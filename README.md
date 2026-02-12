@@ -11,14 +11,16 @@ This project provides a starting point for Total Lagrangian finite element analy
 
 Based on the [Total-Lagrangian-FEA](https://github.com/uwsbel/Total-Lagrangian-FEA) project from SBEL at UW-Madison.
 
-## Requirements
+## Quick Start
+
+### Requirements
 
 - CMake 3.18 or higher
 - CUDA Toolkit 11.0 or higher
 - Eigen3 library
 - C++17 compatible compiler
 
-## Building
+### Building
 
 ```bash
 mkdir build
@@ -27,7 +29,9 @@ cmake ..
 make
 ```
 
-## Running the Example
+See [docs/BUILDING.md](docs/BUILDING.md) for detailed build instructions.
+
+### Running the Example
 
 ```bash
 cd build
@@ -47,9 +51,37 @@ TLFEA/
 │   └── utils/         # Utility functions
 ├── examples/          # Example programs
 ├── data/              # Test data and meshes
+├── docs/              # Documentation
 └── CMakeLists.txt     # Build configuration
 ```
+
+## Documentation
+
+- [Building Guide](docs/BUILDING.md) - Detailed build and installation instructions
+- [Architecture](docs/ARCHITECTURE.md) - System design and component overview
+
+## Features
+
+### Implemented
+- ✅ FEAT10 (10-node tetrahedral) element
+- ✅ SyncedNesterov iterative solver
+- ✅ St. Venant-Kirchhoff hyperelastic material
+- ✅ GPU acceleration via CUDA
+- ✅ CMake build system
+- ✅ Basic cantilever beam example
+
+### Future Extensions
+- Additional element types (ANCF beam/shell elements)
+- More material models (Neo-Hookean, Mooney-Rivlin)
+- Additional solvers (Newton-Raphson, VBD)
+- Collision detection and contact handling
+- Advanced examples and benchmarks
 
 ## License
 
 See LICENSE file for details.
+
+## Acknowledgments
+
+This project is based on the [Total-Lagrangian-FEA](https://github.com/uwsbel/Total-Lagrangian-FEA) research code developed by the Simulation-Based Engineering Laboratory (SBEL) at the University of Wisconsin-Madison.
+
