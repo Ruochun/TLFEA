@@ -6,6 +6,7 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <iostream>
 
 #ifndef HANDLE_ERROR_MACRO
 #define HANDLE_ERROR_MACRO

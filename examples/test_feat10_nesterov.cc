@@ -4,7 +4,7 @@
  * Author: Json Zhou
  * Email:  zzhou292@wisc.edu
  *
- * This driver loads a FEAT10 cube mesh, clamps nodes on the base plane,
+ * This driver loads a FEAT10 cube mesh, clamps nodes on the z=0 plane,
  * applies a point load, and advances the system using the synchronized
  * Nesterov solver. It is intended to test FEAT10 mass and internal force
  * assembly together with the Nesterov integrator on a simple solid block.
