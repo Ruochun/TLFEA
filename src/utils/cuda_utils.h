@@ -8,15 +8,13 @@
 #include <cstdlib>
 #include <iostream>
 
-#ifndef HANDLE_ERROR_MACRO
-    #define HANDLE_ERROR_MACRO
-static inline void HandleError(cudaError_t err, const char* file, int line) {
-    if (err != cudaSuccess) {
-        printf("%s in %s at line %d\n", cudaGetErrorString(err), file, line);
-        exit(EXIT_FAILURE);
-    }
-}
-    #define HANDLE_ERROR(err) (HandleError(err, __FILE__, __LINE__))
+// Include MoPhiEssentials for GPU error handling and logging
+#include <MoPhiEssentials.h>
+
+// Use MoPhiEssentials' MOPHI_GPU_CALL macro for error handling
+// For backward compatibility, alias HANDLE_ERROR to MOPHI_GPU_CALL
+#ifndef HANDLE_ERROR
+    #define HANDLE_ERROR(err) MOPHI_GPU_CALL(err)
 #endif
 
 #ifndef CHECK_CUSPARSE_MACRO
@@ -25,9 +23,8 @@ static inline void HandleError(cudaError_t err, const char* file, int line) {
         {                                                                                \
             cusparseStatus_t status = (func);                                            \
             if (status != CUSPARSE_STATUS_SUCCESS) {                                     \
-                printf("CUSPARSE API failed at line %d with error: %s (%d)\n", __LINE__, \
+                MOPHI_ERROR("CUSPARSE API failed with error: %s (%d)",                   \
                        cusparseGetErrorString(status), status);                          \
-                exit(EXIT_FAILURE);                                                      \
             }                                                                            \
         }
 #endif
@@ -38,8 +35,7 @@ static inline void HandleError(cudaError_t err, const char* file, int line) {
         do {                                                                                \
             cudssStatus_t status = call;                                                    \
             if (status != CUDSS_STATUS_SUCCESS) {                                           \
-                std::cerr << "cuDSS error at " << __FILE__ << ":" << __LINE__ << std::endl; \
-                exit(1);                                                                    \
+                MOPHI_ERROR("cuDSS error");                                                 \
             }                                                                               \
         } while (0)
 #endif
