@@ -15,6 +15,7 @@
 #include <Eigen/Dense>
 #include <iomanip>
 #include <iostream>
+#include <MoPhiEssentials.h>
 
 #include "elements/FEAT10Data.cuh"
 #include "solvers/SyncedNesterov.cuh"
@@ -26,6 +27,9 @@ const double nu   = 0.33;  // Poisson's ratio
 const double rho0 = 2700;  // Density
 
 int main() {
+  // Initialize MoPhiEssentials logging
+  mophi::Logger::GetInstance().SetVerbosity(VERBOSITY_INFO);
+  
   // Read mesh data
   Eigen::MatrixXd nodes;
   Eigen::MatrixXi elements;
@@ -35,8 +39,8 @@ int main() {
   int n_elems = ANCFCPUUtils::FEAT10_read_elements("data/meshes/T10/cube.1.ele",
                                                    elements);
 
-  std::cout << "mesh read nodes: " << n_nodes << std::endl;
-  std::cout << "mesh read elements: " << n_elems << std::endl;
+  MOPHI_INFO("mesh read nodes: %d", n_nodes);
+  MOPHI_INFO("mesh read elements: %d", n_elems);
 
   // print nodes and elements matrix
   std::cout << "nodes matrix:" << std::endl;
@@ -46,11 +50,11 @@ int main() {
 
   GPU_FEAT10_Data gpu_t10_data(n_elems, n_nodes);
 
-  std::cout << "gpu_t10_data created" << std::endl;
+  MOPHI_INFO("gpu_t10_data created");
 
   gpu_t10_data.Initialize();
 
-  std::cout << "gpu_t10_data initialized" << std::endl;
+  MOPHI_INFO("gpu_t10_data initialized");
 
   // Extract coordinate vectors from nodes matrix
   Eigen::VectorXd h_x12(n_nodes), h_y12(n_nodes), h_z12(n_nodes);
@@ -77,7 +81,7 @@ int main() {
   }
 
   // print fixed nodes
-  std::cout << "Fixed nodes (z == 0):" << std::endl;
+  MOPHI_INFO("Fixed nodes (z == 0): %zu nodes", fixed_node_indices.size());
   for (int i = 0; i < h_fixed_nodes.size(); ++i) {
     std::cout << h_fixed_nodes(i) << " ";
   }
@@ -112,7 +116,7 @@ int main() {
 
   gpu_t10_data.CalcDnDuPre();
 
-  std::cout << "gpu_t10_data dndu pre complete" << std::endl;
+  MOPHI_INFO("gpu_t10_data dndu pre complete");
 
   // 2. Retrieve results
   std::vector<std::vector<Eigen::MatrixXd>> ref_grads;
@@ -135,22 +139,22 @@ int main() {
       std::cout << detJ[i][j] << std::endl;
     }
   }
-  std::cout << "done retrieving detJ" << std::endl;
+  MOPHI_INFO("done retrieving detJ");
 
   gpu_t10_data.CalcMassMatrix();
 
   gpu_t10_data.CalcConstraintData();
 
-  std::cout << "done CalcConstraintData" << std::endl;
+  MOPHI_INFO("done CalcConstraintData");
 
   gpu_t10_data.ConvertToCSR_ConstraintJacT();
 
-  std::cout << "done ConvertToCSR_ConstraintJacT" << std::endl;
+  MOPHI_INFO("done ConvertToCSR_ConstraintJacT");
 
   // calculate p
   gpu_t10_data.CalcP();
 
-  std::cout << "done CalcP" << std::endl;
+  MOPHI_INFO("done CalcP");
 
   // retrieve p
   std::vector<std::vector<Eigen::MatrixXd>> p_from_F;
@@ -164,11 +168,11 @@ int main() {
       std::cout << p_from_F[elem][qp] << std::endl;
     }
   }
-  std::cout << "done retrieving P matrices" << std::endl;
+  MOPHI_INFO("done retrieving P matrices");
 
   // calculate internal force
   gpu_t10_data.CalcInternalForce();
-  std::cout << "done CalcInternalForce" << std::endl;
+  MOPHI_INFO("done CalcInternalForce");
 
   // retrieve internal force
   Eigen::VectorXd f_int;

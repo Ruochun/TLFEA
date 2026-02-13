@@ -8,6 +8,7 @@
 #include <numeric>
 #include <sstream>
 #include <stdexcept>
+#include <MoPhiEssentials.h>
 
 namespace ANCFCPUUtils {
 
@@ -85,8 +86,7 @@ bool ValidateColoring(const Eigen::MatrixXi &element_connectivity,
       int node = element_connectivity(e, i);
       int c    = colors[node];
       if (elem_colors.count(c)) {
-        std::cerr << "Invalid coloring: element " << e
-                  << " has duplicate color " << c << std::endl;
+        MOPHI_ERROR("Invalid coloring: element %d has duplicate color %d", e, c);
         return false;
       }
       elem_colors.insert(c);
@@ -611,8 +611,7 @@ void FEAT10_remap_tetgen_indices(const Eigen::VectorXi &tetgen_elem,
   // Mapping indices: [0, 1, 2, 3, 6, 7, 9, 5, 8, 4]
 
   if (tetgen_elem.size() != 10 || standard_elem.size() != 10) {
-    std::cerr << "Error: Element arrays must have size 10 for T10 elements"
-              << std::endl;
+    MOPHI_ERROR("Element arrays must have size 10 for T10 elements");
     return;
   }
 
@@ -626,14 +625,13 @@ void FEAT10_remap_tetgen_indices(const Eigen::VectorXi &tetgen_elem,
 int FEAT10_read_nodes(const std::string &filename, Eigen::MatrixXd &nodes) {
   std::ifstream file(filename);
   if (!file.is_open()) {
-    std::cerr << "Error: Could not open node file " << filename << std::endl;
+    MOPHI_ERROR("Could not open node file %s", filename.c_str());
     return 0;
   }
 
   std::string line;
   if (!std::getline(file, line)) {
-    std::cerr << "Error: Could not read header line from " << filename
-              << std::endl;
+    MOPHI_ERROR("Could not read header line from %s", filename.c_str());
     return 0;
   }
 
@@ -642,8 +640,7 @@ int FEAT10_read_nodes(const std::string &filename, Eigen::MatrixXd &nodes) {
   header >> n_nodes >> dim;
 
   if (dim != 3) {
-    std::cerr << "Error: Only 3D nodes are supported, found " << dim << "D"
-              << std::endl;
+    MOPHI_ERROR("Only 3D nodes are supported, found %dD", dim);
     return 0;
   }
 
@@ -683,17 +680,16 @@ int FEAT10_read_nodes(const std::string &filename, Eigen::MatrixXd &nodes) {
 
 int FEAT10_read_elements(const std::string &filename,
                          Eigen::MatrixXi &elements) {
-  std::cout << "filename: " << filename << std::endl;
+  MOPHI_INFO("Reading elements from file: %s", filename.c_str());
   std::ifstream file(filename);
   if (!file.is_open()) {
-    std::cerr << "Error: Could not open element file " << filename << std::endl;
+    MOPHI_ERROR("Could not open element file %s", filename.c_str());
     return 0;
   }
 
   std::string line;
   if (!std::getline(file, line)) {
-    std::cerr << "Error: Could not read header line from " << filename
-              << std::endl;
+    MOPHI_ERROR("Could not read header line from %s", filename.c_str());
     return 0;
   }
 
@@ -702,8 +698,7 @@ int FEAT10_read_elements(const std::string &filename,
   header >> n_elements >> nodes_per_elem;
 
   if (nodes_per_elem != 10) {
-    std::cerr << "Error: Only T10 elements (10 nodes) are supported, found "
-              << nodes_per_elem << std::endl;
+    MOPHI_ERROR("Only T10 elements (10 nodes) are supported, found %d", nodes_per_elem);
     return 0;
   }
 
