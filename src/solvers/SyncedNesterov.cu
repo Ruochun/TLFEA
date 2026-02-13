@@ -13,6 +13,7 @@
  *==============================================================*/
 
 #include <cooperative_groups.h>
+#include <MoPhiEssentials.h>
 
 #include "../elements/ANCF3243Data.cuh"
 #include "../elements/ANCF3243DataFunc.cuh"

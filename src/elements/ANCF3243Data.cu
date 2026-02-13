@@ -286,7 +286,7 @@ void GPU_ANCF3243_Data::CalcP() {
 
 void GPU_ANCF3243_Data::CalcDsDuPre() {
     if (!is_setup) {
-        std::cerr << "GPU_ANCF3243_Data::CalcDsDuPre: call Setup() first." << std::endl;
+        MOPHI_ERROR("GPU_ANCF3243_Data::CalcDsDuPre: call Setup() first.");
         return;
     }
     if (is_reference_precomputed) {
@@ -733,7 +733,7 @@ __global__ void compute_constraint_data_kernel(GPU_ANCF3243_Data* d_data) {
 
 void GPU_ANCF3243_Data::CalcConstraintData() {
     if (!is_constraints_setup) {
-        std::cerr << "constraint is not set up" << std::endl;
+        MOPHI_ERROR("constraint is not set up");
         return;
     }
 
