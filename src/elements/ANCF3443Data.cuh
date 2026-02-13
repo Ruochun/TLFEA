@@ -31,1183 +31,1071 @@
 //
 // define a SAP data strucutre
 struct GPU_ANCF3443_Data : public ElementBase {
-  // Constraint modes:
-  // - kConstraintFixedCoefficients: legacy fixed coefficient constraints via
-  //   d_fixed_nodes[] and x12_jac/y12_jac/z12_jac targets.
-  // - kConstraintLinearCSR: general linear constraints with explicit J in CSR
-  //   and per-row rhs targets.
-  static constexpr int kConstraintNone              = 0;
-  static constexpr int kConstraintFixedCoefficients = 1;
-  static constexpr int kConstraintLinearCSR         = 2;
+    // Constraint modes:
+    // - kConstraintFixedCoefficients: legacy fixed coefficient constraints via
+    //   d_fixed_nodes[] and x12_jac/y12_jac/z12_jac targets.
+    // - kConstraintLinearCSR: general linear constraints with explicit J in CSR
+    //   and per-row rhs targets.
+    static constexpr int kConstraintNone = 0;
+    static constexpr int kConstraintFixedCoefficients = 1;
+    static constexpr int kConstraintLinearCSR = 2;
 
 #if defined(__CUDACC__)
 
-  // Const get functions
-  __device__ const Eigen::Map<Eigen::MatrixXd> B_inv(int elem_idx) const {
-    const int row_size = Quadrature::N_SHAPE_3443;
-    const int col_size = Quadrature::N_SHAPE_3443;
-    return Eigen::Map<Eigen::MatrixXd>(d_B_inv + elem_idx * row_size * col_size,
-                                       row_size, col_size);
-  }
-
-  __device__ Eigen::Map<Eigen::MatrixXd> grad_N_ref(int elem_idx,
-                                                    int qp_idx) const {
-    const int row_size = Quadrature::N_SHAPE_3443;
-    const int col_size = 3;
-    double *qp_data =
-        d_grad_N_ref + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) *
-                           row_size * col_size;
-    return Eigen::Map<Eigen::MatrixXd>(qp_data, row_size, col_size);
-  }
-
-  __device__ double &detJ_ref(int elem_idx, int qp_idx) {
-    return d_detJ_ref[elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx];
-  }
-
-  __device__ double detJ_ref(int elem_idx, int qp_idx) const {
-    return d_detJ_ref[elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx];
-  }
-
-  // ==============================================================
-
-  __device__ const Eigen::Map<Eigen::VectorXd> gauss_xi_m() const {
-    return Eigen::Map<Eigen::VectorXd>(d_gauss_xi_m, Quadrature::N_QP_7);
-  }
-
-  __device__ const Eigen::Map<Eigen::VectorXd> gauss_eta_m() const {
-    return Eigen::Map<Eigen::VectorXd>(d_gauss_eta_m, Quadrature::N_QP_7);
-  }
-
-  __device__ const Eigen::Map<Eigen::VectorXd> gauss_zeta_m() const {
-    return Eigen::Map<Eigen::VectorXd>(d_gauss_zeta_m, Quadrature::N_QP_3);
-  }
-
-  __device__ const Eigen::Map<Eigen::VectorXd> gauss_xi() const {
-    return Eigen::Map<Eigen::VectorXd>(d_gauss_xi, Quadrature::N_QP_4);
-  }
-
-  __device__ const Eigen::Map<Eigen::VectorXd> gauss_eta() const {
-    return Eigen::Map<Eigen::VectorXd>(d_gauss_eta, Quadrature::N_QP_4);
-  }
-
-  __device__ const Eigen::Map<Eigen::VectorXd> gauss_zeta() const {
-    return Eigen::Map<Eigen::VectorXd>(d_gauss_zeta, Quadrature::N_QP_3);
-  }
-
-  __device__ const Eigen::Map<Eigen::VectorXd> weight_xi_m() const {
-    return Eigen::Map<Eigen::VectorXd>(d_weight_xi_m, Quadrature::N_QP_7);
-  }
-
-  __device__ const Eigen::Map<Eigen::VectorXd> weight_eta_m() const {
-    return Eigen::Map<Eigen::VectorXd>(d_weight_eta_m, Quadrature::N_QP_7);
-  }
-
-  __device__ const Eigen::Map<Eigen::VectorXd> weight_zeta_m() const {
-    return Eigen::Map<Eigen::VectorXd>(d_weight_zeta_m, Quadrature::N_QP_3);
-  }
-
-  __device__ const Eigen::Map<Eigen::VectorXd> weight_xi() const {
-    return Eigen::Map<Eigen::VectorXd>(d_weight_xi, Quadrature::N_QP_4);
-  }
-
-  __device__ const Eigen::Map<Eigen::VectorXd> weight_eta() const {
-    return Eigen::Map<Eigen::VectorXd>(d_weight_eta, Quadrature::N_QP_4);
-  }
-
-  __device__ const Eigen::Map<Eigen::VectorXd> weight_zeta() const {
-    return Eigen::Map<Eigen::VectorXd>(d_weight_zeta, Quadrature::N_QP_3);
-  }
-
-  // ==============================================================
-
-  __device__ Eigen::Map<Eigen::VectorXd> x12_jac() {
-    return Eigen::Map<Eigen::VectorXd>(d_x12_jac, n_coef);
-  }
-
-  __device__ Eigen::Map<Eigen::VectorXd> const x12_jac() const {
-    return Eigen::Map<Eigen::VectorXd>(d_x12_jac, n_coef);
-  }
-
-  __device__ Eigen::Map<Eigen::VectorXd> y12_jac() {
-    return Eigen::Map<Eigen::VectorXd>(d_y12_jac, n_coef);
-  }
-
-  __device__ Eigen::Map<Eigen::VectorXd> const y12_jac() const {
-    return Eigen::Map<Eigen::VectorXd>(d_y12_jac, n_coef);
-  }
-
-  __device__ Eigen::Map<Eigen::VectorXd> z12_jac() {
-    return Eigen::Map<Eigen::VectorXd>(d_z12_jac, n_coef);
-  }
-
-  __device__ Eigen::Map<Eigen::VectorXd> const z12_jac() const {
-    return Eigen::Map<Eigen::VectorXd>(d_z12_jac, n_coef);
-  }
-
-  __device__ Eigen::Map<Eigen::VectorXd> x12() {
-    return Eigen::Map<Eigen::VectorXd>(d_x12, n_coef);
-  }
-
-  __device__ Eigen::Map<Eigen::VectorXd> const x12() const {
-    return Eigen::Map<Eigen::VectorXd>(d_x12, n_coef);
-  }
-
-  __device__ Eigen::Map<Eigen::VectorXd> y12() {
-    return Eigen::Map<Eigen::VectorXd>(d_y12, n_coef);
-  }
-
-  __device__ Eigen::Map<Eigen::VectorXd> const y12() const {
-    return Eigen::Map<Eigen::VectorXd>(d_y12, n_coef);
-  }
-
-  __device__ Eigen::Map<Eigen::VectorXd> z12() {
-    return Eigen::Map<Eigen::VectorXd>(d_z12, n_coef);
-  }
-
-  __device__ Eigen::Map<Eigen::VectorXd> const z12() const {
-    return Eigen::Map<Eigen::VectorXd>(d_z12, n_coef);
-  }
-
-  // Helper: gather 16 DOFs for an element using connectivity
-  __device__ void gather_element_dofs(const double *global,
-                                      Eigen::Map<Eigen::MatrixXi> connectivity,
-                                      int elem, double *local) const {
-    // Each element has 4 nodes, each node has 4 DOFs
-    for (int n = 0; n < 4; ++n) {
-      int node = connectivity(elem, n);
-#pragma unroll
-      for (int d = 0; d < 4; ++d) {
-        local[n * 4 + d] = global[node * 4 + d];
-      }
+    // Const get functions
+    __device__ const Eigen::Map<Eigen::MatrixXd> B_inv(int elem_idx) const {
+        const int row_size = Quadrature::N_SHAPE_3443;
+        const int col_size = Quadrature::N_SHAPE_3443;
+        return Eigen::Map<Eigen::MatrixXd>(d_B_inv + elem_idx * row_size * col_size, row_size, col_size);
     }
-  }
 
-  // Accessor for x12 for a given element (gathered by connectivity)
-  __device__ void x12_elem(int elem, double *buffer) const {
-    gather_element_dofs(d_x12, this->element_connectivity(), elem, buffer);
-  }
+    __device__ Eigen::Map<Eigen::MatrixXd> grad_N_ref(int elem_idx, int qp_idx) const {
+        const int row_size = Quadrature::N_SHAPE_3443;
+        const int col_size = 3;
+        double* qp_data = d_grad_N_ref + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * row_size * col_size;
+        return Eigen::Map<Eigen::MatrixXd>(qp_data, row_size, col_size);
+    }
 
-  __device__ void x12_jac_elem(int elem, double *buffer) const {
-    gather_element_dofs(d_x12_jac, this->element_connectivity(), elem, buffer);
-  }
+    __device__ double& detJ_ref(int elem_idx, int qp_idx) {
+        return d_detJ_ref[elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx];
+    }
 
-  // Accessor for y12 for a given element
-  __device__ void y12_elem(int elem, double *buffer) const {
-    gather_element_dofs(d_y12, this->element_connectivity(), elem, buffer);
-  }
+    __device__ double detJ_ref(int elem_idx, int qp_idx) const {
+        return d_detJ_ref[elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx];
+    }
 
-  __device__ void y12_jac_elem(int elem, double *buffer) const {
-    gather_element_dofs(d_y12_jac, this->element_connectivity(), elem, buffer);
-  }
+    // ==============================================================
 
-  // Accessor for z12 for a given element
-  __device__ void z12_elem(int elem, double *buffer) const {
-    gather_element_dofs(d_z12, this->element_connectivity(), elem, buffer);
-  }
+    __device__ const Eigen::Map<Eigen::VectorXd> gauss_xi_m() const {
+        return Eigen::Map<Eigen::VectorXd>(d_gauss_xi_m, Quadrature::N_QP_7);
+    }
 
-  __device__ void z12_jac_elem(int elem, double *buffer) const {
-    gather_element_dofs(d_z12_jac, this->element_connectivity(), elem, buffer);
-  }
+    __device__ const Eigen::Map<Eigen::VectorXd> gauss_eta_m() const {
+        return Eigen::Map<Eigen::VectorXd>(d_gauss_eta_m, Quadrature::N_QP_7);
+    }
 
-  __device__ Eigen::Map<Eigen::MatrixXi> element_connectivity() const {
-    return Eigen::Map<Eigen::MatrixXi>(d_element_connectivity, n_beam, 4);
-  }
+    __device__ const Eigen::Map<Eigen::VectorXd> gauss_zeta_m() const {
+        return Eigen::Map<Eigen::VectorXd>(d_gauss_zeta_m, Quadrature::N_QP_3);
+    }
 
-  __device__ Eigen::Map<Eigen::MatrixXd> F(int elem_idx, int qp_idx) {
-    return Eigen::Map<Eigen::MatrixXd>(
-        d_F + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
-  }
+    __device__ const Eigen::Map<Eigen::VectorXd> gauss_xi() const {
+        return Eigen::Map<Eigen::VectorXd>(d_gauss_xi, Quadrature::N_QP_4);
+    }
 
-  __device__ const Eigen::Map<Eigen::MatrixXd> F(int elem_idx,
-                                                 int qp_idx) const {
-    return Eigen::Map<Eigen::MatrixXd>(
-        d_F + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
-  }
+    __device__ const Eigen::Map<Eigen::VectorXd> gauss_eta() const {
+        return Eigen::Map<Eigen::VectorXd>(d_gauss_eta, Quadrature::N_QP_4);
+    }
 
-  __device__ Eigen::Map<Eigen::MatrixXd> P(int elem_idx, int qp_idx) {
-    return Eigen::Map<Eigen::MatrixXd>(
-        d_P + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
-  }
+    __device__ const Eigen::Map<Eigen::VectorXd> gauss_zeta() const {
+        return Eigen::Map<Eigen::VectorXd>(d_gauss_zeta, Quadrature::N_QP_3);
+    }
 
-  __device__ const Eigen::Map<Eigen::MatrixXd> P(int elem_idx,
-                                                 int qp_idx) const {
-    return Eigen::Map<Eigen::MatrixXd>(
-        d_P + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
-  }
+    __device__ const Eigen::Map<Eigen::VectorXd> weight_xi_m() const {
+        return Eigen::Map<Eigen::VectorXd>(d_weight_xi_m, Quadrature::N_QP_7);
+    }
 
-  // Time-derivative of deformation gradient (viscous computation)
-  __device__ Eigen::Map<Eigen::MatrixXd> Fdot(int elem_idx, int qp_idx) {
-    return Eigen::Map<Eigen::MatrixXd>(
-        d_Fdot + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
-  }
+    __device__ const Eigen::Map<Eigen::VectorXd> weight_eta_m() const {
+        return Eigen::Map<Eigen::VectorXd>(d_weight_eta_m, Quadrature::N_QP_7);
+    }
 
-  __device__ const Eigen::Map<Eigen::MatrixXd> Fdot(int elem_idx,
-                                                    int qp_idx) const {
-    return Eigen::Map<Eigen::MatrixXd>(
-        d_Fdot + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
-  }
+    __device__ const Eigen::Map<Eigen::VectorXd> weight_zeta_m() const {
+        return Eigen::Map<Eigen::VectorXd>(d_weight_zeta_m, Quadrature::N_QP_3);
+    }
 
-  // Viscous Piola stress storage
-  __device__ Eigen::Map<Eigen::MatrixXd> P_vis(int elem_idx, int qp_idx) {
-    return Eigen::Map<Eigen::MatrixXd>(
-        d_P_vis + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
-  }
+    __device__ const Eigen::Map<Eigen::VectorXd> weight_xi() const {
+        return Eigen::Map<Eigen::VectorXd>(d_weight_xi, Quadrature::N_QP_4);
+    }
 
-  __device__ const Eigen::Map<Eigen::MatrixXd> P_vis(int elem_idx,
-                                                     int qp_idx) const {
-    return Eigen::Map<Eigen::MatrixXd>(
-        d_P_vis + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
-  }
+    __device__ const Eigen::Map<Eigen::VectorXd> weight_eta() const {
+        return Eigen::Map<Eigen::VectorXd>(d_weight_eta, Quadrature::N_QP_4);
+    }
 
-  __device__ Eigen::Map<Eigen::VectorXd> f_int(int global_node_idx) {
-    return Eigen::Map<Eigen::VectorXd>(d_f_int + global_node_idx * 3, 3);
-  }
+    __device__ const Eigen::Map<Eigen::VectorXd> weight_zeta() const {
+        return Eigen::Map<Eigen::VectorXd>(d_weight_zeta, Quadrature::N_QP_3);
+    }
 
-  __device__ const Eigen::Map<Eigen::VectorXd> f_int(
-      int global_node_idx) const {
-    return Eigen::Map<Eigen::VectorXd>(d_f_int + global_node_idx * 3, 3);
-  }
+    // ==============================================================
 
-  __device__ Eigen::Map<Eigen::VectorXd> f_int() {
-    return Eigen::Map<Eigen::VectorXd>(d_f_int, n_coef * 3);
-  }
+    __device__ Eigen::Map<Eigen::VectorXd> x12_jac() {
+        return Eigen::Map<Eigen::VectorXd>(d_x12_jac, n_coef);
+    }
 
-  __device__ const Eigen::Map<Eigen::VectorXd> f_int() const {
-    return Eigen::Map<Eigen::VectorXd>(d_f_int, n_coef * 3);
-  }
+    __device__ Eigen::Map<Eigen::VectorXd> const x12_jac() const {
+        return Eigen::Map<Eigen::VectorXd>(d_x12_jac, n_coef);
+    }
 
-  __device__ Eigen::Map<Eigen::VectorXd> f_ext(int global_node_idx) {
-    return Eigen::Map<Eigen::VectorXd>(d_f_ext + global_node_idx * 3, 3);
-  }
+    __device__ Eigen::Map<Eigen::VectorXd> y12_jac() {
+        return Eigen::Map<Eigen::VectorXd>(d_y12_jac, n_coef);
+    }
 
-  __device__ const Eigen::Map<Eigen::VectorXd> f_ext(
-      int global_node_idx) const {
-    return Eigen::Map<Eigen::VectorXd>(d_f_ext + global_node_idx * 3, 3);
-  }
+    __device__ Eigen::Map<Eigen::VectorXd> const y12_jac() const {
+        return Eigen::Map<Eigen::VectorXd>(d_y12_jac, n_coef);
+    }
 
-  __device__ Eigen::Map<Eigen::VectorXd> f_ext() {
-    return Eigen::Map<Eigen::VectorXd>(d_f_ext, n_coef * 3);
-  }
+    __device__ Eigen::Map<Eigen::VectorXd> z12_jac() {
+        return Eigen::Map<Eigen::VectorXd>(d_z12_jac, n_coef);
+    }
 
-  __device__ const Eigen::Map<Eigen::VectorXd> f_ext() const {
-    return Eigen::Map<Eigen::VectorXd>(d_f_ext, n_coef * 3);
-  }
+    __device__ Eigen::Map<Eigen::VectorXd> const z12_jac() const {
+        return Eigen::Map<Eigen::VectorXd>(d_z12_jac, n_coef);
+    }
 
-  __device__ Eigen::Map<Eigen::VectorXd> constraint() {
-    return Eigen::Map<Eigen::VectorXd>(d_constraint, n_constraint);
-  }
+    __device__ Eigen::Map<Eigen::VectorXd> x12() {
+        return Eigen::Map<Eigen::VectorXd>(d_x12, n_coef);
+    }
 
-  __device__ const Eigen::Map<Eigen::VectorXd> constraint() const {
-    return Eigen::Map<Eigen::VectorXd>(d_constraint, n_constraint);
-  }
+    __device__ Eigen::Map<Eigen::VectorXd> const x12() const {
+        return Eigen::Map<Eigen::VectorXd>(d_x12, n_coef);
+    }
 
-  __device__ const double *constraint_rhs() const {
-    return d_constraint_rhs;
-  }
+    __device__ Eigen::Map<Eigen::VectorXd> y12() {
+        return Eigen::Map<Eigen::VectorXd>(d_y12, n_coef);
+    }
 
-  __device__ int constraint_mode_device() const {
-    return constraint_mode;
-  }
+    __device__ Eigen::Map<Eigen::VectorXd> const y12() const {
+        return Eigen::Map<Eigen::VectorXd>(d_y12, n_coef);
+    }
 
-  __device__ Eigen::Map<Eigen::VectorXi> fixed_nodes() {
-    return Eigen::Map<Eigen::VectorXi>(d_fixed_nodes, n_constraint / 3);
-  }
+    __device__ Eigen::Map<Eigen::VectorXd> z12() {
+        return Eigen::Map<Eigen::VectorXd>(d_z12, n_coef);
+    }
 
-  // ================================
+    __device__ Eigen::Map<Eigen::VectorXd> const z12() const {
+        return Eigen::Map<Eigen::VectorXd>(d_z12, n_coef);
+    }
 
-  __device__ double L(int elem_idx) const {
-    return d_L[elem_idx];
-  }
+    // Helper: gather 16 DOFs for an element using connectivity
+    __device__ void gather_element_dofs(const double* global,
+                                        Eigen::Map<Eigen::MatrixXi> connectivity,
+                                        int elem,
+                                        double* local) const {
+        // Each element has 4 nodes, each node has 4 DOFs
+        for (int n = 0; n < 4; ++n) {
+            int node = connectivity(elem, n);
+    #pragma unroll
+            for (int d = 0; d < 4; ++d) {
+                local[n * 4 + d] = global[node * 4 + d];
+            }
+        }
+    }
 
-  __device__ double W(int elem_idx) const {
-    return d_W[elem_idx];
-  }
+    // Accessor for x12 for a given element (gathered by connectivity)
+    __device__ void x12_elem(int elem, double* buffer) const {
+        gather_element_dofs(d_x12, this->element_connectivity(), elem, buffer);
+    }
 
-  __device__ double H(int elem_idx) const {
-    return d_H[elem_idx];
-  }
+    __device__ void x12_jac_elem(int elem, double* buffer) const {
+        gather_element_dofs(d_x12_jac, this->element_connectivity(), elem, buffer);
+    }
 
-  __device__ double rho0() const {
-    return *d_rho0;
-  }
+    // Accessor for y12 for a given element
+    __device__ void y12_elem(int elem, double* buffer) const {
+        gather_element_dofs(d_y12, this->element_connectivity(), elem, buffer);
+    }
 
-  __device__ double nu() const {
-    return *d_nu;
-  }
+    __device__ void y12_jac_elem(int elem, double* buffer) const {
+        gather_element_dofs(d_y12_jac, this->element_connectivity(), elem, buffer);
+    }
 
-  __device__ double E() const {
-    return *d_E;
-  }
+    // Accessor for z12 for a given element
+    __device__ void z12_elem(int elem, double* buffer) const {
+        gather_element_dofs(d_z12, this->element_connectivity(), elem, buffer);
+    }
 
-  __device__ double lambda() const {
-    return *d_lambda;
-  }
+    __device__ void z12_jac_elem(int elem, double* buffer) const {
+        gather_element_dofs(d_z12_jac, this->element_connectivity(), elem, buffer);
+    }
 
-  __device__ double mu() const {
-    return *d_mu;
-  }
+    __device__ Eigen::Map<Eigen::MatrixXi> element_connectivity() const {
+        return Eigen::Map<Eigen::MatrixXi>(d_element_connectivity, n_beam, 4);
+    }
 
-  __device__ int material_model() const {
-    return *d_material_model;
-  }
+    __device__ Eigen::Map<Eigen::MatrixXd> F(int elem_idx, int qp_idx) {
+        return Eigen::Map<Eigen::MatrixXd>(d_F + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
+    }
 
-  __device__ double mu10() const {
-    return *d_mu10;
-  }
+    __device__ const Eigen::Map<Eigen::MatrixXd> F(int elem_idx, int qp_idx) const {
+        return Eigen::Map<Eigen::MatrixXd>(d_F + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
+    }
 
-  __device__ double mu01() const {
-    return *d_mu01;
-  }
+    __device__ Eigen::Map<Eigen::MatrixXd> P(int elem_idx, int qp_idx) {
+        return Eigen::Map<Eigen::MatrixXd>(d_P + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
+    }
 
-  __device__ double kappa() const {
-    return *d_kappa;
-  }
+    __device__ const Eigen::Map<Eigen::MatrixXd> P(int elem_idx, int qp_idx) const {
+        return Eigen::Map<Eigen::MatrixXd>(d_P + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
+    }
 
-  __device__ double eta_damp() const {
-    return *d_eta_damp;
-  }
+    // Time-derivative of deformation gradient (viscous computation)
+    __device__ Eigen::Map<Eigen::MatrixXd> Fdot(int elem_idx, int qp_idx) {
+        return Eigen::Map<Eigen::MatrixXd>(d_Fdot + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
+    }
 
-  __device__ double lambda_damp() const {
-    return *d_lambda_damp;
-  }
+    __device__ const Eigen::Map<Eigen::MatrixXd> Fdot(int elem_idx, int qp_idx) const {
+        return Eigen::Map<Eigen::MatrixXd>(d_Fdot + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
+    }
 
-  //===========================================
+    // Viscous Piola stress storage
+    __device__ Eigen::Map<Eigen::MatrixXd> P_vis(int elem_idx, int qp_idx) {
+        return Eigen::Map<Eigen::MatrixXd>(d_P_vis + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
+    }
 
-  __device__ int *csr_offsets() {
-    return d_csr_offsets;
-  }
+    __device__ const Eigen::Map<Eigen::MatrixXd> P_vis(int elem_idx, int qp_idx) const {
+        return Eigen::Map<Eigen::MatrixXd>(d_P_vis + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
+    }
 
-  __device__ int *csr_columns() {
-    return d_csr_columns;
-  }
+    __device__ Eigen::Map<Eigen::VectorXd> f_int(int global_node_idx) {
+        return Eigen::Map<Eigen::VectorXd>(d_f_int + global_node_idx * 3, 3);
+    }
 
-  __device__ double *csr_values() {
-    return d_csr_values;
-  }
+    __device__ const Eigen::Map<Eigen::VectorXd> f_int(int global_node_idx) const {
+        return Eigen::Map<Eigen::VectorXd>(d_f_int + global_node_idx * 3, 3);
+    }
 
-  __device__ int *cj_csr_offsets() {
-    return d_cj_csr_offsets;
-  }
+    __device__ Eigen::Map<Eigen::VectorXd> f_int() {
+        return Eigen::Map<Eigen::VectorXd>(d_f_int, n_coef * 3);
+    }
 
-  __device__ int *cj_csr_columns() {
-    return d_cj_csr_columns;
-  }
+    __device__ const Eigen::Map<Eigen::VectorXd> f_int() const {
+        return Eigen::Map<Eigen::VectorXd>(d_f_int, n_coef * 3);
+    }
 
-  __device__ double *cj_csr_values() {
-    return d_cj_csr_values;
-  }
+    __device__ Eigen::Map<Eigen::VectorXd> f_ext(int global_node_idx) {
+        return Eigen::Map<Eigen::VectorXd>(d_f_ext + global_node_idx * 3, 3);
+    }
 
-  __device__ int *j_csr_offsets() {
-    return d_j_csr_offsets;
-  }
+    __device__ const Eigen::Map<Eigen::VectorXd> f_ext(int global_node_idx) const {
+        return Eigen::Map<Eigen::VectorXd>(d_f_ext + global_node_idx * 3, 3);
+    }
 
-  __device__ int *j_csr_columns() {
-    return d_j_csr_columns;
-  }
+    __device__ Eigen::Map<Eigen::VectorXd> f_ext() {
+        return Eigen::Map<Eigen::VectorXd>(d_f_ext, n_coef * 3);
+    }
 
-  __device__ double *j_csr_values() {
-    return d_j_csr_values;
-  }
+    __device__ const Eigen::Map<Eigen::VectorXd> f_ext() const {
+        return Eigen::Map<Eigen::VectorXd>(d_f_ext, n_coef * 3);
+    }
 
-  __device__ int nnz() {
-    return *d_nnz;
-  }
+    __device__ Eigen::Map<Eigen::VectorXd> constraint() {
+        return Eigen::Map<Eigen::VectorXd>(d_constraint, n_constraint);
+    }
 
-  __device__ int gpu_n_beam() const {
-    return n_beam;
-  }
+    __device__ const Eigen::Map<Eigen::VectorXd> constraint() const {
+        return Eigen::Map<Eigen::VectorXd>(d_constraint, n_constraint);
+    }
 
-  __device__ int gpu_n_coef() const {
-    return n_coef;
-  }
+    __device__ const double* constraint_rhs() const {
+        return d_constraint_rhs;
+    }
 
-  __device__ int gpu_n_constraint() const {
-    return n_constraint;
-  }
+    __device__ int constraint_mode_device() const {
+        return constraint_mode;
+    }
+
+    __device__ Eigen::Map<Eigen::VectorXi> fixed_nodes() {
+        return Eigen::Map<Eigen::VectorXi>(d_fixed_nodes, n_constraint / 3);
+    }
+
+    // ================================
+
+    __device__ double L(int elem_idx) const {
+        return d_L[elem_idx];
+    }
+
+    __device__ double W(int elem_idx) const {
+        return d_W[elem_idx];
+    }
+
+    __device__ double H(int elem_idx) const {
+        return d_H[elem_idx];
+    }
+
+    __device__ double rho0() const {
+        return *d_rho0;
+    }
+
+    __device__ double nu() const {
+        return *d_nu;
+    }
+
+    __device__ double E() const {
+        return *d_E;
+    }
+
+    __device__ double lambda() const {
+        return *d_lambda;
+    }
+
+    __device__ double mu() const {
+        return *d_mu;
+    }
+
+    __device__ int material_model() const {
+        return *d_material_model;
+    }
+
+    __device__ double mu10() const {
+        return *d_mu10;
+    }
+
+    __device__ double mu01() const {
+        return *d_mu01;
+    }
+
+    __device__ double kappa() const {
+        return *d_kappa;
+    }
+
+    __device__ double eta_damp() const {
+        return *d_eta_damp;
+    }
+
+    __device__ double lambda_damp() const {
+        return *d_lambda_damp;
+    }
+
+    //===========================================
+
+    __device__ int* csr_offsets() {
+        return d_csr_offsets;
+    }
+
+    __device__ int* csr_columns() {
+        return d_csr_columns;
+    }
+
+    __device__ double* csr_values() {
+        return d_csr_values;
+    }
+
+    __device__ int* cj_csr_offsets() {
+        return d_cj_csr_offsets;
+    }
+
+    __device__ int* cj_csr_columns() {
+        return d_cj_csr_columns;
+    }
+
+    __device__ double* cj_csr_values() {
+        return d_cj_csr_values;
+    }
+
+    __device__ int* j_csr_offsets() {
+        return d_j_csr_offsets;
+    }
+
+    __device__ int* j_csr_columns() {
+        return d_j_csr_columns;
+    }
+
+    __device__ double* j_csr_values() {
+        return d_j_csr_values;
+    }
+
+    __device__ int nnz() {
+        return *d_nnz;
+    }
+
+    __device__ int gpu_n_beam() const {
+        return n_beam;
+    }
+
+    __device__ int gpu_n_coef() const {
+        return n_coef;
+    }
+
+    __device__ int gpu_n_constraint() const {
+        return n_constraint;
+    }
 
 #endif
 
-  __host__ __device__ int get_n_beam() const {
-    return n_beam;
-  }
-  __host__ __device__ int get_n_coef() const {
-    return n_coef;
-  }
-  __host__ __device__ int get_n_constraint() const {
-    return n_constraint;
-  }
-
-  // Constructors
-  //
-  // 1) "Strip" constructor (backward compatible with existing tests):
-  //    assumes a chain of quad elements where each new element introduces 2 new
-  //    nodes (8 coefficients), i.e. n_nodes = 4 + 2*(n_beam-1).
-  GPU_ANCF3443_Data(int num_beams) : n_beam(num_beams) {
-    n_nodes = 4 + 2 * (n_beam - 1);
-    n_coef  = 4 * n_nodes;
-    type    = TYPE_3443;
-  }
-
-  // 2) General mesh constructor: explicit node/element counts.
-  GPU_ANCF3443_Data(int num_nodes, int num_elements)
-      : n_beam(num_elements), n_nodes(num_nodes) {
-    n_coef = 4 * n_nodes;
-    type   = TYPE_3443;
-  }
-
-  void Initialize() {
-    HANDLE_ERROR(cudaMalloc(&d_B_inv, n_beam * Quadrature::N_SHAPE_3443 *
-                                          Quadrature::N_SHAPE_3443 *
-                                          sizeof(double)));
-    HANDLE_ERROR(cudaMalloc(&d_grad_N_ref,
-                            n_beam * Quadrature::N_TOTAL_QP_4_4_3 *
-                                Quadrature::N_SHAPE_3443 * 3 * sizeof(double)));
-    HANDLE_ERROR(cudaMalloc(
-        &d_detJ_ref, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * sizeof(double)));
-
-    HANDLE_ERROR(
-        cudaMalloc(&d_gauss_xi_m, Quadrature::N_QP_7 * sizeof(double)));
-    HANDLE_ERROR(
-        cudaMalloc(&d_gauss_eta_m, Quadrature::N_QP_7 * sizeof(double)));
-    HANDLE_ERROR(
-        cudaMalloc(&d_gauss_zeta_m, Quadrature::N_QP_3 * sizeof(double)));
-    HANDLE_ERROR(cudaMalloc(&d_gauss_xi, Quadrature::N_QP_4 * sizeof(double)));
-    HANDLE_ERROR(cudaMalloc(&d_gauss_eta, Quadrature::N_QP_4 * sizeof(double)));
-    HANDLE_ERROR(
-        cudaMalloc(&d_gauss_zeta, Quadrature::N_QP_3 * sizeof(double)));
-
-    HANDLE_ERROR(
-        cudaMalloc(&d_weight_xi_m, Quadrature::N_QP_7 * sizeof(double)));
-    HANDLE_ERROR(
-        cudaMalloc(&d_weight_eta_m, Quadrature::N_QP_7 * sizeof(double)));
-    HANDLE_ERROR(
-        cudaMalloc(&d_weight_zeta_m, Quadrature::N_QP_3 * sizeof(double)));
-    HANDLE_ERROR(cudaMalloc(&d_weight_xi, Quadrature::N_QP_4 * sizeof(double)));
-    HANDLE_ERROR(
-        cudaMalloc(&d_weight_eta, Quadrature::N_QP_4 * sizeof(double)));
-    HANDLE_ERROR(
-        cudaMalloc(&d_weight_zeta, Quadrature::N_QP_3 * sizeof(double)));
-
-    HANDLE_ERROR(cudaMalloc(&d_x12_jac, n_coef * sizeof(double)));
-    HANDLE_ERROR(cudaMalloc(&d_y12_jac, n_coef * sizeof(double)));
-    HANDLE_ERROR(cudaMalloc(&d_z12_jac, n_coef * sizeof(double)));
-    HANDLE_ERROR(cudaMalloc(&d_x12, n_coef * sizeof(double)));
-    HANDLE_ERROR(cudaMalloc(&d_y12, n_coef * sizeof(double)));
-    HANDLE_ERROR(cudaMalloc(&d_z12, n_coef * sizeof(double)));
-
-    HANDLE_ERROR(cudaMalloc(&d_element_connectivity, n_beam * 4 * sizeof(int)));
-
-    HANDLE_ERROR(cudaMalloc(
-        &d_F, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(double)));
-    HANDLE_ERROR(cudaMalloc(
-        &d_P, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(double)));
-    // Kelvin-Voigt viscous buffers
-    HANDLE_ERROR(cudaMalloc(&d_Fdot, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 *
-                                         3 * sizeof(double)));
-    HANDLE_ERROR(cudaMalloc(&d_P_vis, n_beam * Quadrature::N_TOTAL_QP_4_4_3 *
-                                          3 * 3 * sizeof(double)));
-    HANDLE_ERROR(cudaMalloc(&d_f_int, n_coef * 3 * sizeof(double)));
-    HANDLE_ERROR(cudaMalloc(&d_f_ext, n_coef * 3 * sizeof(double)));
-    // damping parameters (single scalar copied to device)
-    HANDLE_ERROR(cudaMalloc(&d_eta_damp, sizeof(double)));
-    HANDLE_ERROR(cudaMalloc(&d_lambda_damp, sizeof(double)));
-
-    // copy struct to device
-    HANDLE_ERROR(cudaMalloc(&d_data, sizeof(GPU_ANCF3443_Data)));
-
-    // beam data
-    HANDLE_ERROR(cudaMalloc(&d_H, n_beam * sizeof(double)));
-    HANDLE_ERROR(cudaMalloc(&d_W, n_beam * sizeof(double)));
-    HANDLE_ERROR(cudaMalloc(&d_L, n_beam * sizeof(double)));
-
-    HANDLE_ERROR(cudaMalloc(&d_rho0, sizeof(double)));
-    HANDLE_ERROR(cudaMalloc(&d_nu, sizeof(double)));
-    HANDLE_ERROR(cudaMalloc(&d_E, sizeof(double)));
-    HANDLE_ERROR(cudaMalloc(&d_lambda, sizeof(double)));
-    HANDLE_ERROR(cudaMalloc(&d_mu, sizeof(double)));
-    HANDLE_ERROR(cudaMalloc(&d_material_model, sizeof(int)));
-    HANDLE_ERROR(cudaMalloc(&d_mu10, sizeof(double)));
-    HANDLE_ERROR(cudaMalloc(&d_mu01, sizeof(double)));
-    HANDLE_ERROR(cudaMalloc(&d_kappa, sizeof(double)));
-  }
-
-  void Setup(
-      const Eigen::VectorXd &length, const Eigen::VectorXd &width,
-      const Eigen::VectorXd &height, const Eigen::VectorXd &gauss_xi_m,
-      const Eigen::VectorXd &gauss_eta_m, const Eigen::VectorXd &gauss_zeta_m,
-      const Eigen::VectorXd &gauss_xi, const Eigen::VectorXd &gauss_eta,
-      const Eigen::VectorXd &gauss_zeta, const Eigen::VectorXd &weight_xi_m,
-      const Eigen::VectorXd &weight_eta_m, const Eigen::VectorXd &weight_zeta_m,
-      const Eigen::VectorXd &weight_xi, const Eigen::VectorXd &weight_eta,
-      const Eigen::VectorXd &weight_zeta, const Eigen::VectorXd &h_x12,
-      const Eigen::VectorXd &h_y12, const Eigen::VectorXd &h_z12,
-      const Eigen::MatrixXi &element_connectivity) {
-    if (is_setup) {
-      std::cerr << "GPU_ANCF3443_Data is already set up." << std::endl;
-      return;
+    __host__ __device__ int get_n_beam() const {
+        return n_beam;
+    }
+    __host__ __device__ int get_n_coef() const {
+        return n_coef;
+    }
+    __host__ __device__ int get_n_constraint() const {
+        return n_constraint;
     }
 
-    if (length.size() != n_beam || width.size() != n_beam ||
-        height.size() != n_beam) {
-      std::cerr << "GPU_ANCF3443_Data::Setup: length/width/height must have "
-                   "size n_beam."
-                << std::endl;
-      return;
+    // Constructors
+    //
+    // 1) "Strip" constructor (backward compatible with existing tests):
+    //    assumes a chain of quad elements where each new element introduces 2 new
+    //    nodes (8 coefficients), i.e. n_nodes = 4 + 2*(n_beam-1).
+    GPU_ANCF3443_Data(int num_beams) : n_beam(num_beams) {
+        n_nodes = 4 + 2 * (n_beam - 1);
+        n_coef = 4 * n_nodes;
+        type = TYPE_3443;
     }
 
-    Eigen::VectorXd h_B_inv_flat;
-    try {
-      ANCFCPUUtils::ANCF3443_B12_matrix_flat_per_element(
-          length, width, height, h_B_inv_flat, Quadrature::N_SHAPE_3443);
-    } catch (const std::exception &e) {
-      std::cerr
-          << "GPU_ANCF3443_Data::Setup: failed to build per-element B_inv: "
-          << e.what() << std::endl;
-      return;
-    }
-    const int n_binv = static_cast<int>(h_B_inv_flat.size());
-
-    HANDLE_ERROR(cudaMemcpy(d_B_inv, h_B_inv_flat.data(),
-                            n_binv * sizeof(double), cudaMemcpyHostToDevice));
-
-    HANDLE_ERROR(cudaMemcpy(d_gauss_xi_m, gauss_xi_m.data(),
-                            Quadrature::N_QP_7 * sizeof(double),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_gauss_eta_m, gauss_eta_m.data(),
-                            Quadrature::N_QP_7 * sizeof(double),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_gauss_zeta_m, gauss_zeta_m.data(),
-                            Quadrature::N_QP_3 * sizeof(double),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_gauss_xi, gauss_xi.data(),
-                            Quadrature::N_QP_4 * sizeof(double),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_gauss_eta, gauss_eta.data(),
-                            Quadrature::N_QP_4 * sizeof(double),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_gauss_zeta, gauss_zeta.data(),
-                            Quadrature::N_QP_3 * sizeof(double),
-                            cudaMemcpyHostToDevice));
-
-    HANDLE_ERROR(cudaMemcpy(d_weight_xi_m, weight_xi_m.data(),
-                            Quadrature::N_QP_7 * sizeof(double),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_weight_eta_m, weight_eta_m.data(),
-                            Quadrature::N_QP_7 * sizeof(double),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_weight_zeta_m, weight_zeta_m.data(),
-                            Quadrature::N_QP_3 * sizeof(double),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_weight_xi, weight_xi.data(),
-                            Quadrature::N_QP_4 * sizeof(double),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_weight_eta, weight_eta.data(),
-                            Quadrature::N_QP_4 * sizeof(double),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_weight_zeta, weight_zeta.data(),
-                            Quadrature::N_QP_3 * sizeof(double),
-                            cudaMemcpyHostToDevice));
-
-    HANDLE_ERROR(cudaMemcpy(d_x12_jac, h_x12.data(), n_coef * sizeof(double),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_y12_jac, h_y12.data(), n_coef * sizeof(double),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_z12_jac, h_z12.data(), n_coef * sizeof(double),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_x12, h_x12.data(), n_coef * sizeof(double),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_y12, h_y12.data(), n_coef * sizeof(double),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_z12, h_z12.data(), n_coef * sizeof(double),
-                            cudaMemcpyHostToDevice));
-
-    HANDLE_ERROR(cudaMemcpy(d_element_connectivity, element_connectivity.data(),
-                            n_beam * 4 * sizeof(int), cudaMemcpyHostToDevice));
-
-    cudaMemset(d_f_int, 0, n_coef * 3 * sizeof(double));
-
-    cudaMemset(d_F, 0,
-               n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(double));
-    cudaMemset(d_P, 0,
-               n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(double));
-    // initialize viscous buffers to zero
-    cudaMemset(d_Fdot, 0,
-               n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(double));
-    cudaMemset(d_P_vis, 0,
-               n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(double));
-
-    HANDLE_ERROR(cudaMemcpy(d_H, height.data(), n_beam * sizeof(double),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_W, width.data(), n_beam * sizeof(double),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_L, length.data(), n_beam * sizeof(double),
-                            cudaMemcpyHostToDevice));
-
-    double rho0 = 0.0;
-    double nu   = 0.0;
-    double E    = 0.0;
-    double mu   = E / (2 * (1 + nu));  // Shear modulus μ
-    double lambda =
-        (E * nu) / ((1 + nu) * (1 - 2 * nu));  // Lamé’s first parameter λ
-    double eta_damp    = 0.0;
-    double lambda_damp = 0.0;
-    int material_model = MATERIAL_MODEL_SVK;
-    double mu10        = 0.0;
-    double mu01        = 0.0;
-    double kappa       = 0.0;
-
-    HANDLE_ERROR(
-        cudaMemcpy(d_rho0, &rho0, sizeof(double), cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_nu, &nu, sizeof(double), cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_E, &E, sizeof(double), cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_mu, &mu, sizeof(double), cudaMemcpyHostToDevice));
-    HANDLE_ERROR(
-        cudaMemcpy(d_lambda, &lambda, sizeof(double), cudaMemcpyHostToDevice));
-    // copy damping scalars to device (single double each)
-    HANDLE_ERROR(cudaMemcpy(d_eta_damp, &eta_damp, sizeof(double),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_lambda_damp, &lambda_damp, sizeof(double),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_material_model, &material_model, sizeof(int),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(
-        cudaMemcpy(d_mu10, &mu10, sizeof(double), cudaMemcpyHostToDevice));
-    HANDLE_ERROR(
-        cudaMemcpy(d_mu01, &mu01, sizeof(double), cudaMemcpyHostToDevice));
-    HANDLE_ERROR(
-        cudaMemcpy(d_kappa, &kappa, sizeof(double), cudaMemcpyHostToDevice));
-
-    HANDLE_ERROR(cudaMemcpy(d_data, this, sizeof(GPU_ANCF3443_Data),
-                            cudaMemcpyHostToDevice));
-
-    is_setup                 = true;
-    is_reference_precomputed = false;
-  }
-
-  void Setup(
-      double length, double width, double height,
-      const Eigen::VectorXd &gauss_xi_m, const Eigen::VectorXd &gauss_eta_m,
-      const Eigen::VectorXd &gauss_zeta_m, const Eigen::VectorXd &gauss_xi,
-      const Eigen::VectorXd &gauss_eta, const Eigen::VectorXd &gauss_zeta,
-      const Eigen::VectorXd &weight_xi_m, const Eigen::VectorXd &weight_eta_m,
-      const Eigen::VectorXd &weight_zeta_m, const Eigen::VectorXd &weight_xi,
-      const Eigen::VectorXd &weight_eta, const Eigen::VectorXd &weight_zeta,
-      const Eigen::VectorXd &h_x12, const Eigen::VectorXd &h_y12,
-      const Eigen::VectorXd &h_z12,
-      const Eigen::MatrixXi &element_connectivity) {
-    Eigen::VectorXd lengths = Eigen::VectorXd::Constant(n_beam, length);
-    Eigen::VectorXd widths  = Eigen::VectorXd::Constant(n_beam, width);
-    Eigen::VectorXd heights = Eigen::VectorXd::Constant(n_beam, height);
-    Setup(lengths, widths, heights, gauss_xi_m, gauss_eta_m, gauss_zeta_m,
-          gauss_xi, gauss_eta, gauss_zeta, weight_xi_m, weight_eta_m,
-          weight_zeta_m, weight_xi, weight_eta, weight_zeta, h_x12, h_y12,
-          h_z12, element_connectivity);
-  }
-
-  /**
-   * Set reference density (used for mass/inertial terms).
-   */
-  void SetDensity(double rho0) {
-    if (!is_setup) {
-      std::cerr << "GPU_ANCF3443_Data must be set up before setting density."
-                << std::endl;
-      return;
-    }
-    HANDLE_ERROR(
-        cudaMemcpy(d_rho0, &rho0, sizeof(double), cudaMemcpyHostToDevice));
-  }
-
-  /**
-   * Set Kelvin-Voigt damping parameters.
-   * eta_damp: shear-like damping coefficient
-   * lambda_damp: volumetric-like damping coefficient
-   */
-  void SetDamping(double eta_damp, double lambda_damp) {
-    if (!is_setup) {
-      std::cerr << "GPU_ANCF3443_Data must be set up before setting damping."
-                << std::endl;
-      return;
-    }
-    HANDLE_ERROR(cudaMemcpy(d_eta_damp, &eta_damp, sizeof(double),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_lambda_damp, &lambda_damp, sizeof(double),
-                            cudaMemcpyHostToDevice));
-  }
-
-  /**
-   * Select Saint Venant-Kirchhoff (SVK) material model using current E/nu.
-   */
-  void SetSVK() {
-    if (!is_setup) {
-      std::cerr << "GPU_ANCF3443_Data must be set up before setting material."
-                << std::endl;
-      return;
+    // 2) General mesh constructor: explicit node/element counts.
+    GPU_ANCF3443_Data(int num_nodes, int num_elements) : n_beam(num_elements), n_nodes(num_nodes) {
+        n_coef = 4 * n_nodes;
+        type = TYPE_3443;
     }
 
-    int material_model = MATERIAL_MODEL_SVK;
-    double mu10        = 0.0;
-    double mu01        = 0.0;
-    double kappa       = 0.0;
-    HANDLE_ERROR(cudaMemcpy(d_material_model, &material_model, sizeof(int),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(
-        cudaMemcpy(d_mu10, &mu10, sizeof(double), cudaMemcpyHostToDevice));
-    HANDLE_ERROR(
-        cudaMemcpy(d_mu01, &mu01, sizeof(double), cudaMemcpyHostToDevice));
-    HANDLE_ERROR(
-        cudaMemcpy(d_kappa, &kappa, sizeof(double), cudaMemcpyHostToDevice));
-  }
+    void Initialize() {
+        HANDLE_ERROR(
+            cudaMalloc(&d_B_inv, n_beam * Quadrature::N_SHAPE_3443 * Quadrature::N_SHAPE_3443 * sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_grad_N_ref,
+                                n_beam * Quadrature::N_TOTAL_QP_4_4_3 * Quadrature::N_SHAPE_3443 * 3 * sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_detJ_ref, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * sizeof(double)));
 
-  void SetSVK(double E, double nu) {
-    if (!is_setup) {
-      std::cerr << "GPU_ANCF3443_Data must be set up before setting material."
-                << std::endl;
-      return;
+        HANDLE_ERROR(cudaMalloc(&d_gauss_xi_m, Quadrature::N_QP_7 * sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_gauss_eta_m, Quadrature::N_QP_7 * sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_gauss_zeta_m, Quadrature::N_QP_3 * sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_gauss_xi, Quadrature::N_QP_4 * sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_gauss_eta, Quadrature::N_QP_4 * sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_gauss_zeta, Quadrature::N_QP_3 * sizeof(double)));
+
+        HANDLE_ERROR(cudaMalloc(&d_weight_xi_m, Quadrature::N_QP_7 * sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_weight_eta_m, Quadrature::N_QP_7 * sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_weight_zeta_m, Quadrature::N_QP_3 * sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_weight_xi, Quadrature::N_QP_4 * sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_weight_eta, Quadrature::N_QP_4 * sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_weight_zeta, Quadrature::N_QP_3 * sizeof(double)));
+
+        HANDLE_ERROR(cudaMalloc(&d_x12_jac, n_coef * sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_y12_jac, n_coef * sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_z12_jac, n_coef * sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_x12, n_coef * sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_y12, n_coef * sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_z12, n_coef * sizeof(double)));
+
+        HANDLE_ERROR(cudaMalloc(&d_element_connectivity, n_beam * 4 * sizeof(int)));
+
+        HANDLE_ERROR(cudaMalloc(&d_F, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_P, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(double)));
+        // Kelvin-Voigt viscous buffers
+        HANDLE_ERROR(cudaMalloc(&d_Fdot, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_P_vis, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_f_int, n_coef * 3 * sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_f_ext, n_coef * 3 * sizeof(double)));
+        // damping parameters (single scalar copied to device)
+        HANDLE_ERROR(cudaMalloc(&d_eta_damp, sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_lambda_damp, sizeof(double)));
+
+        // copy struct to device
+        HANDLE_ERROR(cudaMalloc(&d_data, sizeof(GPU_ANCF3443_Data)));
+
+        // beam data
+        HANDLE_ERROR(cudaMalloc(&d_H, n_beam * sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_W, n_beam * sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_L, n_beam * sizeof(double)));
+
+        HANDLE_ERROR(cudaMalloc(&d_rho0, sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_nu, sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_E, sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_lambda, sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_mu, sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_material_model, sizeof(int)));
+        HANDLE_ERROR(cudaMalloc(&d_mu10, sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_mu01, sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_kappa, sizeof(double)));
     }
 
-    HANDLE_ERROR(cudaMemcpy(d_nu, &nu, sizeof(double), cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_E, &E, sizeof(double), cudaMemcpyHostToDevice));
+    void Setup(const Eigen::VectorXd& length,
+               const Eigen::VectorXd& width,
+               const Eigen::VectorXd& height,
+               const Eigen::VectorXd& gauss_xi_m,
+               const Eigen::VectorXd& gauss_eta_m,
+               const Eigen::VectorXd& gauss_zeta_m,
+               const Eigen::VectorXd& gauss_xi,
+               const Eigen::VectorXd& gauss_eta,
+               const Eigen::VectorXd& gauss_zeta,
+               const Eigen::VectorXd& weight_xi_m,
+               const Eigen::VectorXd& weight_eta_m,
+               const Eigen::VectorXd& weight_zeta_m,
+               const Eigen::VectorXd& weight_xi,
+               const Eigen::VectorXd& weight_eta,
+               const Eigen::VectorXd& weight_zeta,
+               const Eigen::VectorXd& h_x12,
+               const Eigen::VectorXd& h_y12,
+               const Eigen::VectorXd& h_z12,
+               const Eigen::MatrixXi& element_connectivity) {
+        if (is_setup) {
+            std::cerr << "GPU_ANCF3443_Data is already set up." << std::endl;
+            return;
+        }
 
-    double mu     = E / (2 * (1 + nu));
-    double lambda = (E * nu) / ((1 + nu) * (1 - 2 * nu));
-    HANDLE_ERROR(cudaMemcpy(d_mu, &mu, sizeof(double), cudaMemcpyHostToDevice));
-    HANDLE_ERROR(
-        cudaMemcpy(d_lambda, &lambda, sizeof(double), cudaMemcpyHostToDevice));
+        if (length.size() != n_beam || width.size() != n_beam || height.size() != n_beam) {
+            std::cerr << "GPU_ANCF3443_Data::Setup: length/width/height must have "
+                         "size n_beam."
+                      << std::endl;
+            return;
+        }
 
-    SetSVK();
-  }
+        Eigen::VectorXd h_B_inv_flat;
+        try {
+            ANCFCPUUtils::ANCF3443_B12_matrix_flat_per_element(length, width, height, h_B_inv_flat,
+                                                               Quadrature::N_SHAPE_3443);
+        } catch (const std::exception& e) {
+            std::cerr << "GPU_ANCF3443_Data::Setup: failed to build per-element B_inv: " << e.what() << std::endl;
+            return;
+        }
+        const int n_binv = static_cast<int>(h_B_inv_flat.size());
 
-  /**
-   * Set compressible Mooney-Rivlin parameters.
-   * mu10, mu01: isochoric Mooney-Rivlin coefficients
-   * kappa: volumetric penalty (bulk-modulus-like) coefficient
-   */
-  void SetMooneyRivlin(double mu10, double mu01, double kappa) {
-    if (!is_setup) {
-      std::cerr << "GPU_ANCF3443_Data must be set up before setting material."
-                << std::endl;
-      return;
+        HANDLE_ERROR(cudaMemcpy(d_B_inv, h_B_inv_flat.data(), n_binv * sizeof(double), cudaMemcpyHostToDevice));
+
+        HANDLE_ERROR(
+            cudaMemcpy(d_gauss_xi_m, gauss_xi_m.data(), Quadrature::N_QP_7 * sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(
+            cudaMemcpy(d_gauss_eta_m, gauss_eta_m.data(), Quadrature::N_QP_7 * sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_gauss_zeta_m, gauss_zeta_m.data(), Quadrature::N_QP_3 * sizeof(double),
+                                cudaMemcpyHostToDevice));
+        HANDLE_ERROR(
+            cudaMemcpy(d_gauss_xi, gauss_xi.data(), Quadrature::N_QP_4 * sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(
+            cudaMemcpy(d_gauss_eta, gauss_eta.data(), Quadrature::N_QP_4 * sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(
+            cudaMemcpy(d_gauss_zeta, gauss_zeta.data(), Quadrature::N_QP_3 * sizeof(double), cudaMemcpyHostToDevice));
+
+        HANDLE_ERROR(
+            cudaMemcpy(d_weight_xi_m, weight_xi_m.data(), Quadrature::N_QP_7 * sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_weight_eta_m, weight_eta_m.data(), Quadrature::N_QP_7 * sizeof(double),
+                                cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_weight_zeta_m, weight_zeta_m.data(), Quadrature::N_QP_3 * sizeof(double),
+                                cudaMemcpyHostToDevice));
+        HANDLE_ERROR(
+            cudaMemcpy(d_weight_xi, weight_xi.data(), Quadrature::N_QP_4 * sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(
+            cudaMemcpy(d_weight_eta, weight_eta.data(), Quadrature::N_QP_4 * sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(
+            cudaMemcpy(d_weight_zeta, weight_zeta.data(), Quadrature::N_QP_3 * sizeof(double), cudaMemcpyHostToDevice));
+
+        HANDLE_ERROR(cudaMemcpy(d_x12_jac, h_x12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_y12_jac, h_y12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_z12_jac, h_z12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_x12, h_x12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_y12, h_y12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_z12, h_z12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
+
+        HANDLE_ERROR(cudaMemcpy(d_element_connectivity, element_connectivity.data(), n_beam * 4 * sizeof(int),
+                                cudaMemcpyHostToDevice));
+
+        cudaMemset(d_f_int, 0, n_coef * 3 * sizeof(double));
+
+        cudaMemset(d_F, 0, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(double));
+        cudaMemset(d_P, 0, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(double));
+        // initialize viscous buffers to zero
+        cudaMemset(d_Fdot, 0, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(double));
+        cudaMemset(d_P_vis, 0, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(double));
+
+        HANDLE_ERROR(cudaMemcpy(d_H, height.data(), n_beam * sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_W, width.data(), n_beam * sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_L, length.data(), n_beam * sizeof(double), cudaMemcpyHostToDevice));
+
+        double rho0 = 0.0;
+        double nu = 0.0;
+        double E = 0.0;
+        double mu = E / (2 * (1 + nu));                        // Shear modulus μ
+        double lambda = (E * nu) / ((1 + nu) * (1 - 2 * nu));  // Lamé’s first parameter λ
+        double eta_damp = 0.0;
+        double lambda_damp = 0.0;
+        int material_model = MATERIAL_MODEL_SVK;
+        double mu10 = 0.0;
+        double mu01 = 0.0;
+        double kappa = 0.0;
+
+        HANDLE_ERROR(cudaMemcpy(d_rho0, &rho0, sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_nu, &nu, sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_E, &E, sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_mu, &mu, sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_lambda, &lambda, sizeof(double), cudaMemcpyHostToDevice));
+        // copy damping scalars to device (single double each)
+        HANDLE_ERROR(cudaMemcpy(d_eta_damp, &eta_damp, sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_lambda_damp, &lambda_damp, sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_material_model, &material_model, sizeof(int), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_mu10, &mu10, sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_mu01, &mu01, sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_kappa, &kappa, sizeof(double), cudaMemcpyHostToDevice));
+
+        HANDLE_ERROR(cudaMemcpy(d_data, this, sizeof(GPU_ANCF3443_Data), cudaMemcpyHostToDevice));
+
+        is_setup = true;
+        is_reference_precomputed = false;
     }
 
-    int material_model = MATERIAL_MODEL_MOONEY_RIVLIN;
-    HANDLE_ERROR(cudaMemcpy(d_material_model, &material_model, sizeof(int),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(
-        cudaMemcpy(d_mu10, &mu10, sizeof(double), cudaMemcpyHostToDevice));
-    HANDLE_ERROR(
-        cudaMemcpy(d_mu01, &mu01, sizeof(double), cudaMemcpyHostToDevice));
-    HANDLE_ERROR(
-        cudaMemcpy(d_kappa, &kappa, sizeof(double), cudaMemcpyHostToDevice));
-  }
-
-  void SetExternalForce(const Eigen::VectorXd &f_ext) {
-    if (f_ext.size() != n_coef * 3) {
-      std::cerr << "External force vector size mismatch." << std::endl;
-      return;
-    }
-    cudaMemset(d_f_ext, 0, n_coef * 3 * sizeof(double));
-    HANDLE_ERROR(cudaMemcpy(d_f_ext, f_ext.data(), n_coef * 3 * sizeof(double),
-                            cudaMemcpyHostToDevice));
-  }
-
-  void SetNodalFixed(const Eigen::VectorXi &fixed_nodes) {
-    if (is_constraints_setup) {
-      std::cerr << "GPU_ANCF3443_Data CONSTRAINT is already set up."
-                << std::endl;
-      return;
-    }
-
-    n_constraint    = fixed_nodes.size() * 3;
-    constraint_mode = kConstraintFixedCoefficients;
-
-    HANDLE_ERROR(cudaMalloc(&d_constraint, n_constraint * sizeof(double)));
-    HANDLE_ERROR(cudaMalloc(&d_fixed_nodes, fixed_nodes.size() * sizeof(int)));
-
-    HANDLE_ERROR(cudaMemset(d_constraint, 0, n_constraint * sizeof(double)));
-    HANDLE_ERROR(cudaMemcpy(d_fixed_nodes, fixed_nodes.data(),
-                            fixed_nodes.size() * sizeof(int),
-                            cudaMemcpyHostToDevice));
-
-    is_constraints_setup = true;
-    if (d_data) {
-      HANDLE_ERROR(cudaMemcpy(d_data, this, sizeof(GPU_ANCF3443_Data),
-                              cudaMemcpyHostToDevice));
-    }
-  }
-
-  // General linear constraints:
-  //   c = J * x - rhs
-  // where x is the flattened coefficient vector in solver ordering
-  // (coef_index major, then xyz component), J is CSR (rows = constraints,
-  // cols = n_coef*3), and rhs is per-row target.
-  //
-  // This uploads both J (CSR) and J^T (CSR).
-  void SetLinearConstraintsCSR(const std::vector<int> &j_offsets,
-                               const std::vector<int> &j_columns,
-                               const std::vector<double> &j_values,
-                               const Eigen::VectorXd &rhs) {
-    if (is_constraints_setup) {
-      std::cerr << "GPU_ANCF3443_Data CONSTRAINT is already set up."
-                << std::endl;
-      return;
-    }
-    if (j_offsets.empty() || j_offsets.front() != 0) {
-      std::cerr << "SetLinearConstraintsCSR: invalid offsets." << std::endl;
-      return;
-    }
-    if (static_cast<int>(rhs.size()) + 1 !=
-        static_cast<int>(j_offsets.size())) {
-      std::cerr << "SetLinearConstraintsCSR: offsets/rhs size mismatch."
-                << std::endl;
-      return;
-    }
-    if (j_columns.size() != j_values.size()) {
-      std::cerr << "SetLinearConstraintsCSR: columns/values size mismatch."
-                << std::endl;
-      return;
+    void Setup(double length,
+               double width,
+               double height,
+               const Eigen::VectorXd& gauss_xi_m,
+               const Eigen::VectorXd& gauss_eta_m,
+               const Eigen::VectorXd& gauss_zeta_m,
+               const Eigen::VectorXd& gauss_xi,
+               const Eigen::VectorXd& gauss_eta,
+               const Eigen::VectorXd& gauss_zeta,
+               const Eigen::VectorXd& weight_xi_m,
+               const Eigen::VectorXd& weight_eta_m,
+               const Eigen::VectorXd& weight_zeta_m,
+               const Eigen::VectorXd& weight_xi,
+               const Eigen::VectorXd& weight_eta,
+               const Eigen::VectorXd& weight_zeta,
+               const Eigen::VectorXd& h_x12,
+               const Eigen::VectorXd& h_y12,
+               const Eigen::VectorXd& h_z12,
+               const Eigen::MatrixXi& element_connectivity) {
+        Eigen::VectorXd lengths = Eigen::VectorXd::Constant(n_beam, length);
+        Eigen::VectorXd widths = Eigen::VectorXd::Constant(n_beam, width);
+        Eigen::VectorXd heights = Eigen::VectorXd::Constant(n_beam, height);
+        Setup(lengths, widths, heights, gauss_xi_m, gauss_eta_m, gauss_zeta_m, gauss_xi, gauss_eta, gauss_zeta,
+              weight_xi_m, weight_eta_m, weight_zeta_m, weight_xi, weight_eta, weight_zeta, h_x12, h_y12, h_z12,
+              element_connectivity);
     }
 
-    const int nnz = static_cast<int>(j_columns.size());
-    if (j_offsets.back() != nnz) {
-      std::cerr << "SetLinearConstraintsCSR: offsets.back != nnz." << std::endl;
-      return;
+    /**
+     * Set reference density (used for mass/inertial terms).
+     */
+    void SetDensity(double rho0) {
+        if (!is_setup) {
+            std::cerr << "GPU_ANCF3443_Data must be set up before setting density." << std::endl;
+            return;
+        }
+        HANDLE_ERROR(cudaMemcpy(d_rho0, &rho0, sizeof(double), cudaMemcpyHostToDevice));
     }
 
-    const int n_dofs = n_coef * 3;
-    for (int c : j_columns) {
-      if (c < 0 || c >= n_dofs) {
-        std::cerr << "SetLinearConstraintsCSR: column out of range."
-                  << std::endl;
-        return;
-      }
+    /**
+     * Set Kelvin-Voigt damping parameters.
+     * eta_damp: shear-like damping coefficient
+     * lambda_damp: volumetric-like damping coefficient
+     */
+    void SetDamping(double eta_damp, double lambda_damp) {
+        if (!is_setup) {
+            std::cerr << "GPU_ANCF3443_Data must be set up before setting damping." << std::endl;
+            return;
+        }
+        HANDLE_ERROR(cudaMemcpy(d_eta_damp, &eta_damp, sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_lambda_damp, &lambda_damp, sizeof(double), cudaMemcpyHostToDevice));
     }
 
-    d_fixed_nodes   = nullptr;
-    n_constraint    = static_cast<int>(rhs.size());
-    constraint_mode = kConstraintLinearCSR;
+    /**
+     * Select Saint Venant-Kirchhoff (SVK) material model using current E/nu.
+     */
+    void SetSVK() {
+        if (!is_setup) {
+            std::cerr << "GPU_ANCF3443_Data must be set up before setting material." << std::endl;
+            return;
+        }
 
-    HANDLE_ERROR(cudaMalloc(&d_constraint, n_constraint * sizeof(double)));
-    HANDLE_ERROR(cudaMemset(d_constraint, 0, n_constraint * sizeof(double)));
-
-    HANDLE_ERROR(cudaMalloc(&d_constraint_rhs, n_constraint * sizeof(double)));
-    HANDLE_ERROR(cudaMemcpy(d_constraint_rhs, rhs.data(),
-                            n_constraint * sizeof(double),
-                            cudaMemcpyHostToDevice));
-
-    // J (CSR): rows=constraints, cols=dofs.
-    HANDLE_ERROR(
-        cudaMalloc((void **)&d_j_csr_offsets,
-                   static_cast<size_t>(n_constraint + 1) * sizeof(int)));
-    HANDLE_ERROR(cudaMalloc((void **)&d_j_csr_columns,
-                            static_cast<size_t>(nnz) * sizeof(int)));
-    HANDLE_ERROR(cudaMalloc((void **)&d_j_csr_values,
-                            static_cast<size_t>(nnz) * sizeof(double)));
-    HANDLE_ERROR(cudaMalloc((void **)&d_j_nnz, sizeof(int)));
-
-    HANDLE_ERROR(cudaMemcpy(d_j_csr_offsets, j_offsets.data(),
-                            static_cast<size_t>(n_constraint + 1) * sizeof(int),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_j_csr_columns, j_columns.data(),
-                            static_cast<size_t>(nnz) * sizeof(int),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_j_csr_values, j_values.data(),
-                            static_cast<size_t>(nnz) * sizeof(double),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(
-        cudaMemcpy(d_j_nnz, &nnz, sizeof(int), cudaMemcpyHostToDevice));
-    is_j_csr_setup = true;
-
-    // Build J^T (CSR) on host: rows=dofs, cols=constraints.
-    std::vector<int> jt_offsets(static_cast<size_t>(n_dofs + 1), 0);
-    std::vector<int> jt_columns(static_cast<size_t>(nnz), 0);
-    std::vector<double> jt_values(static_cast<size_t>(nnz), 0.0);
-
-    std::vector<int> counts(static_cast<size_t>(n_dofs), 0);
-    for (int idx = 0; idx < nnz; ++idx) {
-      counts[static_cast<size_t>(j_columns[static_cast<size_t>(idx)])] += 1;
-    }
-    int running = 0;
-    for (int i = 0; i < n_dofs; ++i) {
-      jt_offsets[static_cast<size_t>(i)] = running;
-      running += counts[static_cast<size_t>(i)];
-    }
-    jt_offsets[static_cast<size_t>(n_dofs)] = nnz;
-
-    std::vector<int> positions = jt_offsets;
-    for (int row = 0; row < n_constraint; ++row) {
-      const int start = j_offsets[static_cast<size_t>(row)];
-      const int end   = j_offsets[static_cast<size_t>(row + 1)];
-      for (int idx = start; idx < end; ++idx) {
-        const int col = j_columns[static_cast<size_t>(idx)];
-        const int out = positions[static_cast<size_t>(col)]++;
-        jt_columns[static_cast<size_t>(out)] = row;
-        jt_values[static_cast<size_t>(out)] =
-            j_values[static_cast<size_t>(idx)];
-      }
+        int material_model = MATERIAL_MODEL_SVK;
+        double mu10 = 0.0;
+        double mu01 = 0.0;
+        double kappa = 0.0;
+        HANDLE_ERROR(cudaMemcpy(d_material_model, &material_model, sizeof(int), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_mu10, &mu10, sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_mu01, &mu01, sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_kappa, &kappa, sizeof(double), cudaMemcpyHostToDevice));
     }
 
-    HANDLE_ERROR(cudaMalloc((void **)&d_cj_csr_offsets,
-                            static_cast<size_t>(n_dofs + 1) * sizeof(int)));
-    HANDLE_ERROR(cudaMalloc((void **)&d_cj_csr_columns,
-                            static_cast<size_t>(nnz) * sizeof(int)));
-    HANDLE_ERROR(cudaMalloc((void **)&d_cj_csr_values,
-                            static_cast<size_t>(nnz) * sizeof(double)));
-    HANDLE_ERROR(cudaMalloc((void **)&d_cj_nnz, sizeof(int)));
+    void SetSVK(double E, double nu) {
+        if (!is_setup) {
+            std::cerr << "GPU_ANCF3443_Data must be set up before setting material." << std::endl;
+            return;
+        }
 
-    HANDLE_ERROR(cudaMemcpy(d_cj_csr_offsets, jt_offsets.data(),
-                            static_cast<size_t>(n_dofs + 1) * sizeof(int),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_cj_csr_columns, jt_columns.data(),
-                            static_cast<size_t>(nnz) * sizeof(int),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(d_cj_csr_values, jt_values.data(),
-                            static_cast<size_t>(nnz) * sizeof(double),
-                            cudaMemcpyHostToDevice));
-    HANDLE_ERROR(
-        cudaMemcpy(d_cj_nnz, &nnz, sizeof(int), cudaMemcpyHostToDevice));
-    is_cj_csr_setup = true;
+        HANDLE_ERROR(cudaMemcpy(d_nu, &nu, sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_E, &E, sizeof(double), cudaMemcpyHostToDevice));
 
-    is_constraints_setup = true;
-    if (d_data) {
-      HANDLE_ERROR(cudaMemcpy(d_data, this, sizeof(GPU_ANCF3443_Data),
-                              cudaMemcpyHostToDevice));
-    }
-  }
+        double mu = E / (2 * (1 + nu));
+        double lambda = (E * nu) / ((1 + nu) * (1 - 2 * nu));
+        HANDLE_ERROR(cudaMemcpy(d_mu, &mu, sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_lambda, &lambda, sizeof(double), cudaMemcpyHostToDevice));
 
-  // For kConstraintLinearCSR, update only RHS values (keeps J/J^T and sparsity
-  // fixed).
-  void UpdateLinearConstraintRHS(const Eigen::VectorXd &rhs) {
-    if (!is_constraints_setup || n_constraint == 0) {
-      std::cerr << "UpdateLinearConstraintRHS: constraints not set up."
-                << std::endl;
-      return;
-    }
-    if (constraint_mode != kConstraintLinearCSR) {
-      std::cerr << "UpdateLinearConstraintRHS: constraint mode is not CSR."
-                << std::endl;
-      return;
-    }
-    if (static_cast<int>(rhs.size()) != n_constraint) {
-      std::cerr << "UpdateLinearConstraintRHS: size mismatch." << std::endl;
-      return;
-    }
-    HANDLE_ERROR(cudaMemcpy(d_constraint_rhs, rhs.data(),
-                            static_cast<size_t>(n_constraint) * sizeof(double),
-                            cudaMemcpyHostToDevice));
-  }
-
-  // Free memory
-  void Destroy() {
-    HANDLE_ERROR(cudaFree(d_B_inv));
-    HANDLE_ERROR(cudaFree(d_grad_N_ref));
-    HANDLE_ERROR(cudaFree(d_detJ_ref));
-
-    HANDLE_ERROR(cudaFree(d_gauss_xi_m));
-    HANDLE_ERROR(cudaFree(d_gauss_eta_m));
-    HANDLE_ERROR(cudaFree(d_gauss_zeta_m));
-    HANDLE_ERROR(cudaFree(d_gauss_xi));
-    HANDLE_ERROR(cudaFree(d_gauss_eta));
-    HANDLE_ERROR(cudaFree(d_gauss_zeta));
-    HANDLE_ERROR(cudaFree(d_weight_xi_m));
-    HANDLE_ERROR(cudaFree(d_weight_eta_m));
-    HANDLE_ERROR(cudaFree(d_weight_zeta_m));
-    HANDLE_ERROR(cudaFree(d_weight_xi));
-    HANDLE_ERROR(cudaFree(d_weight_eta));
-    HANDLE_ERROR(cudaFree(d_weight_zeta));
-
-    HANDLE_ERROR(cudaFree(d_x12_jac));
-    HANDLE_ERROR(cudaFree(d_y12_jac));
-    HANDLE_ERROR(cudaFree(d_z12_jac));
-    HANDLE_ERROR(cudaFree(d_x12));
-    HANDLE_ERROR(cudaFree(d_y12));
-    HANDLE_ERROR(cudaFree(d_z12));
-
-    HANDLE_ERROR(cudaFree(d_element_connectivity));
-
-    if (is_csr_setup) {
-      HANDLE_ERROR(cudaFree(d_csr_offsets));
-      HANDLE_ERROR(cudaFree(d_csr_columns));
-      HANDLE_ERROR(cudaFree(d_csr_values));
-      HANDLE_ERROR(cudaFree(d_nnz));
+        SetSVK();
     }
 
-    if (is_cj_csr_setup) {
-      HANDLE_ERROR(cudaFree(d_cj_csr_offsets));
-      HANDLE_ERROR(cudaFree(d_cj_csr_columns));
-      HANDLE_ERROR(cudaFree(d_cj_csr_values));
-      HANDLE_ERROR(cudaFree(d_cj_nnz));
-      is_cj_csr_setup = false;
+    /**
+     * Set compressible Mooney-Rivlin parameters.
+     * mu10, mu01: isochoric Mooney-Rivlin coefficients
+     * kappa: volumetric penalty (bulk-modulus-like) coefficient
+     */
+    void SetMooneyRivlin(double mu10, double mu01, double kappa) {
+        if (!is_setup) {
+            std::cerr << "GPU_ANCF3443_Data must be set up before setting material." << std::endl;
+            return;
+        }
+
+        int material_model = MATERIAL_MODEL_MOONEY_RIVLIN;
+        HANDLE_ERROR(cudaMemcpy(d_material_model, &material_model, sizeof(int), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_mu10, &mu10, sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_mu01, &mu01, sizeof(double), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_kappa, &kappa, sizeof(double), cudaMemcpyHostToDevice));
     }
 
-    if (is_j_csr_setup) {
-      HANDLE_ERROR(cudaFree(d_j_csr_offsets));
-      HANDLE_ERROR(cudaFree(d_j_csr_columns));
-      HANDLE_ERROR(cudaFree(d_j_csr_values));
-      HANDLE_ERROR(cudaFree(d_j_nnz));
-      is_j_csr_setup = false;
+    void SetExternalForce(const Eigen::VectorXd& f_ext) {
+        if (f_ext.size() != n_coef * 3) {
+            std::cerr << "External force vector size mismatch." << std::endl;
+            return;
+        }
+        cudaMemset(d_f_ext, 0, n_coef * 3 * sizeof(double));
+        HANDLE_ERROR(cudaMemcpy(d_f_ext, f_ext.data(), n_coef * 3 * sizeof(double), cudaMemcpyHostToDevice));
     }
 
-    HANDLE_ERROR(cudaFree(d_F));
-    HANDLE_ERROR(cudaFree(d_P));
-    HANDLE_ERROR(cudaFree(d_Fdot));
-    HANDLE_ERROR(cudaFree(d_P_vis));
-    HANDLE_ERROR(cudaFree(d_f_int));
-    HANDLE_ERROR(cudaFree(d_f_ext));
-    HANDLE_ERROR(cudaFree(d_eta_damp));
-    HANDLE_ERROR(cudaFree(d_lambda_damp));
+    void SetNodalFixed(const Eigen::VectorXi& fixed_nodes) {
+        if (is_constraints_setup) {
+            std::cerr << "GPU_ANCF3443_Data CONSTRAINT is already set up." << std::endl;
+            return;
+        }
 
-    HANDLE_ERROR(cudaFree(d_H));
-    HANDLE_ERROR(cudaFree(d_W));
-    HANDLE_ERROR(cudaFree(d_L));
+        n_constraint = fixed_nodes.size() * 3;
+        constraint_mode = kConstraintFixedCoefficients;
 
-    HANDLE_ERROR(cudaFree(d_rho0));
-    HANDLE_ERROR(cudaFree(d_nu));
-    HANDLE_ERROR(cudaFree(d_E));
-    HANDLE_ERROR(cudaFree(d_lambda));
-    HANDLE_ERROR(cudaFree(d_mu));
-    HANDLE_ERROR(cudaFree(d_material_model));
-    HANDLE_ERROR(cudaFree(d_mu10));
-    HANDLE_ERROR(cudaFree(d_mu01));
-    HANDLE_ERROR(cudaFree(d_kappa));
+        HANDLE_ERROR(cudaMalloc(&d_constraint, n_constraint * sizeof(double)));
+        HANDLE_ERROR(cudaMalloc(&d_fixed_nodes, fixed_nodes.size() * sizeof(int)));
 
-    HANDLE_ERROR(cudaFree(d_data));
+        HANDLE_ERROR(cudaMemset(d_constraint, 0, n_constraint * sizeof(double)));
+        HANDLE_ERROR(
+            cudaMemcpy(d_fixed_nodes, fixed_nodes.data(), fixed_nodes.size() * sizeof(int), cudaMemcpyHostToDevice));
 
-    if (is_constraints_setup) {
-      HANDLE_ERROR(cudaFree(d_constraint));
-      if (d_fixed_nodes) {
-        HANDLE_ERROR(cudaFree(d_fixed_nodes));
+        is_constraints_setup = true;
+        if (d_data) {
+            HANDLE_ERROR(cudaMemcpy(d_data, this, sizeof(GPU_ANCF3443_Data), cudaMemcpyHostToDevice));
+        }
+    }
+
+    // General linear constraints:
+    //   c = J * x - rhs
+    // where x is the flattened coefficient vector in solver ordering
+    // (coef_index major, then xyz component), J is CSR (rows = constraints,
+    // cols = n_coef*3), and rhs is per-row target.
+    //
+    // This uploads both J (CSR) and J^T (CSR).
+    void SetLinearConstraintsCSR(const std::vector<int>& j_offsets,
+                                 const std::vector<int>& j_columns,
+                                 const std::vector<double>& j_values,
+                                 const Eigen::VectorXd& rhs) {
+        if (is_constraints_setup) {
+            std::cerr << "GPU_ANCF3443_Data CONSTRAINT is already set up." << std::endl;
+            return;
+        }
+        if (j_offsets.empty() || j_offsets.front() != 0) {
+            std::cerr << "SetLinearConstraintsCSR: invalid offsets." << std::endl;
+            return;
+        }
+        if (static_cast<int>(rhs.size()) + 1 != static_cast<int>(j_offsets.size())) {
+            std::cerr << "SetLinearConstraintsCSR: offsets/rhs size mismatch." << std::endl;
+            return;
+        }
+        if (j_columns.size() != j_values.size()) {
+            std::cerr << "SetLinearConstraintsCSR: columns/values size mismatch." << std::endl;
+            return;
+        }
+
+        const int nnz = static_cast<int>(j_columns.size());
+        if (j_offsets.back() != nnz) {
+            std::cerr << "SetLinearConstraintsCSR: offsets.back != nnz." << std::endl;
+            return;
+        }
+
+        const int n_dofs = n_coef * 3;
+        for (int c : j_columns) {
+            if (c < 0 || c >= n_dofs) {
+                std::cerr << "SetLinearConstraintsCSR: column out of range." << std::endl;
+                return;
+            }
+        }
+
         d_fixed_nodes = nullptr;
-      }
-      if (d_constraint_rhs) {
-        HANDLE_ERROR(cudaFree(d_constraint_rhs));
-        d_constraint_rhs = nullptr;
-      }
+        n_constraint = static_cast<int>(rhs.size());
+        constraint_mode = kConstraintLinearCSR;
+
+        HANDLE_ERROR(cudaMalloc(&d_constraint, n_constraint * sizeof(double)));
+        HANDLE_ERROR(cudaMemset(d_constraint, 0, n_constraint * sizeof(double)));
+
+        HANDLE_ERROR(cudaMalloc(&d_constraint_rhs, n_constraint * sizeof(double)));
+        HANDLE_ERROR(cudaMemcpy(d_constraint_rhs, rhs.data(), n_constraint * sizeof(double), cudaMemcpyHostToDevice));
+
+        // J (CSR): rows=constraints, cols=dofs.
+        HANDLE_ERROR(cudaMalloc((void**)&d_j_csr_offsets, static_cast<size_t>(n_constraint + 1) * sizeof(int)));
+        HANDLE_ERROR(cudaMalloc((void**)&d_j_csr_columns, static_cast<size_t>(nnz) * sizeof(int)));
+        HANDLE_ERROR(cudaMalloc((void**)&d_j_csr_values, static_cast<size_t>(nnz) * sizeof(double)));
+        HANDLE_ERROR(cudaMalloc((void**)&d_j_nnz, sizeof(int)));
+
+        HANDLE_ERROR(cudaMemcpy(d_j_csr_offsets, j_offsets.data(), static_cast<size_t>(n_constraint + 1) * sizeof(int),
+                                cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_j_csr_columns, j_columns.data(), static_cast<size_t>(nnz) * sizeof(int),
+                                cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_j_csr_values, j_values.data(), static_cast<size_t>(nnz) * sizeof(double),
+                                cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_j_nnz, &nnz, sizeof(int), cudaMemcpyHostToDevice));
+        is_j_csr_setup = true;
+
+        // Build J^T (CSR) on host: rows=dofs, cols=constraints.
+        std::vector<int> jt_offsets(static_cast<size_t>(n_dofs + 1), 0);
+        std::vector<int> jt_columns(static_cast<size_t>(nnz), 0);
+        std::vector<double> jt_values(static_cast<size_t>(nnz), 0.0);
+
+        std::vector<int> counts(static_cast<size_t>(n_dofs), 0);
+        for (int idx = 0; idx < nnz; ++idx) {
+            counts[static_cast<size_t>(j_columns[static_cast<size_t>(idx)])] += 1;
+        }
+        int running = 0;
+        for (int i = 0; i < n_dofs; ++i) {
+            jt_offsets[static_cast<size_t>(i)] = running;
+            running += counts[static_cast<size_t>(i)];
+        }
+        jt_offsets[static_cast<size_t>(n_dofs)] = nnz;
+
+        std::vector<int> positions = jt_offsets;
+        for (int row = 0; row < n_constraint; ++row) {
+            const int start = j_offsets[static_cast<size_t>(row)];
+            const int end = j_offsets[static_cast<size_t>(row + 1)];
+            for (int idx = start; idx < end; ++idx) {
+                const int col = j_columns[static_cast<size_t>(idx)];
+                const int out = positions[static_cast<size_t>(col)]++;
+                jt_columns[static_cast<size_t>(out)] = row;
+                jt_values[static_cast<size_t>(out)] = j_values[static_cast<size_t>(idx)];
+            }
+        }
+
+        HANDLE_ERROR(cudaMalloc((void**)&d_cj_csr_offsets, static_cast<size_t>(n_dofs + 1) * sizeof(int)));
+        HANDLE_ERROR(cudaMalloc((void**)&d_cj_csr_columns, static_cast<size_t>(nnz) * sizeof(int)));
+        HANDLE_ERROR(cudaMalloc((void**)&d_cj_csr_values, static_cast<size_t>(nnz) * sizeof(double)));
+        HANDLE_ERROR(cudaMalloc((void**)&d_cj_nnz, sizeof(int)));
+
+        HANDLE_ERROR(cudaMemcpy(d_cj_csr_offsets, jt_offsets.data(), static_cast<size_t>(n_dofs + 1) * sizeof(int),
+                                cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_cj_csr_columns, jt_columns.data(), static_cast<size_t>(nnz) * sizeof(int),
+                                cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_cj_csr_values, jt_values.data(), static_cast<size_t>(nnz) * sizeof(double),
+                                cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(d_cj_nnz, &nnz, sizeof(int), cudaMemcpyHostToDevice));
+        is_cj_csr_setup = true;
+
+        is_constraints_setup = true;
+        if (d_data) {
+            HANDLE_ERROR(cudaMemcpy(d_data, this, sizeof(GPU_ANCF3443_Data), cudaMemcpyHostToDevice));
+        }
     }
-  }
 
-  void CalcDsDuPre();
+    // For kConstraintLinearCSR, update only RHS values (keeps J/J^T and sparsity
+    // fixed).
+    void UpdateLinearConstraintRHS(const Eigen::VectorXd& rhs) {
+        if (!is_constraints_setup || n_constraint == 0) {
+            std::cerr << "UpdateLinearConstraintRHS: constraints not set up." << std::endl;
+            return;
+        }
+        if (constraint_mode != kConstraintLinearCSR) {
+            std::cerr << "UpdateLinearConstraintRHS: constraint mode is not CSR." << std::endl;
+            return;
+        }
+        if (static_cast<int>(rhs.size()) != n_constraint) {
+            std::cerr << "UpdateLinearConstraintRHS: size mismatch." << std::endl;
+            return;
+        }
+        HANDLE_ERROR(cudaMemcpy(d_constraint_rhs, rhs.data(), static_cast<size_t>(n_constraint) * sizeof(double),
+                                cudaMemcpyHostToDevice));
+    }
 
-  void CalcMassMatrix();
+    // Free memory
+    void Destroy() {
+        HANDLE_ERROR(cudaFree(d_B_inv));
+        HANDLE_ERROR(cudaFree(d_grad_N_ref));
+        HANDLE_ERROR(cudaFree(d_detJ_ref));
 
-  void BuildMassCSRPattern();
+        HANDLE_ERROR(cudaFree(d_gauss_xi_m));
+        HANDLE_ERROR(cudaFree(d_gauss_eta_m));
+        HANDLE_ERROR(cudaFree(d_gauss_zeta_m));
+        HANDLE_ERROR(cudaFree(d_gauss_xi));
+        HANDLE_ERROR(cudaFree(d_gauss_eta));
+        HANDLE_ERROR(cudaFree(d_gauss_zeta));
+        HANDLE_ERROR(cudaFree(d_weight_xi_m));
+        HANDLE_ERROR(cudaFree(d_weight_eta_m));
+        HANDLE_ERROR(cudaFree(d_weight_zeta_m));
+        HANDLE_ERROR(cudaFree(d_weight_xi));
+        HANDLE_ERROR(cudaFree(d_weight_eta));
+        HANDLE_ERROR(cudaFree(d_weight_zeta));
 
-  void ConvertToCSR_ConstraintJacT();
+        HANDLE_ERROR(cudaFree(d_x12_jac));
+        HANDLE_ERROR(cudaFree(d_y12_jac));
+        HANDLE_ERROR(cudaFree(d_z12_jac));
+        HANDLE_ERROR(cudaFree(d_x12));
+        HANDLE_ERROR(cudaFree(d_y12));
+        HANDLE_ERROR(cudaFree(d_z12));
 
-  void BuildConstraintJacobianTransposeCSR() {
-    ConvertToCSR_ConstraintJacT();
-  }
+        HANDLE_ERROR(cudaFree(d_element_connectivity));
 
-  void ConvertToCSR_ConstraintJac();
+        if (is_csr_setup) {
+            HANDLE_ERROR(cudaFree(d_csr_offsets));
+            HANDLE_ERROR(cudaFree(d_csr_columns));
+            HANDLE_ERROR(cudaFree(d_csr_values));
+            HANDLE_ERROR(cudaFree(d_nnz));
+        }
 
-  void BuildConstraintJacobianCSR() {
-    ConvertToCSR_ConstraintJac();
-  }
+        if (is_cj_csr_setup) {
+            HANDLE_ERROR(cudaFree(d_cj_csr_offsets));
+            HANDLE_ERROR(cudaFree(d_cj_csr_columns));
+            HANDLE_ERROR(cudaFree(d_cj_csr_values));
+            HANDLE_ERROR(cudaFree(d_cj_nnz));
+            is_cj_csr_setup = false;
+        }
 
-  void CalcP();
+        if (is_j_csr_setup) {
+            HANDLE_ERROR(cudaFree(d_j_csr_offsets));
+            HANDLE_ERROR(cudaFree(d_j_csr_columns));
+            HANDLE_ERROR(cudaFree(d_j_csr_values));
+            HANDLE_ERROR(cudaFree(d_j_nnz));
+            is_j_csr_setup = false;
+        }
 
-  void CalcInternalForce();
+        HANDLE_ERROR(cudaFree(d_F));
+        HANDLE_ERROR(cudaFree(d_P));
+        HANDLE_ERROR(cudaFree(d_Fdot));
+        HANDLE_ERROR(cudaFree(d_P_vis));
+        HANDLE_ERROR(cudaFree(d_f_int));
+        HANDLE_ERROR(cudaFree(d_f_ext));
+        HANDLE_ERROR(cudaFree(d_eta_damp));
+        HANDLE_ERROR(cudaFree(d_lambda_damp));
 
-  void CalcConstraintData() override;
+        HANDLE_ERROR(cudaFree(d_H));
+        HANDLE_ERROR(cudaFree(d_W));
+        HANDLE_ERROR(cudaFree(d_L));
 
-  void PrintDsDuPre();
+        HANDLE_ERROR(cudaFree(d_rho0));
+        HANDLE_ERROR(cudaFree(d_nu));
+        HANDLE_ERROR(cudaFree(d_E));
+        HANDLE_ERROR(cudaFree(d_lambda));
+        HANDLE_ERROR(cudaFree(d_mu));
+        HANDLE_ERROR(cudaFree(d_material_model));
+        HANDLE_ERROR(cudaFree(d_mu10));
+        HANDLE_ERROR(cudaFree(d_mu01));
+        HANDLE_ERROR(cudaFree(d_kappa));
 
-  void RetrieveConnectivityToCPU(Eigen::MatrixXi &connectivity);
+        HANDLE_ERROR(cudaFree(d_data));
 
-  void RetrieveDetJToCPU(std::vector<std::vector<double>> &detJ);
+        if (is_constraints_setup) {
+            HANDLE_ERROR(cudaFree(d_constraint));
+            if (d_fixed_nodes) {
+                HANDLE_ERROR(cudaFree(d_fixed_nodes));
+                d_fixed_nodes = nullptr;
+            }
+            if (d_constraint_rhs) {
+                HANDLE_ERROR(cudaFree(d_constraint_rhs));
+                d_constraint_rhs = nullptr;
+            }
+        }
+    }
 
-  void RetrieveMassCSRToCPU(std::vector<int> &offsets,
-                            std::vector<int> &columns,
-                            std::vector<double> &values);
+    void CalcDsDuPre();
 
-  void RetrieveDeformationGradientToCPU(
-      std::vector<std::vector<Eigen::MatrixXd>> &deformation_gradient);
+    void CalcMassMatrix();
 
-  void RetrievePFromFToCPU(std::vector<std::vector<Eigen::MatrixXd>> &p_from_F);
+    void BuildMassCSRPattern();
 
-  void RetrieveInternalForceToCPU(Eigen::VectorXd &internal_force);
+    void ConvertToCSR_ConstraintJacT();
 
-  void RetrieveConstraintDataToCPU(Eigen::VectorXd &constraint);
+    void BuildConstraintJacobianTransposeCSR() {
+        ConvertToCSR_ConstraintJacT();
+    }
 
-  void RetrieveConstraintJacobianToCPU(Eigen::MatrixXd &constraint_jac);
+    void ConvertToCSR_ConstraintJac();
 
-  void RetrievePositionToCPU(Eigen::VectorXd &x12, Eigen::VectorXd &y12,
-                             Eigen::VectorXd &z12);
+    void BuildConstraintJacobianCSR() {
+        ConvertToCSR_ConstraintJac();
+    }
 
-  double *Get_Constraint_Ptr() {
-    return d_constraint;
-  }
+    void CalcP();
 
-  bool Get_Is_Constraint_Setup() {
-    return is_constraints_setup;
-  }
+    void CalcInternalForce();
 
-  int GetConstraintMode() const {
-    return constraint_mode;
-  }
+    void CalcConstraintData() override;
 
-  void RetrieveConstraintJacobianCSRToCPU(std::vector<int> &offsets,
-                                          std::vector<int> &columns,
-                                          std::vector<double> &values);
+    void PrintDsDuPre();
 
-  GPU_ANCF3443_Data *d_data;  // Storing GPU copy of SAPGPUData
+    void RetrieveConnectivityToCPU(Eigen::MatrixXi& connectivity);
 
-  int n_beam;   // number of elements
-  int n_nodes;  // number of nodes
-  int n_coef;   // number of coefficients (= 4 * n_nodes)
-  int n_constraint;
+    void RetrieveDetJToCPU(std::vector<std::vector<double>>& detJ);
 
- private:
-  double *d_B_inv;
-  double *d_grad_N_ref;  // (n_beam, N_QP, N_SHAPE, 3)
-  double *d_detJ_ref;    // (n_beam, N_QP)
-  double *d_gauss_xi_m, *d_gauss_eta_m, *d_gauss_zeta_m, *d_gauss_xi,
-      *d_gauss_eta, *d_gauss_zeta;
-  double *d_weight_xi_m, *d_weight_eta_m, *d_weight_zeta_m, *d_weight_xi,
-      *d_weight_eta, *d_weight_zeta;
+    void RetrieveMassCSRToCPU(std::vector<int>& offsets, std::vector<int>& columns, std::vector<double>& values);
 
-  double *d_x12_jac, *d_y12_jac, *d_z12_jac;
-  double *d_x12, *d_y12, *d_z12;
+    void RetrieveDeformationGradientToCPU(std::vector<std::vector<Eigen::MatrixXd>>& deformation_gradient);
 
-  int *d_element_connectivity;
-  int *d_csr_offsets, *d_csr_columns;
-  double *d_csr_values;
-  int *d_nnz;
+    void RetrievePFromFToCPU(std::vector<std::vector<Eigen::MatrixXd>>& p_from_F);
 
-  double *d_F, *d_P;
-  double *d_Fdot, *d_P_vis;
+    void RetrieveInternalForceToCPU(Eigen::VectorXd& internal_force);
 
-  // per-element damping parameters
-  double *d_eta_damp, *d_lambda_damp;
+    void RetrieveConstraintDataToCPU(Eigen::VectorXd& constraint);
 
-  double *d_H, *d_W, *d_L;
+    void RetrieveConstraintJacobianToCPU(Eigen::MatrixXd& constraint_jac);
 
-  double *d_rho0, *d_nu, *d_E, *d_lambda, *d_mu;
-  int *d_material_model;
-  double *d_mu10, *d_mu01, *d_kappa;
+    void RetrievePositionToCPU(Eigen::VectorXd& x12, Eigen::VectorXd& y12, Eigen::VectorXd& z12);
 
-  double *d_constraint;
-  double *d_constraint_rhs = nullptr;
-  int *d_fixed_nodes;
+    double* Get_Constraint_Ptr() {
+        return d_constraint;
+    }
 
-  // Constraint Jacobian J^T in CSR format
-  int *d_cj_csr_offsets, *d_cj_csr_columns;
-  double *d_cj_csr_values;
-  int *d_cj_nnz;
+    bool Get_Is_Constraint_Setup() {
+        return is_constraints_setup;
+    }
 
-  // Constraint Jacobian J in CSR format
-  int *d_j_csr_offsets, *d_j_csr_columns;
-  double *d_j_csr_values;
-  int *d_j_nnz;
+    int GetConstraintMode() const {
+        return constraint_mode;
+    }
 
-  // force related parameters
-  double *d_f_int, *d_f_ext;
+    void RetrieveConstraintJacobianCSRToCPU(std::vector<int>& offsets,
+                                            std::vector<int>& columns,
+                                            std::vector<double>& values);
 
-  bool is_setup                 = false;
-  bool is_constraints_setup     = false;
-  bool is_csr_setup             = false;
-  bool is_cj_csr_setup          = false;
-  bool is_j_csr_setup           = false;
-  bool is_reference_precomputed = false;
+    GPU_ANCF3443_Data* d_data;  // Storing GPU copy of SAPGPUData
 
-  int constraint_mode = kConstraintNone;
+    int n_beam;   // number of elements
+    int n_nodes;  // number of nodes
+    int n_coef;   // number of coefficients (= 4 * n_nodes)
+    int n_constraint;
+
+  private:
+    double* d_B_inv;
+    double* d_grad_N_ref;  // (n_beam, N_QP, N_SHAPE, 3)
+    double* d_detJ_ref;    // (n_beam, N_QP)
+    double *d_gauss_xi_m, *d_gauss_eta_m, *d_gauss_zeta_m, *d_gauss_xi, *d_gauss_eta, *d_gauss_zeta;
+    double *d_weight_xi_m, *d_weight_eta_m, *d_weight_zeta_m, *d_weight_xi, *d_weight_eta, *d_weight_zeta;
+
+    double *d_x12_jac, *d_y12_jac, *d_z12_jac;
+    double *d_x12, *d_y12, *d_z12;
+
+    int* d_element_connectivity;
+    int *d_csr_offsets, *d_csr_columns;
+    double* d_csr_values;
+    int* d_nnz;
+
+    double *d_F, *d_P;
+    double *d_Fdot, *d_P_vis;
+
+    // per-element damping parameters
+    double *d_eta_damp, *d_lambda_damp;
+
+    double *d_H, *d_W, *d_L;
+
+    double *d_rho0, *d_nu, *d_E, *d_lambda, *d_mu;
+    int* d_material_model;
+    double *d_mu10, *d_mu01, *d_kappa;
+
+    double* d_constraint;
+    double* d_constraint_rhs = nullptr;
+    int* d_fixed_nodes;
+
+    // Constraint Jacobian J^T in CSR format
+    int *d_cj_csr_offsets, *d_cj_csr_columns;
+    double* d_cj_csr_values;
+    int* d_cj_nnz;
+
+    // Constraint Jacobian J in CSR format
+    int *d_j_csr_offsets, *d_j_csr_columns;
+    double* d_j_csr_values;
+    int* d_j_nnz;
+
+    // force related parameters
+    double *d_f_int, *d_f_ext;
+
+    bool is_setup = false;
+    bool is_constraints_setup = false;
+    bool is_csr_setup = false;
+    bool is_cj_csr_setup = false;
+    bool is_j_csr_setup = false;
+    bool is_reference_precomputed = false;
+
+    int constraint_mode = kConstraintNone;
 };

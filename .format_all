@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# Directory to exclude (relative to repo root)
+EXCLUDE_DIR="./external"
+
+# Recursively find source files and apply clang-format with -i -style=file
+find . \( \
+    -path "$EXCLUDE_DIR" -prune \
+    \) -o \( \
+    -name "*.cpp" -o \
+    -name "*.c"   -o \
+    -name "*.h"   -o \
+    -name "*.hpp" -o \
+    -name "*.cu"  -o \
+    -name "*.cuh" \
+    \) -exec clang-format -i -style=file {} +
+
+echo "✔ All matching source files formatted (excluding $EXCLUDE_DIR) with clang-format -style=file"
