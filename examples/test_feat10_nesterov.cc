@@ -28,7 +28,7 @@ const double rho0 = 2700;  // Density
 
 int main() {
   // Initialize MoPhiEssentials logging
-  mophi::Logger::GetInstance().SetVerbosity(VERBOSITY_INFO);
+  mophi::Logger::GetInstance().SetVerbosity(mophi::VERBOSITY_INFO);
   
   // Read mesh data
   Eigen::MatrixXd nodes;
