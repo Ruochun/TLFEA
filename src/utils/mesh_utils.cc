@@ -114,7 +114,7 @@ void GridMeshGenerator::get_coordinates(Eigen::VectorXd& x, Eigen::VectorXd& y,
   std::vector<double> x_pattern = {
       1.0, 0.0, 0.0};  // [dx/du, dx/dv, dx/dw] for x-coordinate
   std::vector<double> y_pattern = {
-      0.0, 0.0, 1.0, 0.0};  // [y, dx/du, dx/dv, dx/dw] for y-coordinate
+      1.0, 0.0, 1.0, 0.0};  // [y, dx/du, dx/dv, dx/dw] for y-coordinate
   std::vector<double> z_pattern = {
       0.0, 0.0, 0.0, 1.0};  // [z, dx/du, dx/dv, dx/dw] for z-coordinate
 
@@ -122,12 +122,12 @@ void GridMeshGenerator::get_coordinates(Eigen::VectorXd& x, Eigen::VectorXd& y,
   for (const auto& node : nodes_) {
     int idx = 4 * node.id;
     x(idx)  = node.x;  // x position
-    y(idx)  = node.y;  // y position
-    z(idx)  = node.z;  // z position
     for (int j = 1; j < 4; j++) {
       x(idx + j) = x_pattern[j - 1];  // dx/du, dx/dv, dx/dw for x
-      y(idx + j) = y_pattern[j];      // dx/du, dx/dv, dx/dw for y
-      z(idx + j) = z_pattern[j];      // dx/du, dx/dv, dx/dw for z
+    }
+    for (int j = 0; j < 4; j++) {
+      y(idx + j) = y_pattern[j];  // y, dx/du, dx/dv, dx/dw for y
+      z(idx + j) = z_pattern[j];  // z, dx/du, dx/dv, dx/dw for z
     }
   }
 }
