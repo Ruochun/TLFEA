@@ -62,6 +62,16 @@ cmake -DEIGEN3_INCLUDE_DIR=/path/to/eigen3 ..
 make -j$(nproc)
 ```
 
+**Note**: If you add new source files or encounter linkage errors after pulling updates, delete the build directory and reconfigure:
+```bash
+cd ..
+rm -rf build
+mkdir build
+cd build
+cmake ..
+make -j$(nproc)
+```
+
 ## Running the Example
 
 After building, run the example from the build directory:

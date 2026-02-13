@@ -20,13 +20,14 @@ include_directories(
 )
 
 # CUDA compilation flags
-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -fPIC")
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -fPIC --expt-relaxed-constexpr")
 set(CMAKE_CUDA_ARCHITECTURES "60;70;75;80;86")
 
 # Collect source files
-file(GLOB ELEMENT_SOURCES src/elements/*.cu)
-file(GLOB SOLVER_SOURCES src/solvers/*.cu)
-file(GLOB UTILS_SOURCES src/utils/*.cc)
+# Note: CONFIGURE_DEPENDS ensures CMake rechecks when files are added/removed
+file(GLOB ELEMENT_SOURCES CONFIGURE_DEPENDS src/elements/*.cu)
+file(GLOB SOLVER_SOURCES CONFIGURE_DEPENDS src/solvers/*.cu)
+file(GLOB UTILS_SOURCES CONFIGURE_DEPENDS src/utils/*.cc)
 
 # Create a library with all FEA components
 add_library(tlfea_lib STATIC
