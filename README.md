@@ -19,10 +19,19 @@ Based on the [Total-Lagrangian-FEA](https://github.com/uwsbel/Total-Lagrangian-F
 - CUDA Toolkit 11.0 or higher
 - Eigen3 library
 - C++17 compatible compiler
+- MoPhiEssentials (included as submodule)
 
 ### Building
 
 ```bash
+# Clone the repository with submodules
+git clone --recursive https://github.com/Ruochun/TLFEA.git
+cd TLFEA
+
+# Or if already cloned, initialize submodules
+git submodule update --init --recursive
+
+# Build
 mkdir build
 cd build
 cmake ..
@@ -49,11 +58,24 @@ TLFEA/
 │   ├── solvers/       # Iterative solvers (SyncedNesterov)
 │   ├── materials/     # Material models (St. Venant-Kirchhoff)
 │   └── utils/         # Utility functions
+├── external/
+│   └── MoPhiEssentials/  # Low-level GPU infrastructure (submodule)
 ├── examples/          # Example programs
 ├── data/              # Test data and meshes
 ├── docs/              # Documentation
 └── CMakeLists.txt     # Build configuration
 ```
+
+## Dependencies
+
+### MoPhiEssentials
+
+This project uses [MoPhiEssentials](https://github.com/Ruochun/MoPhiEssentials) as a submodule for:
+- **GPU Error Handling**: `MOPHI_GPU_CALL` macro for CUDA error checking
+- **Logging System**: Thread-safe logging with `MOPHI_INFO`, `MOPHI_WARNING`, `MOPHI_ERROR`
+- **Common Utilities**: Shared GPU/CPU data structures and memory management
+
+The integration provides consistent error handling and logging across the codebase.
 
 ## Documentation
 
@@ -69,6 +91,7 @@ TLFEA/
 - ✅ GPU acceleration via CUDA
 - ✅ CMake build system
 - ✅ Basic cantilever beam example
+- ✅ MoPhiEssentials integration for error handling and logging
 
 ### Future Extensions
 - Additional element types (ANCF beam/shell elements)
