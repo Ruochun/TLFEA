@@ -121,8 +121,8 @@ int main() {
     gpu_t10_data.SetDamping(0.0, 0.1);  // Add some damping for stability
     gpu_t10_data.SetSVK(E, nu);         // St. Venant-Kirchhoff material model
 
-    std::cout << "Material properties: E=" << std::scientific << E << std::defaultfloat 
-              << " Pa, nu=" << nu << ", rho=" << static_cast<int>(rho0) << " kg/m³" << std::endl;
+    std::cout << "Material properties: E=" << std::scientific << E << std::defaultfloat << " Pa, nu=" << nu
+              << ", rho=" << static_cast<int>(rho0) << " kg/m³" << std::endl;
 
     // ==========================================================================
     // Compute reference configuration data
@@ -146,13 +146,15 @@ int main() {
     solver.Setup();
     solver.SetParameters(&params);
 
-    std::cout << "Solver initialized: SyncedNesterov with h=" << std::scientific << params.time_step << std::defaultfloat << std::endl;
+    std::cout << "Solver initialized: SyncedNesterov with h=" << std::scientific << params.time_step
+              << std::defaultfloat << std::endl;
 
     // ==========================================================================
     // Run simulation and output results
     // ==========================================================================
 
-    std::cout << "Starting simulation: " << N_TIMESTEPS << " timesteps, output every " << OUTPUT_FREQUENCY << " steps" << std::endl;
+    std::cout << "Starting simulation: " << N_TIMESTEPS << " timesteps, output every " << OUTPUT_FREQUENCY << " steps"
+              << std::endl;
 
     // Output initial configuration
     Eigen::VectorXd x12, y12, z12;

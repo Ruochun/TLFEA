@@ -403,7 +403,7 @@ struct GPU_FEAT10_Data : public ElementBase {
                const Eigen::VectorXd& h_z12,
                const Eigen::MatrixXi& element_connectivity) {
         if (is_setup) {
-            MOPHI_ERROR("GPU_FEAT10_Data is already set up.");
+            MOPHI_ERROR(std::string("GPU_FEAT10_Data is already set up."));
             return;
         }
 
