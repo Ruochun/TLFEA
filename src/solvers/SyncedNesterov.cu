@@ -140,9 +140,9 @@ __global__ void one_step_nesterov_kernel(ElementType* data, SyncedNesterovSolver
                 grid.sync();
 
                 if (*d_nesterov_solver->inner_flag() == 0) {
-                    if (tid == 0) {
-                        printf("outer iter: %d, inner iter: %d\n", outer_iter, inner_iter);
-                    }
+                    // if (tid == 0) {
+                    //     printf("outer iter: %d, inner iter: %d\n", outer_iter, inner_iter);
+                    // }
 
                     // Step 1: Compute look-ahead velocity
                     double y = 0.0;
@@ -225,12 +225,12 @@ __global__ void one_step_nesterov_kernel(ElementType* data, SyncedNesterovSolver
                             norm_g += d_nesterov_solver->g()(i) * d_nesterov_solver->g()(i);
                         }
                         *d_nesterov_solver->norm_g() = sqrt(norm_g);
-                        printf("norm_g: %.17f\n", *d_nesterov_solver->norm_g());
+                        // printf("norm_g: %.17f\n", *d_nesterov_solver->norm_g());
 
                         if (inner_iter > 0 && abs(*d_nesterov_solver->norm_g() - *d_nesterov_solver->prev_norm_g()) <
                                                   d_nesterov_solver->solver_inner_tol()) {
-                            printf("Converged diff: %.17f\n",
-                                   *d_nesterov_solver->norm_g() - *d_nesterov_solver->prev_norm_g());
+                            // printf("Converged diff: %.17f\n",
+                            //        *d_nesterov_solver->norm_g() - *d_nesterov_solver->prev_norm_g());
                             *d_nesterov_solver->inner_flag() = 1;
                         }
                     }
@@ -257,10 +257,10 @@ __global__ void one_step_nesterov_kernel(ElementType* data, SyncedNesterovSolver
                         }
                         norm_v_next = sqrt(norm_v_next);
                         norm_v_k = sqrt(norm_v_k);
-                        printf("norm_v_next: %.17f, norm_v_k: %.17f\n", norm_v_next, norm_v_k);
+                        // printf("norm_v_next: %.17f, norm_v_k: %.17f\n", norm_v_next, norm_v_k);
 
                         if (inner_iter > 0 && abs(norm_v_next - norm_v_k) < d_nesterov_solver->solver_inner_tol()) {
-                            printf("Converged velocity: %.17f\n", abs(norm_v_next - norm_v_k));
+                            // printf("Converged velocity: %.17f\n", abs(norm_v_next - norm_v_k));
                             *d_nesterov_solver->inner_flag() = 1;
                         }
                     }
@@ -328,10 +328,10 @@ __global__ void one_step_nesterov_kernel(ElementType* data, SyncedNesterovSolver
                     norm_constraint += constraint_val * constraint_val;
                 }
                 norm_constraint = sqrt(norm_constraint);
-                printf("norm_constraint: %.17f\n", norm_constraint);
+                // printf("norm_constraint: %.17f\n", norm_constraint);
 
                 if (abs(norm_constraint) < d_nesterov_solver->solver_outer_tol()) {
-                    printf("Converged constraint: %.17f\n", abs(norm_constraint));
+                    // printf("Converged constraint: %.17f\n", abs(norm_constraint));
                     *d_nesterov_solver->outer_flag() = 1;
                 }
             }
@@ -399,7 +399,7 @@ void SyncedNesterovSolver::OneStepNesterov() {
     float milliseconds = 0;
     HANDLE_ERROR(cudaEventElapsedTime(&milliseconds, start, stop));
 
-    std::cout << "OneStepNesterov kernel time: " << milliseconds << " ms" << std::endl;
+    // std::cout << "OneStepNesterov kernel time: " << milliseconds << " ms" << std::endl;
 
     HANDLE_ERROR(cudaEventDestroy(start));
     HANDLE_ERROR(cudaEventDestroy(stop));
