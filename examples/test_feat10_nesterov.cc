@@ -15,8 +15,7 @@
 #include <Eigen/Dense>
 #include <iomanip>
 #include <iostream>
-#include <core/Logger.hpp>
-#include <common/Defines.hpp>
+#include <MoPhiEssentials.h>
 
 #include "elements/FEAT10Data.cuh"
 #include "solvers/SyncedNesterov.cuh"

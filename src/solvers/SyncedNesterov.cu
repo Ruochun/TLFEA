@@ -13,7 +13,7 @@
  *==============================================================*/
 
 #include <cooperative_groups.h>
-#include <core/Logger.hpp>
+#include <MoPhiEssentials.h>
 
 #include "../elements/ANCF3243Data.cuh"
 #include "../elements/ANCF3243DataFunc.cuh"
