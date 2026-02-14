@@ -19,23 +19,22 @@
 
 #ifndef CHECK_CUSPARSE_MACRO
     #define CHECK_CUSPARSE_MACRO
-    #define CHECK_CUSPARSE(func)                                                         \
-        {                                                                                \
-            cusparseStatus_t status = (func);                                            \
-            if (status != CUSPARSE_STATUS_SUCCESS) {                                     \
-                MOPHI_ERROR("CUSPARSE API failed with error: %s (%d)",                   \
-                       cusparseGetErrorString(status), status);                          \
-            }                                                                            \
+    #define CHECK_CUSPARSE(func)                                                                                \
+        {                                                                                                       \
+            cusparseStatus_t status = (func);                                                                   \
+            if (status != CUSPARSE_STATUS_SUCCESS) {                                                            \
+                MOPHI_ERROR("CUSPARSE API failed with error: %s (%d)", cusparseGetErrorString(status), status); \
+            }                                                                                                   \
         }
 #endif
 
 #ifndef CHECK_CUDSS_MACRO
     #define CHECK_CUDSS_MACRO
-    #define CUDSS_OK(call)                                                                  \
-        do {                                                                                \
-            cudssStatus_t status = call;                                                    \
-            if (status != CUDSS_STATUS_SUCCESS) {                                           \
-                MOPHI_ERROR("cuDSS error");                                                 \
-            }                                                                               \
+    #define CUDSS_OK(call)                        \
+        do {                                      \
+            cudssStatus_t status = call;          \
+            if (status != CUDSS_STATUS_SUCCESS) { \
+                MOPHI_ERROR("cuDSS error");       \
+            }                                     \
         } while (0)
 #endif

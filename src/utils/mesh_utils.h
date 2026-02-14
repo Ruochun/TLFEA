@@ -226,4 +226,21 @@ void AppendANCF3243FixedCoefficient(LinearConstraintBuilder& builder,
                                     const Eigen::VectorXd& y12_ref,
                                     const Eigen::VectorXd& z12_ref);
 
+/**
+ * Write FEAT10 tetrahedral mesh to VTK format for visualization
+ * @param filename Output VTK file path
+ * @param nodes Node coordinates (n_nodes × 3)
+ * @param elements Element connectivity (n_elements × 10)
+ * @param x Deformed x coordinates (size n_nodes)
+ * @param y Deformed y coordinates (size n_nodes)
+ * @param z Deformed z coordinates (size n_nodes)
+ * @return true if write successful, false otherwise
+ */
+bool WriteFEAT10ToVTK(const std::string& filename,
+                      const Eigen::MatrixXd& nodes,
+                      const Eigen::MatrixXi& elements,
+                      const Eigen::VectorXd& x,
+                      const Eigen::VectorXd& y,
+                      const Eigen::VectorXd& z);
+
 }  // namespace ANCFCPUUtils

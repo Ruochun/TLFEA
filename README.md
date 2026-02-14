@@ -40,14 +40,31 @@ make
 
 See [docs/BUILDING.md](docs/BUILDING.md) for detailed build instructions.
 
-### Running the Example
+### Running the Examples
+
+#### Basic Infrastructure Test
 
 ```bash
 cd build
 ./bin/test_feat10_nesterov
 ```
 
-This example simulates a cantilever beam with gravity loading using the FEAT10 element and SyncedNesterov solver.
+This example tests the FEAT10 element and SyncedNesterov solver infrastructure.
+
+#### Cantilever Beam Simulation (Realistic Use Case)
+
+```bash
+cd build
+./bin/cantilever_beam_simulation
+```
+
+This example demonstrates a realistic physics simulation:
+- Loads a tetrahedral mesh representing a cantilever beam
+- Applies boundary conditions (fixed end)
+- Simulates the beam deflecting under gravity
+- Exports results to VTK files for visualization in ParaView
+
+See [examples/README_CANTILEVER.md](examples/README_CANTILEVER.md) for detailed information about this example.
 
 ## Project Structure
 
@@ -90,7 +107,8 @@ The integration provides consistent error handling and logging across the codeba
 - ✅ St. Venant-Kirchhoff hyperelastic material
 - ✅ GPU acceleration via CUDA
 - ✅ CMake build system
-- ✅ Basic cantilever beam example
+- ✅ Basic infrastructure test example
+- ✅ Realistic cantilever beam simulation example with VTK output
 - ✅ MoPhiEssentials integration for error handling and logging
 
 ### Future Extensions

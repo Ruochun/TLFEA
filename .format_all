@@ -12,7 +12,8 @@ find . \( \
     -name "*.h"   -o \
     -name "*.hpp" -o \
     -name "*.cu"  -o \
-    -name "*.cuh" \
+    -name "*.cuh" -o \
+    -name "*.cc" \
     \) -exec clang-format -i -style=file {} +
 
 echo "✔ All matching source files formatted (excluding $EXCLUDE_DIR) with clang-format -style=file"

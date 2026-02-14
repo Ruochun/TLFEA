@@ -480,12 +480,12 @@ struct GPU_ANCF3243_Data : public ElementBase {
                const Eigen::VectorXd& h_z12,
                const Eigen::Matrix<int, Eigen::Dynamic, 2, Eigen::RowMajor>& h_element_connectivity) {
         if (is_setup) {
-            MOPHI_ERROR("GPU_ANCF3243_Data is already set up.");
+            MOPHI_ERROR(std::string("GPU_ANCF3243_Data is already set up."));
             return;
         }
 
         if (length.size() != n_beam || width.size() != n_beam || height.size() != n_beam) {
-            MOPHI_ERROR("GPU_ANCF3243_Data::Setup: length/width/height must have size n_beam.");
+            MOPHI_ERROR(std::string("GPU_ANCF3243_Data::Setup: length/width/height must have size n_beam."));
             return;
         }
 
