@@ -4,6 +4,7 @@
 #include <cctype>
 #include <cmath>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <stdexcept>
 
@@ -1032,6 +1033,7 @@ bool WriteFEAT10ToVTK(const std::string& filename,
                       const Eigen::VectorXd& z) {
   std::ofstream file(filename);
   if (!file.is_open()) {
+    std::cerr << "Error: Failed to open file for writing: " << filename << std::endl;
     return false;
   }
 

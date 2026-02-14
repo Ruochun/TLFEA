@@ -1,7 +1,7 @@
 /**
  * Cantilever Beam Simulation with Physics
  *
- * Author: Github Copilot Agent
+ * Author: GitHub Copilot Agent
  *
  * This example demonstrates a realistic use case of the TLFEA framework:
  * 1. Load a tetrahedral mesh (FEAT10 elements) representing a cantilever beam
@@ -95,10 +95,13 @@ int main() {
   h_f_ext.setZero();
   
   // Apply gravity force (F = m * g) to all nodes
-  // We'll compute mass per node later and apply gravity based on that
-  // For now, apply a uniform gravity load in the -z direction
+  // Note: For a more accurate simulation, the mass should be computed from the
+  // actual mesh volume and distributed properly to nodes. Here we use a simple
+  // approximation assuming the mesh represents a 1m × 1m × 1m cube.
   double gravity = -9.81;  // m/s² (negative because downward)
-  double mass_per_node = rho0 * (1.0 * 1.0 * 1.0) / n_nodes;  // Approximate mass distribution
+  double mesh_volume = 1.0;  // m³ (approximate volume of unit cube mesh)
+  double total_mass = rho0 * mesh_volume;
+  double mass_per_node = total_mass / n_nodes;  // Simple uniform distribution
   
   for (int i = 0; i < n_nodes; i++) {
     h_f_ext(3 * i + 2) = mass_per_node * gravity;  // Apply force in z-direction
