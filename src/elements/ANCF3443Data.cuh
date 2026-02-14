@@ -5,6 +5,7 @@
 #include <cstring>
 #include <iostream>
 #include <vector>
+#include <MoPhiEssentials.h>
 
 /*==============================================================
  *==============================================================
@@ -517,14 +518,12 @@ struct GPU_ANCF3443_Data : public ElementBase {
                const Eigen::VectorXd& h_z12,
                const Eigen::MatrixXi& element_connectivity) {
         if (is_setup) {
-            std::cerr << "GPU_ANCF3443_Data is already set up." << std::endl;
+            MOPHI_ERROR("GPU_ANCF3443_Data is already set up.");
             return;
         }
 
         if (length.size() != n_beam || width.size() != n_beam || height.size() != n_beam) {
-            std::cerr << "GPU_ANCF3443_Data::Setup: length/width/height must have "
-                         "size n_beam."
-                      << std::endl;
+            MOPHI_ERROR("GPU_ANCF3443_Data::Setup: length/width/height must have size n_beam.");
             return;
         }
 
@@ -533,7 +532,7 @@ struct GPU_ANCF3443_Data : public ElementBase {
             ANCFCPUUtils::ANCF3443_B12_matrix_flat_per_element(length, width, height, h_B_inv_flat,
                                                                Quadrature::N_SHAPE_3443);
         } catch (const std::exception& e) {
-            std::cerr << "GPU_ANCF3443_Data::Setup: failed to build per-element B_inv: " << e.what() << std::endl;
+            MOPHI_ERROR("GPU_ANCF3443_Data::Setup: failed to build per-element B_inv: %s", e.what());
             return;
         }
         const int n_binv = static_cast<int>(h_B_inv_flat.size());
@@ -651,7 +650,7 @@ struct GPU_ANCF3443_Data : public ElementBase {
      */
     void SetDensity(double rho0) {
         if (!is_setup) {
-            std::cerr << "GPU_ANCF3443_Data must be set up before setting density." << std::endl;
+            MOPHI_ERROR("GPU_ANCF3443_Data must be set up before setting density.");
             return;
         }
         HANDLE_ERROR(cudaMemcpy(d_rho0, &rho0, sizeof(double), cudaMemcpyHostToDevice));
@@ -664,7 +663,7 @@ struct GPU_ANCF3443_Data : public ElementBase {
      */
     void SetDamping(double eta_damp, double lambda_damp) {
         if (!is_setup) {
-            std::cerr << "GPU_ANCF3443_Data must be set up before setting damping." << std::endl;
+            MOPHI_ERROR("GPU_ANCF3443_Data must be set up before setting damping.");
             return;
         }
         HANDLE_ERROR(cudaMemcpy(d_eta_damp, &eta_damp, sizeof(double), cudaMemcpyHostToDevice));
@@ -676,7 +675,7 @@ struct GPU_ANCF3443_Data : public ElementBase {
      */
     void SetSVK() {
         if (!is_setup) {
-            std::cerr << "GPU_ANCF3443_Data must be set up before setting material." << std::endl;
+            MOPHI_ERROR("GPU_ANCF3443_Data must be set up before setting material.");
             return;
         }
 
@@ -692,7 +691,7 @@ struct GPU_ANCF3443_Data : public ElementBase {
 
     void SetSVK(double E, double nu) {
         if (!is_setup) {
-            std::cerr << "GPU_ANCF3443_Data must be set up before setting material." << std::endl;
+            MOPHI_ERROR("GPU_ANCF3443_Data must be set up before setting material.");
             return;
         }
 
@@ -714,7 +713,7 @@ struct GPU_ANCF3443_Data : public ElementBase {
      */
     void SetMooneyRivlin(double mu10, double mu01, double kappa) {
         if (!is_setup) {
-            std::cerr << "GPU_ANCF3443_Data must be set up before setting material." << std::endl;
+            MOPHI_ERROR("GPU_ANCF3443_Data must be set up before setting material.");
             return;
         }
 
@@ -727,7 +726,7 @@ struct GPU_ANCF3443_Data : public ElementBase {
 
     void SetExternalForce(const Eigen::VectorXd& f_ext) {
         if (f_ext.size() != n_coef * 3) {
-            std::cerr << "External force vector size mismatch." << std::endl;
+            MOPHI_ERROR("External force vector size mismatch.");
             return;
         }
         cudaMemset(d_f_ext, 0, n_coef * 3 * sizeof(double));
@@ -736,7 +735,7 @@ struct GPU_ANCF3443_Data : public ElementBase {
 
     void SetNodalFixed(const Eigen::VectorXi& fixed_nodes) {
         if (is_constraints_setup) {
-            std::cerr << "GPU_ANCF3443_Data CONSTRAINT is already set up." << std::endl;
+            MOPHI_ERROR("GPU_ANCF3443_Data CONSTRAINT is already set up.");
             return;
         }
 
@@ -768,32 +767,32 @@ struct GPU_ANCF3443_Data : public ElementBase {
                                  const std::vector<double>& j_values,
                                  const Eigen::VectorXd& rhs) {
         if (is_constraints_setup) {
-            std::cerr << "GPU_ANCF3443_Data CONSTRAINT is already set up." << std::endl;
+            MOPHI_ERROR("GPU_ANCF3443_Data CONSTRAINT is already set up.");
             return;
         }
         if (j_offsets.empty() || j_offsets.front() != 0) {
-            std::cerr << "SetLinearConstraintsCSR: invalid offsets." << std::endl;
+            MOPHI_ERROR("SetLinearConstraintsCSR: invalid offsets.");
             return;
         }
         if (static_cast<int>(rhs.size()) + 1 != static_cast<int>(j_offsets.size())) {
-            std::cerr << "SetLinearConstraintsCSR: offsets/rhs size mismatch." << std::endl;
+            MOPHI_ERROR("SetLinearConstraintsCSR: offsets/rhs size mismatch.");
             return;
         }
         if (j_columns.size() != j_values.size()) {
-            std::cerr << "SetLinearConstraintsCSR: columns/values size mismatch." << std::endl;
+            MOPHI_ERROR("SetLinearConstraintsCSR: columns/values size mismatch.");
             return;
         }
 
         const int nnz = static_cast<int>(j_columns.size());
         if (j_offsets.back() != nnz) {
-            std::cerr << "SetLinearConstraintsCSR: offsets.back != nnz." << std::endl;
+            MOPHI_ERROR("SetLinearConstraintsCSR: offsets.back != nnz.");
             return;
         }
 
         const int n_dofs = n_coef * 3;
         for (int c : j_columns) {
             if (c < 0 || c >= n_dofs) {
-                std::cerr << "SetLinearConstraintsCSR: column out of range." << std::endl;
+                MOPHI_ERROR("SetLinearConstraintsCSR: column out of range.");
                 return;
             }
         }
@@ -875,15 +874,15 @@ struct GPU_ANCF3443_Data : public ElementBase {
     // fixed).
     void UpdateLinearConstraintRHS(const Eigen::VectorXd& rhs) {
         if (!is_constraints_setup || n_constraint == 0) {
-            std::cerr << "UpdateLinearConstraintRHS: constraints not set up." << std::endl;
+            MOPHI_ERROR("UpdateLinearConstraintRHS: constraints not set up.");
             return;
         }
         if (constraint_mode != kConstraintLinearCSR) {
-            std::cerr << "UpdateLinearConstraintRHS: constraint mode is not CSR." << std::endl;
+            MOPHI_ERROR("UpdateLinearConstraintRHS: constraint mode is not CSR.");
             return;
         }
         if (static_cast<int>(rhs.size()) != n_constraint) {
-            std::cerr << "UpdateLinearConstraintRHS: size mismatch." << std::endl;
+            MOPHI_ERROR("UpdateLinearConstraintRHS: size mismatch.");
             return;
         }
         HANDLE_ERROR(cudaMemcpy(d_constraint_rhs, rhs.data(), static_cast<size_t>(n_constraint) * sizeof(double),

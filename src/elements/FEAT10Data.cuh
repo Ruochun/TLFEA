@@ -10,6 +10,7 @@
 #include "../utils/quadrature_utils.h"
 #include "../materials/MaterialModel.cuh"
 #include "ElementBase.h"
+#include <MoPhiEssentials.h>
 
 // Definition of GPU_ANCF3443 and data access device functions
 #pragma once
@@ -402,7 +403,7 @@ struct GPU_FEAT10_Data : public ElementBase {
                const Eigen::VectorXd& h_z12,
                const Eigen::MatrixXi& element_connectivity) {
         if (is_setup) {
-            std::cerr << "GPU_FEAT10_Data is already set up." << std::endl;
+            MOPHI_ERROR("GPU_FEAT10_Data is already set up.");
             return;
         }
 
@@ -471,7 +472,7 @@ struct GPU_FEAT10_Data : public ElementBase {
      */
     void SetDensity(double rho0) {
         if (!is_setup) {
-            std::cerr << "GPU_FEAT10_Data must be set up before setting density." << std::endl;
+            MOPHI_ERROR("GPU_FEAT10_Data must be set up before setting density.");
             return;
         }
         HANDLE_ERROR(cudaMemcpy(d_rho0, &rho0, sizeof(double), cudaMemcpyHostToDevice));
@@ -484,7 +485,7 @@ struct GPU_FEAT10_Data : public ElementBase {
      */
     void SetDamping(double eta_damp, double lambda_damp) {
         if (!is_setup) {
-            std::cerr << "GPU_FEAT10_Data must be set up before setting damping." << std::endl;
+            MOPHI_ERROR("GPU_FEAT10_Data must be set up before setting damping.");
             return;
         }
         HANDLE_ERROR(cudaMemcpy(d_eta_damp, &eta_damp, sizeof(double), cudaMemcpyHostToDevice));
@@ -496,7 +497,7 @@ struct GPU_FEAT10_Data : public ElementBase {
      */
     void SetSVK() {
         if (!is_setup) {
-            std::cerr << "GPU_FEAT10_Data must be set up before setting material." << std::endl;
+            MOPHI_ERROR("GPU_FEAT10_Data must be set up before setting material.");
             return;
         }
 
@@ -517,7 +518,7 @@ struct GPU_FEAT10_Data : public ElementBase {
      */
     void SetSVK(double E, double nu) {
         if (!is_setup) {
-            std::cerr << "GPU_FEAT10_Data must be set up before setting material." << std::endl;
+            MOPHI_ERROR("GPU_FEAT10_Data must be set up before setting material.");
             return;
         }
 
@@ -539,7 +540,7 @@ struct GPU_FEAT10_Data : public ElementBase {
      */
     void SetMooneyRivlin(double mu10, double mu01, double kappa) {
         if (!is_setup) {
-            std::cerr << "GPU_FEAT10_Data must be set up before setting material." << std::endl;
+            MOPHI_ERROR("GPU_FEAT10_Data must be set up before setting material.");
             return;
         }
 
@@ -552,7 +553,7 @@ struct GPU_FEAT10_Data : public ElementBase {
 
     void SetExternalForce(const Eigen::VectorXd& h_f_ext) {
         if (h_f_ext.size() != n_coef * 3) {
-            std::cerr << "External force vector size mismatch." << std::endl;
+            MOPHI_ERROR("External force vector size mismatch.");
             return;
         }
 
@@ -585,7 +586,7 @@ struct GPU_FEAT10_Data : public ElementBase {
      */
     void UpdatePositions(const Eigen::VectorXd& h_x12, const Eigen::VectorXd& h_y12, const Eigen::VectorXd& h_z12) {
         if (h_x12.size() != n_coef || h_y12.size() != n_coef || h_z12.size() != n_coef) {
-            std::cerr << "Position vector size mismatch." << std::endl;
+            MOPHI_ERROR("Position vector size mismatch.");
             return;
         }
         HANDLE_ERROR(cudaMemcpy(d_h_x12, h_x12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
@@ -597,7 +598,7 @@ struct GPU_FEAT10_Data : public ElementBase {
                                  const Eigen::VectorXd& h_y12,
                                  const Eigen::VectorXd& h_z12) {
         if (h_x12.size() != n_coef || h_y12.size() != n_coef || h_z12.size() != n_coef) {
-            std::cerr << "Position vector size mismatch." << std::endl;
+            MOPHI_ERROR("Position vector size mismatch.");
             return;
         }
         HANDLE_ERROR(cudaMemcpy(d_h_x12_jac, h_x12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));

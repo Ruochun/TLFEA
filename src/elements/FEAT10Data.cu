@@ -322,7 +322,7 @@ void GPU_FEAT10_Data::CalcInternalForce() {
 
 void GPU_FEAT10_Data::CalcConstraintData() {
     if (!is_constraints_setup) {
-        std::cerr << "constraint is not set up" << std::endl;
+        MOPHI_ERROR("constraint is not set up");
         return;
     }
     if (n_constraint == 0) {
@@ -668,7 +668,7 @@ void GPU_FEAT10_Data::RetrievePositionToCPU(Eigen::VectorXd& x12, Eigen::VectorX
 
 void GPU_FEAT10_Data::SetNodalFixed(const Eigen::VectorXi& fixed_nodes) {
     if (is_constraints_setup) {
-        std::cerr << "GPU_FEAT10_Data CONSTRAINT is already set up." << std::endl;
+        MOPHI_ERROR("GPU_FEAT10_Data CONSTRAINT is already set up.");
         return;
     }
 

@@ -13,10 +13,14 @@ set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(CUDAToolkit REQUIRED)
 
+# Add MoPhiEssentials subdirectory
+add_subdirectory(external/MoPhiEssentials)
+
 # Include directories
 include_directories(
     ${CMAKE_SOURCE_DIR}/src
     ${EIGEN3_INCLUDE_DIR}
+    ${CMAKE_SOURCE_DIR}/external/MoPhiEssentials/src
 )
 
 # CUDA compilation flags
@@ -40,10 +44,12 @@ target_link_libraries(tlfea_lib
     Eigen3::Eigen
     CUDA::cudart
     CUDA::cusparse
+    mophi_essentials
 )
 
 target_include_directories(tlfea_lib PUBLIC
     ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/external/MoPhiEssentials/src
 )
 
 # Add the example executable
@@ -56,10 +62,12 @@ target_link_libraries(test_feat10_nesterov
     Eigen3::Eigen
     CUDA::cudart
     CUDA::cusparse
+    mophi_essentials
 )
 
 target_include_directories(test_feat10_nesterov PRIVATE
     ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/external/MoPhiEssentials/src
 )
 
 # Set the runtime path for the data directory

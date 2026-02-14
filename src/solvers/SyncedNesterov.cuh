@@ -19,6 +19,7 @@
 #include "../elements/ElementBase.h"
 #include "../elements/FEAT10Data.cuh"
 #include "SolverBase.h"
+#include <MoPhiEssentials.h>
 
 // this is a true first order Nesterov method
 // fully synced, and each inner iteration will compute the full gradient
@@ -56,11 +57,11 @@ class SyncedNesterovSolver : public SolverBase {
             n_shape_ = Quadrature::N_NODE_T10_10;
         } else {
             d_data_ = nullptr;
-            std::cerr << "Unknown element type!" << std::endl;
+            MOPHI_ERROR("Unknown element type!");
         }
 
         if (d_data_ == nullptr) {
-            std::cerr << "d_data_ is null in SyncedNesterovSolver constructor" << std::endl;
+            MOPHI_ERROR("d_data_ is null in SyncedNesterovSolver constructor");
         }
 
         cudaMalloc(&d_v_guess_, n_coef_ * 3 * sizeof(double));
