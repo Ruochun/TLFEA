@@ -19,7 +19,6 @@
 #include <Eigen/Dense>
 #include <iomanip>
 #include <iostream>
-#include <MoPhiEssentials.h>
 #include <sstream>
 
 #include "elements/FEAT10Data.cuh"
@@ -38,12 +37,9 @@ const int N_TIMESTEPS = 100;      // Number of timesteps to simulate
 const int OUTPUT_FREQUENCY = 10;  // Output every N timesteps
 
 int main() {
-    // Initialize MoPhiEssentials logging
-    mophi::Logger::GetInstance().SetVerbosity(mophi::VERBOSITY_INFO);
-
-    MOPHI_INFO("=======================================================");
-    MOPHI_INFO("  Cantilever Beam Simulation with Physics");
-    MOPHI_INFO("=======================================================");
+    std::cout << "=======================================================" << std::endl;
+    std::cout << "  Cantilever Beam Simulation with Physics" << std::endl;
+    std::cout << "=======================================================" << std::endl;
 
     // Read mesh data
     Eigen::MatrixXd nodes;
@@ -52,7 +48,7 @@ int main() {
     int n_nodes = ANCFCPUUtils::FEAT10_read_nodes("data/meshes/T10/cube.1.node", nodes);
     int n_elems = ANCFCPUUtils::FEAT10_read_elements("data/meshes/T10/cube.1.ele", elements);
 
-    MOPHI_INFO("Mesh loaded: %d nodes, %d elements", n_nodes, n_elems);
+    std::cout << "Mesh loaded: " << n_nodes << " nodes, " << n_elems << " elements" << std::endl;
 
     // Initialize GPU data structure
     GPU_FEAT10_Data gpu_t10_data(n_elems, n_nodes);
@@ -82,7 +78,7 @@ int main() {
         h_fixed_nodes(i) = fixed_node_indices[i];
     }
 
-    MOPHI_INFO("Boundary conditions: Fixed %zu nodes at z=0", fixed_node_indices.size());
+    std::cout << "Boundary conditions: Fixed " << fixed_node_indices.size() << " nodes at z=0" << std::endl;
     gpu_t10_data.SetNodalFixed(h_fixed_nodes);
 
     // ==========================================================================
@@ -106,7 +102,7 @@ int main() {
     }
 
     gpu_t10_data.SetExternalForce(h_f_ext);
-    MOPHI_INFO("External forces: Applied gravity (g = %.2f m/s²)", gravity);
+    std::cout << "External forces: Applied gravity (g = " << gravity << " m/s²)" << std::endl;
 
     // ==========================================================================
     // Setup material and element properties
@@ -125,7 +121,7 @@ int main() {
     gpu_t10_data.SetDamping(0.0, 0.1);  // Add some damping for stability
     gpu_t10_data.SetSVK(E, nu);         // St. Venant-Kirchhoff material model
 
-    MOPHI_INFO("Material properties: E=%.2e Pa, nu=%.2f, rho=%.0f kg/m³", E, nu, rho0);
+    std::cout << "Material properties: E=" << std::scientific << E << " Pa, nu=" << std::fixed << nu << ", rho=" << rho0 << " kg/m³" << std::endl;
 
     // ==========================================================================
     // Compute reference configuration data
@@ -136,7 +132,7 @@ int main() {
     gpu_t10_data.CalcConstraintData();
     gpu_t10_data.ConvertToCSR_ConstraintJacT();
 
-    MOPHI_INFO("Reference configuration computed");
+    std::cout << "Reference configuration computed" << std::endl;
 
     // ==========================================================================
     // Setup solver
@@ -149,13 +145,13 @@ int main() {
     solver.Setup();
     solver.SetParameters(&params);
 
-    MOPHI_INFO("Solver initialized: SyncedNesterov with h=%.2e", params.time_step);
+    std::cout << "Solver initialized: SyncedNesterov with h=" << std::scientific << params.time_step << std::endl;
 
     // ==========================================================================
     // Run simulation and output results
     // ==========================================================================
 
-    MOPHI_INFO("Starting simulation: %d timesteps, output every %d steps", N_TIMESTEPS, OUTPUT_FREQUENCY);
+    std::cout << "Starting simulation: " << N_TIMESTEPS << " timesteps, output every " << OUTPUT_FREQUENCY << " steps" << std::endl;
 
     // Output initial configuration
     Eigen::VectorXd x12, y12, z12;
@@ -165,9 +161,9 @@ int main() {
     ss << "output_beam_" << std::setfill('0') << std::setw(5) << 0 << ".vtk";
     bool success = ANCFCPUUtils::WriteFEAT10ToVTK(ss.str(), nodes, elements, x12, y12, z12);
     if (success) {
-        MOPHI_INFO("Saved initial state to %s", ss.str().c_str());
+        std::cout << "Saved initial state to " << ss.str() << std::endl;
     } else {
-        MOPHI_ERROR("Failed to write initial VTK file");
+        std::cerr << "Failed to write initial VTK file" << std::endl;
     }
 
     // Run simulation loop
@@ -184,9 +180,9 @@ int main() {
 
             bool write_success = ANCFCPUUtils::WriteFEAT10ToVTK(filename.str(), nodes, elements, x12, y12, z12);
             if (write_success) {
-                MOPHI_INFO("Step %d/%d: Saved to %s", step, N_TIMESTEPS, filename.str().c_str());
+                std::cout << "Step " << step << "/" << N_TIMESTEPS << ": Saved to " << filename.str() << std::endl;
             } else {
-                MOPHI_ERROR("Step %d/%d: Failed to write VTK file", step, N_TIMESTEPS);
+                std::cerr << "Step " << step << "/" << N_TIMESTEPS << ": Failed to write VTK file" << std::endl;
             }
         }
     }
@@ -197,11 +193,11 @@ int main() {
 
     gpu_t10_data.Destroy();
 
-    MOPHI_INFO("=======================================================");
-    MOPHI_INFO("  Simulation Complete!");
-    MOPHI_INFO("  Output files: output_beam_*.vtk");
-    MOPHI_INFO("  Visualize with: paraview output_beam_*.vtk");
-    MOPHI_INFO("=======================================================");
+    std::cout << "=======================================================" << std::endl;
+    std::cout << "  Simulation Complete!" << std::endl;
+    std::cout << "  Output files: output_beam_*.vtk" << std::endl;
+    std::cout << "  Visualize with: paraview output_beam_*.vtk" << std::endl;
+    std::cout << "=======================================================" << std::endl;
 
     return 0;
 }
