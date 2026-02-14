@@ -1024,4 +1024,62 @@ bool ReadANCF3443MeshFromFile(const std::string& path, ANCF3443Mesh& out,
   return true;
 }
 
+bool WriteFEAT10ToVTK(const std::string& filename,
+                      const Eigen::MatrixXd& nodes,
+                      const Eigen::MatrixXi& elements,
+                      const Eigen::VectorXd& x,
+                      const Eigen::VectorXd& y,
+                      const Eigen::VectorXd& z) {
+  std::ofstream file(filename);
+  if (!file.is_open()) {
+    return false;
+  }
+
+  int n_nodes = static_cast<int>(nodes.rows());
+  int n_elements = static_cast<int>(elements.rows());
+
+  // Write VTK header
+  file << "# vtk DataFile Version 3.0\n";
+  file << "FEAT10 Tetrahedral Mesh\n";
+  file << "ASCII\n";
+  file << "DATASET UNSTRUCTURED_GRID\n";
+
+  // Write deformed node positions
+  file << "POINTS " << n_nodes << " double\n";
+  for (int i = 0; i < n_nodes; i++) {
+    file << x(i) << " " << y(i) << " " << z(i) << "\n";
+  }
+
+  // Write elements (FEAT10 has 10 nodes per element)
+  // VTK cell type 24 is VTK_QUADRATIC_TETRA (10-node tetrahedral)
+  file << "\nCELLS " << n_elements << " " << (n_elements * 11) << "\n";
+  for (int i = 0; i < n_elements; i++) {
+    file << "10";  // 10 nodes per FEAT10 element
+    for (int j = 0; j < 10; j++) {
+      // Convert from 1-based indexing to 0-based
+      file << " " << (elements(i, j) - 1);
+    }
+    file << "\n";
+  }
+
+  // Write cell types (24 = VTK_QUADRATIC_TETRA)
+  file << "\nCELL_TYPES " << n_elements << "\n";
+  for (int i = 0; i < n_elements; i++) {
+    file << "24\n";
+  }
+
+  // Write displacement as point data
+  file << "\nPOINT_DATA " << n_nodes << "\n";
+  file << "VECTORS displacement double\n";
+  for (int i = 0; i < n_nodes; i++) {
+    double dx = x(i) - nodes(i, 0);
+    double dy = y(i) - nodes(i, 1);
+    double dz = z(i) - nodes(i, 2);
+    file << dx << " " << dy << " " << dz << "\n";
+  }
+
+  file.close();
+  return true;
+}
+
 }  // namespace ANCFCPUUtils
