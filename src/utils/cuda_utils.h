@@ -9,7 +9,8 @@
 #include <iostream>
 
 // Include MoPhiEssentials for GPU error handling and logging
-#include <MoPhiEssentials.h>
+// Only include what we need to avoid multiple definition errors
+#include <core/Logger.hpp>
 
 // Use MoPhiEssentials' MOPHI_GPU_CALL macro for error handling
 // For backward compatibility, alias HANDLE_ERROR to MOPHI_GPU_CALL

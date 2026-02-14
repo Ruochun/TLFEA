@@ -10,7 +10,7 @@
 #include "../utils/quadrature_utils.h"
 #include "../materials/MaterialModel.cuh"
 #include "ElementBase.h"
-#include <MoPhiEssentials.h>
+#include <core/Logger.hpp>
 
 // Definition of GPU_ANCF3443 and data access device functions
 #pragma once

@@ -19,7 +19,7 @@
 #include "../elements/ElementBase.h"
 #include "../elements/FEAT10Data.cuh"
 #include "SolverBase.h"
-#include <MoPhiEssentials.h>
+#include <core/Logger.hpp>
 
 // this is a true first order Nesterov method
 // fully synced, and each inner iteration will compute the full gradient
