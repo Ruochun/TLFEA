@@ -15,7 +15,7 @@ The simulation performs the following steps:
 ## Material Properties
 
 The simulation uses material properties for Aluminum:
-- Young's Modulus (E): 7×10¹⁰ Pa
+- Young's Modulus (E): 7×10^10 Pa
 - Poisson's Ratio (ν): 0.33
 - Density (ρ): 2700 kg/m³
 
