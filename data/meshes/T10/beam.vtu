@@ -108,11 +108,11 @@
           130 140 150 160 170 180
           190 200 210 220 230 240
         </DataArray>
-        <DataArray type="UInt8" Name="types" format="ascii" RangeMin="10" RangeMax="10">
-          10 10 10 10 10 10
-          10 10 10 10 10 10
-          10 10 10 10 10 10
-          10 10 10 10 10 10
+        <DataArray type="UInt8" Name="types" format="ascii" RangeMin="24" RangeMax="24">
+          24 24 24 24 24 24
+          24 24 24 24 24 24
+          24 24 24 24 24 24
+          24 24 24 24 24 24
         </DataArray>
       </Cells>
     </Piece>
