@@ -66,6 +66,22 @@ This example demonstrates a realistic physics simulation:
 
 See [examples/README_CANTILEVER.md](examples/README_CANTILEVER.md) for detailed information about this example.
 
+#### VTU Beam Simulation (VTU Mesh Loading)
+
+```bash
+cd build
+./bin/vtu_beam_simulation
+```
+
+This example demonstrates loading a mesh from a VTU file:
+- Uses MoPhiEssentials' VTU loader to read beam.vtu
+- Works with industry-standard VTU mesh format
+- Applies boundary conditions and concentrated load
+- Simulates cantilever beam deflection
+- Exports results to VTK files for visualization
+
+See [examples/README_VTU_BEAM.md](examples/README_VTU_BEAM.md) for detailed information about this example.
+
 ## Project Structure
 
 ```
@@ -109,6 +125,8 @@ The integration provides consistent error handling and logging across the codeba
 - ✅ CMake build system
 - ✅ Basic infrastructure test example
 - ✅ Realistic cantilever beam simulation example with VTK output
+- ✅ VTU mesh loading capability via MoPhiEssentials
+- ✅ VTU beam simulation demo using mophi::Mesh
 - ✅ MoPhiEssentials integration for error handling and logging
 
 ### Future Extensions
