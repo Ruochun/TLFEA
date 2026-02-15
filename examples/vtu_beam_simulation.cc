@@ -29,7 +29,7 @@
 #include "utils/quadrature_utils.h"
 
 // Material properties for aluminum
-const double E = 7e10;     // Young's modulus (70 GPa) - Aluminum
+const double E = 7e10;     // Young's modulus: 7e10 Pa (70 GPa) - Aluminum
 const double nu = 0.33;    // Poisson's ratio - Aluminum
 const double rho0 = 2700;  // Density (kg/m³) - Aluminum
 
