@@ -141,7 +141,7 @@ This demo is similar to `cantilever_beam_simulation.cc` but differs in:
 | Mesh source | Text files (.node, .ele) | VTU file |
 | Mesh loader | Custom FEAT10 reader | MoPhiEssentials VTU loader |
 | Mesh storage | Direct Eigen matrices | mophi::Mesh class |
-| Element type | Pre-generated FEAT10 | Convert from linear tets |
+| Element type | Pre-generated FEAT10 | Parse 10-node quadratic tets |
 | Load type | Gravity on all nodes | Point load at free end |
 | Mesh size | Simple cube | Realistic beam geometry |
 
