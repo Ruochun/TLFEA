@@ -54,33 +54,91 @@ int main() {
     std::string vtu_filename = "data/meshes/T10/beam.vtu";
     MOPHI_INFO("Loading mesh from: %s", vtu_filename.c_str());
 
+    // Load the VTU file using MoPhiEssentials' VTU loader
+    // Note: The beam.vtu file contains 10-node tetrahedral elements (FEAT10/quadratic tets)
+    // but the mophi::LoadVtu() function expects 4-node linear tets.
+    // We'll use mophi::Mesh to store the mesh and manually parse the VTU for FEAT10 elements.
+
     mophi::Mesh mesh;
     try {
         mesh = mophi::LoadVtu(vtu_filename);
-        MOPHI_INFO("Mesh loaded successfully");
-        MOPHI_INFO("Number of nodes: %d", (int)mesh.NumLocalNodes());
-        MOPHI_INFO("Number of owned nodes: %d", (int)mesh.NumOwnedNodes());
-        MOPHI_INFO("Number of tets: %d", (int)mesh.NumOwnedTets());
-        MOPHI_INFO("Number of hexes: %d", (int)mesh.NumOwnedHexes());
+        MOPHI_INFO("VTU file parsed successfully");
+        MOPHI_INFO("Number of nodes loaded: %d", (int)mesh.NumLocalNodes());
     } catch (const std::exception& e) {
-        std::cerr << "Error loading mesh: " << e.what() << std::endl;
+        std::cerr << "Error loading VTU file: " << e.what() << std::endl;
         return 1;
     }
+
+    // ==========================================================================
+    // Parse FEAT10 elements directly from VTU file
+    // ==========================================================================
+    // Since mophi::LoadVtu() doesn't support 10-node tets (it only supports 4-node tets),
+    // we need to parse the connectivity directly from the VTU file.
+
+    std::cout << "Parsing FEAT10 elements from VTU file..." << std::endl;
+
+    pugi::xml_document doc;
+    if (!doc.load_file(vtu_filename.c_str())) {
+        std::cerr << "Error: Failed to parse VTU file" << std::endl;
+        return 1;
+    }
+
+    auto vtk = doc.child("VTKFile");
+    auto piece = vtk.child("UnstructuredGrid").child("Piece");
+    if (!piece) {
+        std::cerr << "Error: Invalid VTU file structure" << std::endl;
+        return 1;
+    }
+
+    // Parse connectivity for 10-node tets
+    pugi::xml_node conn_da, offset_da, types_da;
+    for (auto da : piece.child("Cells").children("DataArray")) {
+        std::string name = da.attribute("Name").as_string();
+        if (name == "connectivity")
+            conn_da = da;
+        else if (name == "offsets")
+            offset_da = da;
+        else if (name == "types")
+            types_da = da;
+    }
+
+    auto connectivity = mophi::ParseDataArray<int>(conn_da);
+    auto offsets = mophi::ParseDataArray<int>(offset_da);
+    auto types = mophi::ParseDataArray<int>(types_da);
+
+    // Build FEAT10 elements
+    std::vector<std::array<int, 10>> feat10_elements;
+    size_t start = 0;
+    for (size_t i = 0; i < types.size(); ++i) {
+        size_t end = (size_t)offsets[i];
+        size_t nverts = end - start;
+
+        // Check for 10-node tetrahedral elements
+        if (nverts == 10) {
+            std::array<int, 10> elem;
+            for (size_t j = 0; j < 10; ++j) {
+                elem[j] = connectivity[start + j];
+            }
+            feat10_elements.push_back(elem);
+        }
+        start = end;
+    }
+
+    int n_nodes = static_cast<int>(mesh.NumLocalNodes());
+    int n_elems = static_cast<int>(feat10_elements.size());
+
+    if (n_elems == 0) {
+        std::cerr << "Error: No 10-node tetrahedral elements found in VTU file" << std::endl;
+        return 1;
+    }
+
+    std::cout << "Mesh loaded successfully:" << std::endl;
+    std::cout << "  Nodes: " << n_nodes << std::endl;
+    std::cout << "  FEAT10 Elements: " << n_elems << std::endl;
 
     // ==========================================================================
     // Convert mophi::Mesh to TLFEA format
     // ==========================================================================
-
-    int n_nodes = static_cast<int>(mesh.NumLocalNodes());
-    int n_elems = static_cast<int>(mesh.NumOwnedTets());
-
-    if (n_elems == 0) {
-        std::cerr << "Error: No tetrahedral elements found in mesh" << std::endl;
-        return 1;
-    }
-
-    std::cout << "Converting mesh to TLFEA format..." << std::endl;
-    std::cout << "Nodes: " << n_nodes << ", Elements: " << n_elems << std::endl;
 
     // Convert nodes to Eigen matrices
     Eigen::MatrixXd nodes(n_nodes, 3);
@@ -91,69 +149,14 @@ int main() {
     }
 
     // Convert elements to Eigen matrix
-    // Note: The beam.vtu file has 4-node tets, but we need 10-node FEAT10 elements
-    // We'll need to generate mid-edge nodes
     Eigen::MatrixXi elements(n_elems, 10);
-
-    // For each tetrahedral element, we need:
-    // - 4 corner nodes (0-3)
-    // - 6 mid-edge nodes (4-9): edges 01, 02, 03, 12, 13, 23
-
-    // First, create a map to track existing nodes and mid-edge nodes
-    std::map<std::pair<int, int>, int> edge_node_map;
-    int next_node_id = n_nodes;
-
-    std::vector<Eigen::Vector3d> new_nodes;
-
     for (int e = 0; e < n_elems; e++) {
-        const auto& tet = mesh.topo.tets[e];
-
-        // Copy corner nodes
-        for (int i = 0; i < 4; i++) {
-            elements(e, i) = tet[i];
-        }
-
-        // Generate mid-edge nodes
-        int edge_pairs[6][2] = {{0, 1}, {0, 2}, {0, 3}, {1, 2}, {1, 3}, {2, 3}};
-
-        for (int i = 0; i < 6; i++) {
-            int n1 = tet[edge_pairs[i][0]];
-            int n2 = tet[edge_pairs[i][1]];
-
-            // Ensure consistent ordering for edge key
-            if (n1 > n2)
-                std::swap(n1, n2);
-            auto edge_key = std::make_pair(n1, n2);
-
-            // Check if mid-edge node already exists
-            auto it = edge_node_map.find(edge_key);
-            if (it != edge_node_map.end()) {
-                elements(e, 4 + i) = it->second;
-            } else {
-                // Create new mid-edge node
-                Eigen::Vector3d p1(nodes(n1, 0), nodes(n1, 1), nodes(n1, 2));
-                Eigen::Vector3d p2(nodes(n2, 0), nodes(n2, 1), nodes(n2, 2));
-                Eigen::Vector3d mid = (p1 + p2) / 2.0;
-
-                elements(e, 4 + i) = next_node_id;
-                edge_node_map[edge_key] = next_node_id;
-                new_nodes.push_back(mid);
-                next_node_id++;
-            }
+        for (int j = 0; j < 10; j++) {
+            elements(e, j) = feat10_elements[e][j];
         }
     }
 
-    // Append new mid-edge nodes to nodes matrix
-    int total_nodes = n_nodes + static_cast<int>(new_nodes.size());
-    Eigen::MatrixXd nodes_with_midpoints(total_nodes, 3);
-    nodes_with_midpoints.topRows(n_nodes) = nodes;
-    for (size_t i = 0; i < new_nodes.size(); i++) {
-        nodes_with_midpoints(n_nodes + i, 0) = new_nodes[i](0);
-        nodes_with_midpoints(n_nodes + i, 1) = new_nodes[i](1);
-        nodes_with_midpoints(n_nodes + i, 2) = new_nodes[i](2);
-    }
-
-    std::cout << "Total nodes with mid-edge nodes: " << total_nodes << std::endl;
+    int total_nodes = n_nodes;
 
     // ==========================================================================
     // Initialize GPU data structure
@@ -165,9 +168,9 @@ int main() {
     // Extract coordinate vectors from nodes matrix
     Eigen::VectorXd h_x12(total_nodes), h_y12(total_nodes), h_z12(total_nodes);
     for (int i = 0; i < total_nodes; i++) {
-        h_x12(i) = nodes_with_midpoints(i, 0);
-        h_y12(i) = nodes_with_midpoints(i, 1);
-        h_z12(i) = nodes_with_midpoints(i, 2);
+        h_x12(i) = nodes(i, 0);
+        h_y12(i) = nodes(i, 1);
+        h_z12(i) = nodes(i, 2);
     }
 
     // ==========================================================================
@@ -280,7 +283,7 @@ int main() {
 
     std::stringstream ss;
     ss << "output_beam_vtu_" << std::setfill('0') << std::setw(5) << 0 << ".vtk";
-    bool success = ANCFCPUUtils::WriteFEAT10ToVTK(ss.str(), nodes_with_midpoints, elements, x12, y12, z12);
+    bool success = ANCFCPUUtils::WriteFEAT10ToVTK(ss.str(), nodes, elements, x12, y12, z12);
     if (success) {
         std::cout << "Saved initial state to " << ss.str() << std::endl;
     } else {
@@ -299,7 +302,7 @@ int main() {
             std::stringstream filename;
             filename << "output_beam_vtu_" << std::setfill('0') << std::setw(5) << step << ".vtk";
 
-            bool write_success = ANCFCPUUtils::WriteFEAT10ToVTK(filename.str(), nodes_with_midpoints, elements, x12, y12, z12);
+            bool write_success = ANCFCPUUtils::WriteFEAT10ToVTK(filename.str(), nodes, elements, x12, y12, z12);
             if (write_success) {
                 std::cout << "Step " << step << "/" << N_TIMESTEPS << ": Saved to " << filename.str() << std::endl;
             } else {
