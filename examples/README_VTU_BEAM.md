@@ -95,13 +95,13 @@ The cantilever beam should exhibit:
 ### MoPhiEssentials Integration
 
 This example uses MoPhiEssentials' `mophi::Mesh` class and `mophi::LoadVtu()` function to load mesh data. The `mophi::Mesh` class can store:
-- Tet4 (4-node tetrahedral) elements
-- Tet10 (10-node tetrahedral) elements
-- Hex8 (8-node hexahedral) elements
+- TET4 (4-node tetrahedral) elements
+- TET10 (10-node tetrahedral) elements
+- HEX8 (8-node hexahedral) elements
 - Node coordinates with halo support for multi-GPU simulations
 - Element region tags and boundary condition tags
 
-This demo specifically uses Tet10 elements, which are compatible with TLFEA's FEAT10 element type.
+This demo specifically uses TET10 elements, which are compatible with TLFEA's FEAT10 element type.
 
 ### Mesh Requirements
 
