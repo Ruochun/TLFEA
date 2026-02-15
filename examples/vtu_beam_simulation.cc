@@ -236,6 +236,7 @@ int main() {
         std::cout << "Saved initial state to " << ss.str() << std::endl;
     } else {
         std::cerr << "Failed to write initial VTK file" << std::endl;
+        // Continue simulation even if output fails - computation is still valuable
     }
 
     // Run simulation loop
