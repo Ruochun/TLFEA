@@ -97,5 +97,27 @@ set_target_properties(cantilever_beam_simulation PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
 
+# Add the beam VTU demo example
+add_executable(beam_vtu_demo
+    examples/beam_vtu_demo.cc
+)
+
+target_link_libraries(beam_vtu_demo
+    tlfea_lib
+    Eigen3::Eigen
+    CUDA::cudart
+    CUDA::cusparse
+    mophi_essentials
+)
+
+target_include_directories(beam_vtu_demo PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/external/MoPhiEssentials/src
+)
+
+set_target_properties(beam_vtu_demo PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+)
+
 # Copy data directory to build directory
 file(COPY ${CMAKE_SOURCE_DIR}/data DESTINATION ${CMAKE_BINARY_DIR})
