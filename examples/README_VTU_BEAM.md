@@ -25,7 +25,7 @@ This example differs from `cantilever_beam_simulation.cc` in the following ways:
 ## Material Properties
 
 The simulation uses material properties for Aluminum:
-- Young's Modulus (E): 7×10^10 Pa
+- Young's Modulus (E): 7e10 Pa (70 GPa)
 - Poisson's Ratio (ν): 0.33
 - Density (ρ): 2700 kg/m³
 

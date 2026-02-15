@@ -59,9 +59,9 @@ int main() {
 
     std::cout << "Mesh loaded successfully:" << std::endl;
     std::cout << "  Nodes: " << mesh.NumLocalNodes() << std::endl;
-    std::cout << "  Tet4 elements: " << mesh.NumOwnedTets() << std::endl;
-    std::cout << "  Tet10 elements: " << mesh.NumOwnedTet10s() << std::endl;
-    std::cout << "  Hex8 elements: " << mesh.NumOwnedHexes() << std::endl;
+    std::cout << "  TET4 elements: " << mesh.NumOwnedTets() << std::endl;
+    std::cout << "  TET10 elements: " << mesh.NumOwnedTet10s() << std::endl;
+    std::cout << "  HEX8 elements: " << mesh.NumOwnedHexes() << std::endl;
 
     // ==========================================================================
     // Extract mesh data for TLFEA
@@ -69,8 +69,9 @@ int main() {
 
     // Check that we have tet10 elements (required for FEAT10)
     if (mesh.NumOwnedTet10s() == 0) {
-        std::cerr << "Error: No Tet10 elements found in mesh. FEAT10 requires 10-node tetrahedral elements."
-                  << std::endl;
+        std::cerr << "Error: No TET10 elements found in '" << vtu_filename << "'." << std::endl;
+        std::cerr << "FEAT10 requires 10-node tetrahedral elements (VTK cell type 24)." << std::endl;
+        std::cerr << "Please verify the mesh format. See examples/README_VTU_BEAM.md for requirements." << std::endl;
         return 1;
     }
 
