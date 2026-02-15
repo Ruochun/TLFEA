@@ -29,7 +29,7 @@
 #include "utils/quadrature_utils.h"
 
 // Material properties for aluminum
-const double E = 7e10;     // Young's modulus (Pa) - Aluminum
+const double E = 7e10;     // Young's modulus: 7e10 Pa (70 GPa) - Aluminum
 const double nu = 0.33;    // Poisson's ratio - Aluminum
 const double rho0 = 2700;  // Density (kg/m³) - Aluminum
 
@@ -189,7 +189,7 @@ int main() {
     gpu_t10_data.SetSVK(E, nu);         // St. Venant-Kirchhoff material model
 
     std::cout << "Material properties: E=" << std::scientific << E << std::defaultfloat << " Pa, nu=" << nu
-              << ", rho=" << static_cast<int>(rho0) << " kg/m³" << std::endl;
+              << ", rho=" << rho0 << " kg/m³" << std::endl;
 
     // ==========================================================================
     // Compute reference configuration data
