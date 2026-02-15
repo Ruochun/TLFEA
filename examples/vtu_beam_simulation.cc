@@ -160,12 +160,13 @@ int main() {
         }
     }
 
-    // Apply a downward force (negative z-direction) at the loaded nodes
-    double total_load = -1000.0;  // Total load in Newtons (downward)
+    // Apply a downward force in the -z direction
+    // Coordinate system: x=axial (beam length), y=width, z=height (positive up)
+    double total_load = -1000.0;  // Total load in Newtons (negative = downward in z)
     double load_per_node = total_load / loaded_node_indices.size();
 
     for (int i : loaded_node_indices) {
-        h_f_ext(3 * i + 2) = load_per_node;  // Apply force in z-direction
+        h_f_ext(3 * i + 2) = load_per_node;  // Apply force in z-direction (index 2)
     }
 
     gpu_t10_data.SetExternalForce(h_f_ext);
