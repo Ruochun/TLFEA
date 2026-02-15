@@ -70,6 +70,8 @@ int main() {
     // Check that we have tet10 elements (required for FEAT10)
     if (mesh.NumOwnedTet10s() == 0) {
         std::cerr << "Error: No TET10 elements found in '" << vtu_filename << "'." << std::endl;
+        std::cerr << "Found: " << mesh.NumOwnedTets() << " TET4, " << mesh.NumOwnedTet10s() << " TET10, "
+                  << mesh.NumOwnedHexes() << " HEX8 elements." << std::endl;
         std::cerr << "FEAT10 requires 10-node tetrahedral elements (VTK cell type 24)." << std::endl;
         std::cerr << "Please verify the mesh format. See examples/README_VTU_BEAM.md for requirements." << std::endl;
         return 1;
