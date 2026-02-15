@@ -439,63 +439,63 @@ struct GPU_ANCF3443_Data : public ElementBase {
     }
 
     void Initialize() {
-        HANDLE_ERROR(
+        MOPHI_GPU_CALL(
             cudaMalloc(&d_B_inv, n_beam * Quadrature::N_SHAPE_3443 * Quadrature::N_SHAPE_3443 * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_grad_N_ref,
-                                n_beam * Quadrature::N_TOTAL_QP_4_4_3 * Quadrature::N_SHAPE_3443 * 3 * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_detJ_ref, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(
+            &d_grad_N_ref, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * Quadrature::N_SHAPE_3443 * 3 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_detJ_ref, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * sizeof(double)));
 
-        HANDLE_ERROR(cudaMalloc(&d_gauss_xi_m, Quadrature::N_QP_7 * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_gauss_eta_m, Quadrature::N_QP_7 * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_gauss_zeta_m, Quadrature::N_QP_3 * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_gauss_xi, Quadrature::N_QP_4 * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_gauss_eta, Quadrature::N_QP_4 * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_gauss_zeta, Quadrature::N_QP_3 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_gauss_xi_m, Quadrature::N_QP_7 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_gauss_eta_m, Quadrature::N_QP_7 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_gauss_zeta_m, Quadrature::N_QP_3 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_gauss_xi, Quadrature::N_QP_4 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_gauss_eta, Quadrature::N_QP_4 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_gauss_zeta, Quadrature::N_QP_3 * sizeof(double)));
 
-        HANDLE_ERROR(cudaMalloc(&d_weight_xi_m, Quadrature::N_QP_7 * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_weight_eta_m, Quadrature::N_QP_7 * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_weight_zeta_m, Quadrature::N_QP_3 * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_weight_xi, Quadrature::N_QP_4 * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_weight_eta, Quadrature::N_QP_4 * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_weight_zeta, Quadrature::N_QP_3 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_weight_xi_m, Quadrature::N_QP_7 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_weight_eta_m, Quadrature::N_QP_7 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_weight_zeta_m, Quadrature::N_QP_3 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_weight_xi, Quadrature::N_QP_4 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_weight_eta, Quadrature::N_QP_4 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_weight_zeta, Quadrature::N_QP_3 * sizeof(double)));
 
-        HANDLE_ERROR(cudaMalloc(&d_x12_jac, n_coef * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_y12_jac, n_coef * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_z12_jac, n_coef * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_x12, n_coef * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_y12, n_coef * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_z12, n_coef * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_x12_jac, n_coef * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_y12_jac, n_coef * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_z12_jac, n_coef * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_x12, n_coef * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_y12, n_coef * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_z12, n_coef * sizeof(double)));
 
-        HANDLE_ERROR(cudaMalloc(&d_element_connectivity, n_beam * 4 * sizeof(int)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_element_connectivity, n_beam * 4 * sizeof(int)));
 
-        HANDLE_ERROR(cudaMalloc(&d_F, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_P, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_F, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_P, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(double)));
         // Kelvin-Voigt viscous buffers
-        HANDLE_ERROR(cudaMalloc(&d_Fdot, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_P_vis, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_f_int, n_coef * 3 * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_f_ext, n_coef * 3 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_Fdot, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_P_vis, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_f_int, n_coef * 3 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_f_ext, n_coef * 3 * sizeof(double)));
         // damping parameters (single scalar copied to device)
-        HANDLE_ERROR(cudaMalloc(&d_eta_damp, sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_lambda_damp, sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_eta_damp, sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_lambda_damp, sizeof(double)));
 
         // copy struct to device
-        HANDLE_ERROR(cudaMalloc(&d_data, sizeof(GPU_ANCF3443_Data)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_data, sizeof(GPU_ANCF3443_Data)));
 
         // beam data
-        HANDLE_ERROR(cudaMalloc(&d_H, n_beam * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_W, n_beam * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_L, n_beam * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_H, n_beam * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_W, n_beam * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_L, n_beam * sizeof(double)));
 
-        HANDLE_ERROR(cudaMalloc(&d_rho0, sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_nu, sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_E, sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_lambda, sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_mu, sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_material_model, sizeof(int)));
-        HANDLE_ERROR(cudaMalloc(&d_mu10, sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_mu01, sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_kappa, sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_rho0, sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_nu, sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_E, sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_lambda, sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_mu, sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_material_model, sizeof(int)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_mu10, sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_mu01, sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_kappa, sizeof(double)));
     }
 
     void Setup(const Eigen::VectorXd& length,
@@ -537,43 +537,43 @@ struct GPU_ANCF3443_Data : public ElementBase {
         }
         const int n_binv = static_cast<int>(h_B_inv_flat.size());
 
-        HANDLE_ERROR(cudaMemcpy(d_B_inv, h_B_inv_flat.data(), n_binv * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_B_inv, h_B_inv_flat.data(), n_binv * sizeof(double), cudaMemcpyHostToDevice));
 
-        HANDLE_ERROR(
+        MOPHI_GPU_CALL(
             cudaMemcpy(d_gauss_xi_m, gauss_xi_m.data(), Quadrature::N_QP_7 * sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(
+        MOPHI_GPU_CALL(
             cudaMemcpy(d_gauss_eta_m, gauss_eta_m.data(), Quadrature::N_QP_7 * sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_gauss_zeta_m, gauss_zeta_m.data(), Quadrature::N_QP_3 * sizeof(double),
-                                cudaMemcpyHostToDevice));
-        HANDLE_ERROR(
+        MOPHI_GPU_CALL(cudaMemcpy(d_gauss_zeta_m, gauss_zeta_m.data(), Quadrature::N_QP_3 * sizeof(double),
+                                  cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(
             cudaMemcpy(d_gauss_xi, gauss_xi.data(), Quadrature::N_QP_4 * sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(
+        MOPHI_GPU_CALL(
             cudaMemcpy(d_gauss_eta, gauss_eta.data(), Quadrature::N_QP_4 * sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(
+        MOPHI_GPU_CALL(
             cudaMemcpy(d_gauss_zeta, gauss_zeta.data(), Quadrature::N_QP_3 * sizeof(double), cudaMemcpyHostToDevice));
 
-        HANDLE_ERROR(
+        MOPHI_GPU_CALL(
             cudaMemcpy(d_weight_xi_m, weight_xi_m.data(), Quadrature::N_QP_7 * sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_weight_eta_m, weight_eta_m.data(), Quadrature::N_QP_7 * sizeof(double),
-                                cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_weight_zeta_m, weight_zeta_m.data(), Quadrature::N_QP_3 * sizeof(double),
-                                cudaMemcpyHostToDevice));
-        HANDLE_ERROR(
+        MOPHI_GPU_CALL(cudaMemcpy(d_weight_eta_m, weight_eta_m.data(), Quadrature::N_QP_7 * sizeof(double),
+                                  cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_weight_zeta_m, weight_zeta_m.data(), Quadrature::N_QP_3 * sizeof(double),
+                                  cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(
             cudaMemcpy(d_weight_xi, weight_xi.data(), Quadrature::N_QP_4 * sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(
+        MOPHI_GPU_CALL(
             cudaMemcpy(d_weight_eta, weight_eta.data(), Quadrature::N_QP_4 * sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(
+        MOPHI_GPU_CALL(
             cudaMemcpy(d_weight_zeta, weight_zeta.data(), Quadrature::N_QP_3 * sizeof(double), cudaMemcpyHostToDevice));
 
-        HANDLE_ERROR(cudaMemcpy(d_x12_jac, h_x12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_y12_jac, h_y12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_z12_jac, h_z12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_x12, h_x12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_y12, h_y12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_z12, h_z12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_x12_jac, h_x12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_y12_jac, h_y12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_z12_jac, h_z12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_x12, h_x12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_y12, h_y12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_z12, h_z12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
 
-        HANDLE_ERROR(cudaMemcpy(d_element_connectivity, element_connectivity.data(), n_beam * 4 * sizeof(int),
-                                cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_element_connectivity, element_connectivity.data(), n_beam * 4 * sizeof(int),
+                                  cudaMemcpyHostToDevice));
 
         cudaMemset(d_f_int, 0, n_coef * 3 * sizeof(double));
 
@@ -583,9 +583,9 @@ struct GPU_ANCF3443_Data : public ElementBase {
         cudaMemset(d_Fdot, 0, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(double));
         cudaMemset(d_P_vis, 0, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(double));
 
-        HANDLE_ERROR(cudaMemcpy(d_H, height.data(), n_beam * sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_W, width.data(), n_beam * sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_L, length.data(), n_beam * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_H, height.data(), n_beam * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_W, width.data(), n_beam * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_L, length.data(), n_beam * sizeof(double), cudaMemcpyHostToDevice));
 
         double rho0 = 0.0;
         double nu = 0.0;
@@ -599,20 +599,20 @@ struct GPU_ANCF3443_Data : public ElementBase {
         double mu01 = 0.0;
         double kappa = 0.0;
 
-        HANDLE_ERROR(cudaMemcpy(d_rho0, &rho0, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_nu, &nu, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_E, &E, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_mu, &mu, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_lambda, &lambda, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_rho0, &rho0, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_nu, &nu, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_E, &E, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_mu, &mu, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_lambda, &lambda, sizeof(double), cudaMemcpyHostToDevice));
         // copy damping scalars to device (single double each)
-        HANDLE_ERROR(cudaMemcpy(d_eta_damp, &eta_damp, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_lambda_damp, &lambda_damp, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_material_model, &material_model, sizeof(int), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_mu10, &mu10, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_mu01, &mu01, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_kappa, &kappa, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_eta_damp, &eta_damp, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_lambda_damp, &lambda_damp, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_material_model, &material_model, sizeof(int), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_mu10, &mu10, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_mu01, &mu01, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_kappa, &kappa, sizeof(double), cudaMemcpyHostToDevice));
 
-        HANDLE_ERROR(cudaMemcpy(d_data, this, sizeof(GPU_ANCF3443_Data), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_data, this, sizeof(GPU_ANCF3443_Data), cudaMemcpyHostToDevice));
 
         is_setup = true;
         is_reference_precomputed = false;
@@ -653,7 +653,7 @@ struct GPU_ANCF3443_Data : public ElementBase {
             MOPHI_ERROR("GPU_ANCF3443_Data must be set up before setting density.");
             return;
         }
-        HANDLE_ERROR(cudaMemcpy(d_rho0, &rho0, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_rho0, &rho0, sizeof(double), cudaMemcpyHostToDevice));
     }
 
     /**
@@ -666,8 +666,8 @@ struct GPU_ANCF3443_Data : public ElementBase {
             MOPHI_ERROR("GPU_ANCF3443_Data must be set up before setting damping.");
             return;
         }
-        HANDLE_ERROR(cudaMemcpy(d_eta_damp, &eta_damp, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_lambda_damp, &lambda_damp, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_eta_damp, &eta_damp, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_lambda_damp, &lambda_damp, sizeof(double), cudaMemcpyHostToDevice));
     }
 
     /**
@@ -683,10 +683,10 @@ struct GPU_ANCF3443_Data : public ElementBase {
         double mu10 = 0.0;
         double mu01 = 0.0;
         double kappa = 0.0;
-        HANDLE_ERROR(cudaMemcpy(d_material_model, &material_model, sizeof(int), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_mu10, &mu10, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_mu01, &mu01, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_kappa, &kappa, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_material_model, &material_model, sizeof(int), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_mu10, &mu10, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_mu01, &mu01, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_kappa, &kappa, sizeof(double), cudaMemcpyHostToDevice));
     }
 
     void SetSVK(double E, double nu) {
@@ -695,13 +695,13 @@ struct GPU_ANCF3443_Data : public ElementBase {
             return;
         }
 
-        HANDLE_ERROR(cudaMemcpy(d_nu, &nu, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_E, &E, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_nu, &nu, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_E, &E, sizeof(double), cudaMemcpyHostToDevice));
 
         double mu = E / (2 * (1 + nu));
         double lambda = (E * nu) / ((1 + nu) * (1 - 2 * nu));
-        HANDLE_ERROR(cudaMemcpy(d_mu, &mu, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_lambda, &lambda, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_mu, &mu, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_lambda, &lambda, sizeof(double), cudaMemcpyHostToDevice));
 
         SetSVK();
     }
@@ -718,10 +718,10 @@ struct GPU_ANCF3443_Data : public ElementBase {
         }
 
         int material_model = MATERIAL_MODEL_MOONEY_RIVLIN;
-        HANDLE_ERROR(cudaMemcpy(d_material_model, &material_model, sizeof(int), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_mu10, &mu10, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_mu01, &mu01, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_kappa, &kappa, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_material_model, &material_model, sizeof(int), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_mu10, &mu10, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_mu01, &mu01, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_kappa, &kappa, sizeof(double), cudaMemcpyHostToDevice));
     }
 
     void SetExternalForce(const Eigen::VectorXd& f_ext) {
@@ -730,7 +730,7 @@ struct GPU_ANCF3443_Data : public ElementBase {
             return;
         }
         cudaMemset(d_f_ext, 0, n_coef * 3 * sizeof(double));
-        HANDLE_ERROR(cudaMemcpy(d_f_ext, f_ext.data(), n_coef * 3 * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_f_ext, f_ext.data(), n_coef * 3 * sizeof(double), cudaMemcpyHostToDevice));
     }
 
     void SetNodalFixed(const Eigen::VectorXi& fixed_nodes) {
@@ -742,16 +742,16 @@ struct GPU_ANCF3443_Data : public ElementBase {
         n_constraint = fixed_nodes.size() * 3;
         constraint_mode = kConstraintFixedCoefficients;
 
-        HANDLE_ERROR(cudaMalloc(&d_constraint, n_constraint * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_fixed_nodes, fixed_nodes.size() * sizeof(int)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_constraint, n_constraint * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_fixed_nodes, fixed_nodes.size() * sizeof(int)));
 
-        HANDLE_ERROR(cudaMemset(d_constraint, 0, n_constraint * sizeof(double)));
-        HANDLE_ERROR(
+        MOPHI_GPU_CALL(cudaMemset(d_constraint, 0, n_constraint * sizeof(double)));
+        MOPHI_GPU_CALL(
             cudaMemcpy(d_fixed_nodes, fixed_nodes.data(), fixed_nodes.size() * sizeof(int), cudaMemcpyHostToDevice));
 
         is_constraints_setup = true;
         if (d_data) {
-            HANDLE_ERROR(cudaMemcpy(d_data, this, sizeof(GPU_ANCF3443_Data), cudaMemcpyHostToDevice));
+            MOPHI_GPU_CALL(cudaMemcpy(d_data, this, sizeof(GPU_ANCF3443_Data), cudaMemcpyHostToDevice));
         }
     }
 
@@ -801,25 +801,25 @@ struct GPU_ANCF3443_Data : public ElementBase {
         n_constraint = static_cast<int>(rhs.size());
         constraint_mode = kConstraintLinearCSR;
 
-        HANDLE_ERROR(cudaMalloc(&d_constraint, n_constraint * sizeof(double)));
-        HANDLE_ERROR(cudaMemset(d_constraint, 0, n_constraint * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_constraint, n_constraint * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMemset(d_constraint, 0, n_constraint * sizeof(double)));
 
-        HANDLE_ERROR(cudaMalloc(&d_constraint_rhs, n_constraint * sizeof(double)));
-        HANDLE_ERROR(cudaMemcpy(d_constraint_rhs, rhs.data(), n_constraint * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMalloc(&d_constraint_rhs, n_constraint * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMemcpy(d_constraint_rhs, rhs.data(), n_constraint * sizeof(double), cudaMemcpyHostToDevice));
 
         // J (CSR): rows=constraints, cols=dofs.
-        HANDLE_ERROR(cudaMalloc((void**)&d_j_csr_offsets, static_cast<size_t>(n_constraint + 1) * sizeof(int)));
-        HANDLE_ERROR(cudaMalloc((void**)&d_j_csr_columns, static_cast<size_t>(nnz) * sizeof(int)));
-        HANDLE_ERROR(cudaMalloc((void**)&d_j_csr_values, static_cast<size_t>(nnz) * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc((void**)&d_j_nnz, sizeof(int)));
+        MOPHI_GPU_CALL(cudaMalloc((void**)&d_j_csr_offsets, static_cast<size_t>(n_constraint + 1) * sizeof(int)));
+        MOPHI_GPU_CALL(cudaMalloc((void**)&d_j_csr_columns, static_cast<size_t>(nnz) * sizeof(int)));
+        MOPHI_GPU_CALL(cudaMalloc((void**)&d_j_csr_values, static_cast<size_t>(nnz) * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc((void**)&d_j_nnz, sizeof(int)));
 
-        HANDLE_ERROR(cudaMemcpy(d_j_csr_offsets, j_offsets.data(), static_cast<size_t>(n_constraint + 1) * sizeof(int),
-                                cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_j_csr_columns, j_columns.data(), static_cast<size_t>(nnz) * sizeof(int),
-                                cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_j_csr_values, j_values.data(), static_cast<size_t>(nnz) * sizeof(double),
-                                cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_j_nnz, &nnz, sizeof(int), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_j_csr_offsets, j_offsets.data(),
+                                  static_cast<size_t>(n_constraint + 1) * sizeof(int), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_j_csr_columns, j_columns.data(), static_cast<size_t>(nnz) * sizeof(int),
+                                  cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_j_csr_values, j_values.data(), static_cast<size_t>(nnz) * sizeof(double),
+                                  cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_j_nnz, &nnz, sizeof(int), cudaMemcpyHostToDevice));
         is_j_csr_setup = true;
 
         // Build J^T (CSR) on host: rows=dofs, cols=constraints.
@@ -850,23 +850,23 @@ struct GPU_ANCF3443_Data : public ElementBase {
             }
         }
 
-        HANDLE_ERROR(cudaMalloc((void**)&d_cj_csr_offsets, static_cast<size_t>(n_dofs + 1) * sizeof(int)));
-        HANDLE_ERROR(cudaMalloc((void**)&d_cj_csr_columns, static_cast<size_t>(nnz) * sizeof(int)));
-        HANDLE_ERROR(cudaMalloc((void**)&d_cj_csr_values, static_cast<size_t>(nnz) * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc((void**)&d_cj_nnz, sizeof(int)));
+        MOPHI_GPU_CALL(cudaMalloc((void**)&d_cj_csr_offsets, static_cast<size_t>(n_dofs + 1) * sizeof(int)));
+        MOPHI_GPU_CALL(cudaMalloc((void**)&d_cj_csr_columns, static_cast<size_t>(nnz) * sizeof(int)));
+        MOPHI_GPU_CALL(cudaMalloc((void**)&d_cj_csr_values, static_cast<size_t>(nnz) * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc((void**)&d_cj_nnz, sizeof(int)));
 
-        HANDLE_ERROR(cudaMemcpy(d_cj_csr_offsets, jt_offsets.data(), static_cast<size_t>(n_dofs + 1) * sizeof(int),
-                                cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_cj_csr_columns, jt_columns.data(), static_cast<size_t>(nnz) * sizeof(int),
-                                cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_cj_csr_values, jt_values.data(), static_cast<size_t>(nnz) * sizeof(double),
-                                cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_cj_nnz, &nnz, sizeof(int), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_cj_csr_offsets, jt_offsets.data(), static_cast<size_t>(n_dofs + 1) * sizeof(int),
+                                  cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_cj_csr_columns, jt_columns.data(), static_cast<size_t>(nnz) * sizeof(int),
+                                  cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_cj_csr_values, jt_values.data(), static_cast<size_t>(nnz) * sizeof(double),
+                                  cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_cj_nnz, &nnz, sizeof(int), cudaMemcpyHostToDevice));
         is_cj_csr_setup = true;
 
         is_constraints_setup = true;
         if (d_data) {
-            HANDLE_ERROR(cudaMemcpy(d_data, this, sizeof(GPU_ANCF3443_Data), cudaMemcpyHostToDevice));
+            MOPHI_GPU_CALL(cudaMemcpy(d_data, this, sizeof(GPU_ANCF3443_Data), cudaMemcpyHostToDevice));
         }
     }
 
@@ -885,94 +885,94 @@ struct GPU_ANCF3443_Data : public ElementBase {
             MOPHI_ERROR("UpdateLinearConstraintRHS: size mismatch.");
             return;
         }
-        HANDLE_ERROR(cudaMemcpy(d_constraint_rhs, rhs.data(), static_cast<size_t>(n_constraint) * sizeof(double),
-                                cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_constraint_rhs, rhs.data(), static_cast<size_t>(n_constraint) * sizeof(double),
+                                  cudaMemcpyHostToDevice));
     }
 
     // Free memory
     void Destroy() {
-        HANDLE_ERROR(cudaFree(d_B_inv));
-        HANDLE_ERROR(cudaFree(d_grad_N_ref));
-        HANDLE_ERROR(cudaFree(d_detJ_ref));
+        MOPHI_GPU_CALL(cudaFree(d_B_inv));
+        MOPHI_GPU_CALL(cudaFree(d_grad_N_ref));
+        MOPHI_GPU_CALL(cudaFree(d_detJ_ref));
 
-        HANDLE_ERROR(cudaFree(d_gauss_xi_m));
-        HANDLE_ERROR(cudaFree(d_gauss_eta_m));
-        HANDLE_ERROR(cudaFree(d_gauss_zeta_m));
-        HANDLE_ERROR(cudaFree(d_gauss_xi));
-        HANDLE_ERROR(cudaFree(d_gauss_eta));
-        HANDLE_ERROR(cudaFree(d_gauss_zeta));
-        HANDLE_ERROR(cudaFree(d_weight_xi_m));
-        HANDLE_ERROR(cudaFree(d_weight_eta_m));
-        HANDLE_ERROR(cudaFree(d_weight_zeta_m));
-        HANDLE_ERROR(cudaFree(d_weight_xi));
-        HANDLE_ERROR(cudaFree(d_weight_eta));
-        HANDLE_ERROR(cudaFree(d_weight_zeta));
+        MOPHI_GPU_CALL(cudaFree(d_gauss_xi_m));
+        MOPHI_GPU_CALL(cudaFree(d_gauss_eta_m));
+        MOPHI_GPU_CALL(cudaFree(d_gauss_zeta_m));
+        MOPHI_GPU_CALL(cudaFree(d_gauss_xi));
+        MOPHI_GPU_CALL(cudaFree(d_gauss_eta));
+        MOPHI_GPU_CALL(cudaFree(d_gauss_zeta));
+        MOPHI_GPU_CALL(cudaFree(d_weight_xi_m));
+        MOPHI_GPU_CALL(cudaFree(d_weight_eta_m));
+        MOPHI_GPU_CALL(cudaFree(d_weight_zeta_m));
+        MOPHI_GPU_CALL(cudaFree(d_weight_xi));
+        MOPHI_GPU_CALL(cudaFree(d_weight_eta));
+        MOPHI_GPU_CALL(cudaFree(d_weight_zeta));
 
-        HANDLE_ERROR(cudaFree(d_x12_jac));
-        HANDLE_ERROR(cudaFree(d_y12_jac));
-        HANDLE_ERROR(cudaFree(d_z12_jac));
-        HANDLE_ERROR(cudaFree(d_x12));
-        HANDLE_ERROR(cudaFree(d_y12));
-        HANDLE_ERROR(cudaFree(d_z12));
+        MOPHI_GPU_CALL(cudaFree(d_x12_jac));
+        MOPHI_GPU_CALL(cudaFree(d_y12_jac));
+        MOPHI_GPU_CALL(cudaFree(d_z12_jac));
+        MOPHI_GPU_CALL(cudaFree(d_x12));
+        MOPHI_GPU_CALL(cudaFree(d_y12));
+        MOPHI_GPU_CALL(cudaFree(d_z12));
 
-        HANDLE_ERROR(cudaFree(d_element_connectivity));
+        MOPHI_GPU_CALL(cudaFree(d_element_connectivity));
 
         if (is_csr_setup) {
-            HANDLE_ERROR(cudaFree(d_csr_offsets));
-            HANDLE_ERROR(cudaFree(d_csr_columns));
-            HANDLE_ERROR(cudaFree(d_csr_values));
-            HANDLE_ERROR(cudaFree(d_nnz));
+            MOPHI_GPU_CALL(cudaFree(d_csr_offsets));
+            MOPHI_GPU_CALL(cudaFree(d_csr_columns));
+            MOPHI_GPU_CALL(cudaFree(d_csr_values));
+            MOPHI_GPU_CALL(cudaFree(d_nnz));
         }
 
         if (is_cj_csr_setup) {
-            HANDLE_ERROR(cudaFree(d_cj_csr_offsets));
-            HANDLE_ERROR(cudaFree(d_cj_csr_columns));
-            HANDLE_ERROR(cudaFree(d_cj_csr_values));
-            HANDLE_ERROR(cudaFree(d_cj_nnz));
+            MOPHI_GPU_CALL(cudaFree(d_cj_csr_offsets));
+            MOPHI_GPU_CALL(cudaFree(d_cj_csr_columns));
+            MOPHI_GPU_CALL(cudaFree(d_cj_csr_values));
+            MOPHI_GPU_CALL(cudaFree(d_cj_nnz));
             is_cj_csr_setup = false;
         }
 
         if (is_j_csr_setup) {
-            HANDLE_ERROR(cudaFree(d_j_csr_offsets));
-            HANDLE_ERROR(cudaFree(d_j_csr_columns));
-            HANDLE_ERROR(cudaFree(d_j_csr_values));
-            HANDLE_ERROR(cudaFree(d_j_nnz));
+            MOPHI_GPU_CALL(cudaFree(d_j_csr_offsets));
+            MOPHI_GPU_CALL(cudaFree(d_j_csr_columns));
+            MOPHI_GPU_CALL(cudaFree(d_j_csr_values));
+            MOPHI_GPU_CALL(cudaFree(d_j_nnz));
             is_j_csr_setup = false;
         }
 
-        HANDLE_ERROR(cudaFree(d_F));
-        HANDLE_ERROR(cudaFree(d_P));
-        HANDLE_ERROR(cudaFree(d_Fdot));
-        HANDLE_ERROR(cudaFree(d_P_vis));
-        HANDLE_ERROR(cudaFree(d_f_int));
-        HANDLE_ERROR(cudaFree(d_f_ext));
-        HANDLE_ERROR(cudaFree(d_eta_damp));
-        HANDLE_ERROR(cudaFree(d_lambda_damp));
+        MOPHI_GPU_CALL(cudaFree(d_F));
+        MOPHI_GPU_CALL(cudaFree(d_P));
+        MOPHI_GPU_CALL(cudaFree(d_Fdot));
+        MOPHI_GPU_CALL(cudaFree(d_P_vis));
+        MOPHI_GPU_CALL(cudaFree(d_f_int));
+        MOPHI_GPU_CALL(cudaFree(d_f_ext));
+        MOPHI_GPU_CALL(cudaFree(d_eta_damp));
+        MOPHI_GPU_CALL(cudaFree(d_lambda_damp));
 
-        HANDLE_ERROR(cudaFree(d_H));
-        HANDLE_ERROR(cudaFree(d_W));
-        HANDLE_ERROR(cudaFree(d_L));
+        MOPHI_GPU_CALL(cudaFree(d_H));
+        MOPHI_GPU_CALL(cudaFree(d_W));
+        MOPHI_GPU_CALL(cudaFree(d_L));
 
-        HANDLE_ERROR(cudaFree(d_rho0));
-        HANDLE_ERROR(cudaFree(d_nu));
-        HANDLE_ERROR(cudaFree(d_E));
-        HANDLE_ERROR(cudaFree(d_lambda));
-        HANDLE_ERROR(cudaFree(d_mu));
-        HANDLE_ERROR(cudaFree(d_material_model));
-        HANDLE_ERROR(cudaFree(d_mu10));
-        HANDLE_ERROR(cudaFree(d_mu01));
-        HANDLE_ERROR(cudaFree(d_kappa));
+        MOPHI_GPU_CALL(cudaFree(d_rho0));
+        MOPHI_GPU_CALL(cudaFree(d_nu));
+        MOPHI_GPU_CALL(cudaFree(d_E));
+        MOPHI_GPU_CALL(cudaFree(d_lambda));
+        MOPHI_GPU_CALL(cudaFree(d_mu));
+        MOPHI_GPU_CALL(cudaFree(d_material_model));
+        MOPHI_GPU_CALL(cudaFree(d_mu10));
+        MOPHI_GPU_CALL(cudaFree(d_mu01));
+        MOPHI_GPU_CALL(cudaFree(d_kappa));
 
-        HANDLE_ERROR(cudaFree(d_data));
+        MOPHI_GPU_CALL(cudaFree(d_data));
 
         if (is_constraints_setup) {
-            HANDLE_ERROR(cudaFree(d_constraint));
+            MOPHI_GPU_CALL(cudaFree(d_constraint));
             if (d_fixed_nodes) {
-                HANDLE_ERROR(cudaFree(d_fixed_nodes));
+                MOPHI_GPU_CALL(cudaFree(d_fixed_nodes));
                 d_fixed_nodes = nullptr;
             }
             if (d_constraint_rhs) {
-                HANDLE_ERROR(cudaFree(d_constraint_rhs));
+                MOPHI_GPU_CALL(cudaFree(d_constraint_rhs));
                 d_constraint_rhs = nullptr;
             }
         }

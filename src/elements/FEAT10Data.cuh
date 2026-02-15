@@ -353,45 +353,45 @@ struct GPU_FEAT10_Data : public ElementBase {
     }
 
     void Initialize() {
-        HANDLE_ERROR(cudaMalloc(&d_h_x12, n_coef * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_h_y12, n_coef * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_h_z12, n_coef * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_h_x12_jac, n_coef * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_h_y12_jac, n_coef * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_h_z12_jac, n_coef * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_element_connectivity, n_elem * Quadrature::N_NODE_T10_10 * sizeof(int)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_h_x12, n_coef * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_h_y12, n_coef * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_h_z12, n_coef * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_h_x12_jac, n_coef * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_h_y12_jac, n_coef * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_h_z12_jac, n_coef * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_element_connectivity, n_elem * Quadrature::N_NODE_T10_10 * sizeof(int)));
 
-        HANDLE_ERROR(cudaMalloc(&d_tet5pt_x, Quadrature::N_QP_T10_5 * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_tet5pt_y, Quadrature::N_QP_T10_5 * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_tet5pt_z, Quadrature::N_QP_T10_5 * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_tet5pt_weights, Quadrature::N_QP_T10_5 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_tet5pt_x, Quadrature::N_QP_T10_5 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_tet5pt_y, Quadrature::N_QP_T10_5 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_tet5pt_z, Quadrature::N_QP_T10_5 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_tet5pt_weights, Quadrature::N_QP_T10_5 * sizeof(double)));
 
-        HANDLE_ERROR(cudaMalloc(&d_grad_N_ref, n_elem * Quadrature::N_QP_T10_5 * 10 * 3 * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_detJ_ref, n_elem * Quadrature::N_QP_T10_5 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_grad_N_ref, n_elem * Quadrature::N_QP_T10_5 * 10 * 3 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_detJ_ref, n_elem * Quadrature::N_QP_T10_5 * sizeof(double)));
 
-        HANDLE_ERROR(cudaMalloc(&d_F, n_elem * Quadrature::N_QP_T10_5 * 3 * 3 * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_P, n_elem * Quadrature::N_QP_T10_5 * 3 * 3 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_F, n_elem * Quadrature::N_QP_T10_5 * 3 * 3 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_P, n_elem * Quadrature::N_QP_T10_5 * 3 * 3 * sizeof(double)));
         // Viscous-related buffers
-        HANDLE_ERROR(cudaMalloc(&d_Fdot, n_elem * Quadrature::N_QP_T10_5 * 3 * 3 * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_P_vis, n_elem * Quadrature::N_QP_T10_5 * 3 * 3 * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_f_int, n_coef * 3 * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_f_ext, n_coef * 3 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_Fdot, n_elem * Quadrature::N_QP_T10_5 * 3 * 3 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_P_vis, n_elem * Quadrature::N_QP_T10_5 * 3 * 3 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_f_int, n_coef * 3 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_f_ext, n_coef * 3 * sizeof(double)));
 
-        HANDLE_ERROR(cudaMalloc(&d_rho0, sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_nu, sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_E, sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_lambda, sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_mu, sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_material_model, sizeof(int)));
-        HANDLE_ERROR(cudaMalloc(&d_mu10, sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_mu01, sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_kappa, sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_rho0, sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_nu, sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_E, sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_lambda, sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_mu, sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_material_model, sizeof(int)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_mu10, sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_mu01, sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_kappa, sizeof(double)));
         // damping parameters
-        HANDLE_ERROR(cudaMalloc(&d_eta_damp, sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_lambda_damp, sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_eta_damp, sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_lambda_damp, sizeof(double)));
 
         //     // copy struct to device
-        HANDLE_ERROR(cudaMalloc(&d_data, sizeof(GPU_FEAT10_Data)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_data, sizeof(GPU_FEAT10_Data)));
     }
 
     void Setup(const Eigen::VectorXd& tet5pt_x_host,
@@ -407,26 +407,26 @@ struct GPU_FEAT10_Data : public ElementBase {
             return;
         }
 
-        HANDLE_ERROR(cudaMemcpy(d_h_x12, h_x12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_h_y12, h_y12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_h_z12, h_z12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_h_x12_jac, h_x12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_h_y12_jac, h_y12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_h_z12_jac, h_z12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_h_x12, h_x12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_h_y12, h_y12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_h_z12, h_z12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_h_x12_jac, h_x12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_h_y12_jac, h_y12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_h_z12_jac, h_z12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
 
-        HANDLE_ERROR(cudaMemcpy(d_element_connectivity, element_connectivity.data(),
-                                n_elem * Quadrature::N_NODE_T10_10 * sizeof(int), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_element_connectivity, element_connectivity.data(),
+                                  n_elem * Quadrature::N_NODE_T10_10 * sizeof(int), cudaMemcpyHostToDevice));
 
-        HANDLE_ERROR(cudaMemcpy(d_tet5pt_x, tet5pt_x_host.data(), Quadrature::N_QP_T10_5 * sizeof(double),
-                                cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_tet5pt_y, tet5pt_y_host.data(), Quadrature::N_QP_T10_5 * sizeof(double),
-                                cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_tet5pt_z, tet5pt_z_host.data(), Quadrature::N_QP_T10_5 * sizeof(double),
-                                cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_tet5pt_weights, tet5pt_weights_host.data(), Quadrature::N_QP_T10_5 * sizeof(double),
-                                cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemset(d_grad_N_ref, 0, n_elem * Quadrature::N_QP_T10_5 * 10 * 3 * sizeof(double)));
-        HANDLE_ERROR(cudaMemset(d_detJ_ref, 0, n_elem * Quadrature::N_QP_T10_5 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMemcpy(d_tet5pt_x, tet5pt_x_host.data(), Quadrature::N_QP_T10_5 * sizeof(double),
+                                  cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_tet5pt_y, tet5pt_y_host.data(), Quadrature::N_QP_T10_5 * sizeof(double),
+                                  cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_tet5pt_z, tet5pt_z_host.data(), Quadrature::N_QP_T10_5 * sizeof(double),
+                                  cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_tet5pt_weights, tet5pt_weights_host.data(), Quadrature::N_QP_T10_5 * sizeof(double),
+                                  cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemset(d_grad_N_ref, 0, n_elem * Quadrature::N_QP_T10_5 * 10 * 3 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMemset(d_detJ_ref, 0, n_elem * Quadrature::N_QP_T10_5 * sizeof(double)));
 
         cudaMemset(d_f_int, 0, n_coef * 3 * sizeof(double));
 
@@ -449,20 +449,20 @@ struct GPU_FEAT10_Data : public ElementBase {
         double mu01 = 0.0;
         double kappa = 0.0;
 
-        HANDLE_ERROR(cudaMemcpy(d_rho0, &rho0, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_nu, &nu, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_E, &E, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_mu, &mu, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_lambda, &lambda, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_rho0, &rho0, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_nu, &nu, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_E, &E, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_mu, &mu, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_lambda, &lambda, sizeof(double), cudaMemcpyHostToDevice));
         // copy damping parameters
-        HANDLE_ERROR(cudaMemcpy(d_eta_damp, &eta_damp, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_lambda_damp, &lambda_damp, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_material_model, &material_model, sizeof(int), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_mu10, &mu10, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_mu01, &mu01, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_kappa, &kappa, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_eta_damp, &eta_damp, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_lambda_damp, &lambda_damp, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_material_model, &material_model, sizeof(int), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_mu10, &mu10, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_mu01, &mu01, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_kappa, &kappa, sizeof(double), cudaMemcpyHostToDevice));
 
-        HANDLE_ERROR(cudaMemcpy(d_data, this, sizeof(GPU_FEAT10_Data), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_data, this, sizeof(GPU_FEAT10_Data), cudaMemcpyHostToDevice));
 
         is_setup = true;
     }
@@ -475,7 +475,7 @@ struct GPU_FEAT10_Data : public ElementBase {
             MOPHI_ERROR("GPU_FEAT10_Data must be set up before setting density.");
             return;
         }
-        HANDLE_ERROR(cudaMemcpy(d_rho0, &rho0, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_rho0, &rho0, sizeof(double), cudaMemcpyHostToDevice));
     }
 
     /**
@@ -488,8 +488,8 @@ struct GPU_FEAT10_Data : public ElementBase {
             MOPHI_ERROR("GPU_FEAT10_Data must be set up before setting damping.");
             return;
         }
-        HANDLE_ERROR(cudaMemcpy(d_eta_damp, &eta_damp, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_lambda_damp, &lambda_damp, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_eta_damp, &eta_damp, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_lambda_damp, &lambda_damp, sizeof(double), cudaMemcpyHostToDevice));
     }
 
     /**
@@ -505,10 +505,10 @@ struct GPU_FEAT10_Data : public ElementBase {
         double mu10 = 0.0;
         double mu01 = 0.0;
         double kappa = 0.0;
-        HANDLE_ERROR(cudaMemcpy(d_material_model, &material_model, sizeof(int), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_mu10, &mu10, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_mu01, &mu01, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_kappa, &kappa, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_material_model, &material_model, sizeof(int), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_mu10, &mu10, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_mu01, &mu01, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_kappa, &kappa, sizeof(double), cudaMemcpyHostToDevice));
     }
 
     /**
@@ -522,13 +522,13 @@ struct GPU_FEAT10_Data : public ElementBase {
             return;
         }
 
-        HANDLE_ERROR(cudaMemcpy(d_nu, &nu, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_E, &E, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_nu, &nu, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_E, &E, sizeof(double), cudaMemcpyHostToDevice));
 
         double mu = E / (2 * (1 + nu));
         double lambda = (E * nu) / ((1 + nu) * (1 - 2 * nu));
-        HANDLE_ERROR(cudaMemcpy(d_mu, &mu, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_lambda, &lambda, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_mu, &mu, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_lambda, &lambda, sizeof(double), cudaMemcpyHostToDevice));
 
         SetSVK();
     }
@@ -545,10 +545,10 @@ struct GPU_FEAT10_Data : public ElementBase {
         }
 
         int material_model = MATERIAL_MODEL_MOONEY_RIVLIN;
-        HANDLE_ERROR(cudaMemcpy(d_material_model, &material_model, sizeof(int), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_mu10, &mu10, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_mu01, &mu01, sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_kappa, &kappa, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_material_model, &material_model, sizeof(int), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_mu10, &mu10, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_mu01, &mu01, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_kappa, &kappa, sizeof(double), cudaMemcpyHostToDevice));
     }
 
     void SetExternalForce(const Eigen::VectorXd& h_f_ext) {
@@ -558,7 +558,7 @@ struct GPU_FEAT10_Data : public ElementBase {
         }
 
         cudaMemset(d_f_ext, 0, n_coef * 3 * sizeof(double));
-        HANDLE_ERROR(cudaMemcpy(d_f_ext, h_f_ext.data(), n_coef * 3 * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_f_ext, h_f_ext.data(), n_coef * 3 * sizeof(double), cudaMemcpyHostToDevice));
     }
 
     const double* GetX12DevicePtr() const {
@@ -589,9 +589,9 @@ struct GPU_FEAT10_Data : public ElementBase {
             MOPHI_ERROR("Position vector size mismatch.");
             return;
         }
-        HANDLE_ERROR(cudaMemcpy(d_h_x12, h_x12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_h_y12, h_y12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_h_z12, h_z12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_h_x12, h_x12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_h_y12, h_y12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_h_z12, h_z12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
     }
 
     void UpdateConstraintTargets(const Eigen::VectorXd& h_x12,
@@ -601,9 +601,9 @@ struct GPU_FEAT10_Data : public ElementBase {
             MOPHI_ERROR("Position vector size mismatch.");
             return;
         }
-        HANDLE_ERROR(cudaMemcpy(d_h_x12_jac, h_x12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_h_y12_jac, h_y12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(d_h_z12_jac, h_z12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_h_x12_jac, h_x12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_h_y12_jac, h_y12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_h_z12_jac, h_z12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
     }
 
     void SetNodalFixed(const Eigen::VectorXi& fixed_nodes);
@@ -618,69 +618,69 @@ struct GPU_FEAT10_Data : public ElementBase {
 
     // Free memory
     void Destroy() {
-        HANDLE_ERROR(cudaFree(d_h_x12));
-        HANDLE_ERROR(cudaFree(d_h_y12));
-        HANDLE_ERROR(cudaFree(d_h_z12));
+        MOPHI_GPU_CALL(cudaFree(d_h_x12));
+        MOPHI_GPU_CALL(cudaFree(d_h_y12));
+        MOPHI_GPU_CALL(cudaFree(d_h_z12));
 
-        HANDLE_ERROR(cudaFree(d_h_x12_jac));
-        HANDLE_ERROR(cudaFree(d_h_y12_jac));
-        HANDLE_ERROR(cudaFree(d_h_z12_jac));
+        MOPHI_GPU_CALL(cudaFree(d_h_x12_jac));
+        MOPHI_GPU_CALL(cudaFree(d_h_y12_jac));
+        MOPHI_GPU_CALL(cudaFree(d_h_z12_jac));
 
-        HANDLE_ERROR(cudaFree(d_element_connectivity));
+        MOPHI_GPU_CALL(cudaFree(d_element_connectivity));
 
         if (is_csr_setup) {
-            HANDLE_ERROR(cudaFree(d_csr_offsets));
-            HANDLE_ERROR(cudaFree(d_csr_columns));
-            HANDLE_ERROR(cudaFree(d_csr_values));
-            HANDLE_ERROR(cudaFree(d_nnz));
+            MOPHI_GPU_CALL(cudaFree(d_csr_offsets));
+            MOPHI_GPU_CALL(cudaFree(d_csr_columns));
+            MOPHI_GPU_CALL(cudaFree(d_csr_values));
+            MOPHI_GPU_CALL(cudaFree(d_nnz));
         }
 
         if (is_cj_csr_setup) {
-            HANDLE_ERROR(cudaFree(d_cj_csr_offsets));
-            HANDLE_ERROR(cudaFree(d_cj_csr_columns));
-            HANDLE_ERROR(cudaFree(d_cj_csr_values));
-            HANDLE_ERROR(cudaFree(d_cj_nnz));
+            MOPHI_GPU_CALL(cudaFree(d_cj_csr_offsets));
+            MOPHI_GPU_CALL(cudaFree(d_cj_csr_columns));
+            MOPHI_GPU_CALL(cudaFree(d_cj_csr_values));
+            MOPHI_GPU_CALL(cudaFree(d_cj_nnz));
         }
 
         if (is_j_csr_setup) {
-            HANDLE_ERROR(cudaFree(d_j_csr_offsets));
-            HANDLE_ERROR(cudaFree(d_j_csr_columns));
-            HANDLE_ERROR(cudaFree(d_j_csr_values));
-            HANDLE_ERROR(cudaFree(d_j_nnz));
+            MOPHI_GPU_CALL(cudaFree(d_j_csr_offsets));
+            MOPHI_GPU_CALL(cudaFree(d_j_csr_columns));
+            MOPHI_GPU_CALL(cudaFree(d_j_csr_values));
+            MOPHI_GPU_CALL(cudaFree(d_j_nnz));
         }
 
-        HANDLE_ERROR(cudaFree(d_tet5pt_x));
-        HANDLE_ERROR(cudaFree(d_tet5pt_y));
-        HANDLE_ERROR(cudaFree(d_tet5pt_z));
-        HANDLE_ERROR(cudaFree(d_tet5pt_weights));
+        MOPHI_GPU_CALL(cudaFree(d_tet5pt_x));
+        MOPHI_GPU_CALL(cudaFree(d_tet5pt_y));
+        MOPHI_GPU_CALL(cudaFree(d_tet5pt_z));
+        MOPHI_GPU_CALL(cudaFree(d_tet5pt_weights));
 
-        HANDLE_ERROR(cudaFree(d_grad_N_ref));
-        HANDLE_ERROR(cudaFree(d_detJ_ref));
+        MOPHI_GPU_CALL(cudaFree(d_grad_N_ref));
+        MOPHI_GPU_CALL(cudaFree(d_detJ_ref));
 
-        HANDLE_ERROR(cudaFree(d_F));
-        HANDLE_ERROR(cudaFree(d_P));
-        HANDLE_ERROR(cudaFree(d_Fdot));
-        HANDLE_ERROR(cudaFree(d_P_vis));
-        HANDLE_ERROR(cudaFree(d_f_int));
-        HANDLE_ERROR(cudaFree(d_f_ext));
+        MOPHI_GPU_CALL(cudaFree(d_F));
+        MOPHI_GPU_CALL(cudaFree(d_P));
+        MOPHI_GPU_CALL(cudaFree(d_Fdot));
+        MOPHI_GPU_CALL(cudaFree(d_P_vis));
+        MOPHI_GPU_CALL(cudaFree(d_f_int));
+        MOPHI_GPU_CALL(cudaFree(d_f_ext));
 
-        HANDLE_ERROR(cudaFree(d_rho0));
-        HANDLE_ERROR(cudaFree(d_nu));
-        HANDLE_ERROR(cudaFree(d_E));
-        HANDLE_ERROR(cudaFree(d_lambda));
-        HANDLE_ERROR(cudaFree(d_mu));
-        HANDLE_ERROR(cudaFree(d_material_model));
-        HANDLE_ERROR(cudaFree(d_mu10));
-        HANDLE_ERROR(cudaFree(d_mu01));
-        HANDLE_ERROR(cudaFree(d_kappa));
-        HANDLE_ERROR(cudaFree(d_eta_damp));
-        HANDLE_ERROR(cudaFree(d_lambda_damp));
+        MOPHI_GPU_CALL(cudaFree(d_rho0));
+        MOPHI_GPU_CALL(cudaFree(d_nu));
+        MOPHI_GPU_CALL(cudaFree(d_E));
+        MOPHI_GPU_CALL(cudaFree(d_lambda));
+        MOPHI_GPU_CALL(cudaFree(d_mu));
+        MOPHI_GPU_CALL(cudaFree(d_material_model));
+        MOPHI_GPU_CALL(cudaFree(d_mu10));
+        MOPHI_GPU_CALL(cudaFree(d_mu01));
+        MOPHI_GPU_CALL(cudaFree(d_kappa));
+        MOPHI_GPU_CALL(cudaFree(d_eta_damp));
+        MOPHI_GPU_CALL(cudaFree(d_lambda_damp));
 
-        HANDLE_ERROR(cudaFree(d_data));
+        MOPHI_GPU_CALL(cudaFree(d_data));
 
         if (is_constraints_setup) {
-            HANDLE_ERROR(cudaFree(d_constraint));
-            HANDLE_ERROR(cudaFree(d_fixed_nodes));
+            MOPHI_GPU_CALL(cudaFree(d_constraint));
+            MOPHI_GPU_CALL(cudaFree(d_fixed_nodes));
         }
     }
 

@@ -142,7 +142,7 @@ class SyncedNesterovSolver : public SolverBase {
         cudaMemset(d_lambda_guess_, 0, n_constraints_ * sizeof(double));
         cudaMemset(d_g_, 0, n_coef_ * 3 * sizeof(double));
 
-        HANDLE_ERROR(cudaMemcpy(d_nesterov_solver_, this, sizeof(SyncedNesterovSolver), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_nesterov_solver_, this, sizeof(SyncedNesterovSolver), cudaMemcpyHostToDevice));
     }
 
 #if defined(__CUDACC__)

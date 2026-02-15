@@ -342,9 +342,9 @@ void GPU_FEAT10_Data::CalcMassMatrix() {
     }
 
     int h_nnz = 0;
-    HANDLE_ERROR(cudaMemcpy(&h_nnz, d_nnz, sizeof(int), cudaMemcpyDeviceToHost));
+    MOPHI_GPU_CALL(cudaMemcpy(&h_nnz, d_nnz, sizeof(int), cudaMemcpyDeviceToHost));
     if (h_nnz > 0) {
-        HANDLE_ERROR(cudaMemset(d_csr_values, 0, static_cast<size_t>(h_nnz) * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMemset(d_csr_values, 0, static_cast<size_t>(h_nnz) * sizeof(double)));
     }
 
     // Launch: n_elem × 10 × 10 threads
@@ -353,7 +353,7 @@ void GPU_FEAT10_Data::CalcMassMatrix() {
     int blocks = (total_threads + threads_per_block - 1) / threads_per_block;
 
     mass_matrix_qp_kernel<<<blocks, threads_per_block>>>(d_data);
-    HANDLE_ERROR(cudaDeviceSynchronize());
+    MOPHI_GPU_CALL(cudaDeviceSynchronize());
 }
 
 void GPU_FEAT10_Data::BuildMassCSRPattern() {
@@ -363,13 +363,13 @@ void GPU_FEAT10_Data::BuildMassCSRPattern() {
 
     const int total_keys = n_elem * Quadrature::N_NODE_T10_10 * Quadrature::N_NODE_T10_10;
     unsigned long long* d_keys = nullptr;
-    HANDLE_ERROR(cudaMalloc(&d_keys, static_cast<size_t>(total_keys) * sizeof(unsigned long long)));
+    MOPHI_GPU_CALL(cudaMalloc(&d_keys, static_cast<size_t>(total_keys) * sizeof(unsigned long long)));
 
     {
         constexpr int threads = 256;
         const int blocks = (total_keys + threads - 1) / threads;
         build_mass_keys_feat10_kernel<<<blocks, threads>>>(d_data, d_keys);
-        HANDLE_ERROR(cudaDeviceSynchronize());
+        MOPHI_GPU_CALL(cudaDeviceSynchronize());
     }
 
     thrust::device_ptr<unsigned long long> keys_begin(d_keys);
@@ -379,20 +379,20 @@ void GPU_FEAT10_Data::BuildMassCSRPattern() {
 
     const int nnz = static_cast<int>(keys_unique_end - keys_begin);
 
-    HANDLE_ERROR(cudaMalloc((void**)&d_csr_offsets, static_cast<size_t>(n_coef + 1) * sizeof(int)));
-    HANDLE_ERROR(cudaMalloc((void**)&d_csr_columns, static_cast<size_t>(nnz) * sizeof(int)));
-    HANDLE_ERROR(cudaMalloc((void**)&d_csr_values, static_cast<size_t>(nnz) * sizeof(double)));
-    HANDLE_ERROR(cudaMalloc((void**)&d_nnz, sizeof(int)));
+    MOPHI_GPU_CALL(cudaMalloc((void**)&d_csr_offsets, static_cast<size_t>(n_coef + 1) * sizeof(int)));
+    MOPHI_GPU_CALL(cudaMalloc((void**)&d_csr_columns, static_cast<size_t>(nnz) * sizeof(int)));
+    MOPHI_GPU_CALL(cudaMalloc((void**)&d_csr_values, static_cast<size_t>(nnz) * sizeof(double)));
+    MOPHI_GPU_CALL(cudaMalloc((void**)&d_nnz, sizeof(int)));
 
     int* d_row_counts = nullptr;
-    HANDLE_ERROR(cudaMalloc(&d_row_counts, static_cast<size_t>(n_coef) * sizeof(int)));
-    HANDLE_ERROR(cudaMemset(d_row_counts, 0, static_cast<size_t>(n_coef) * sizeof(int)));
+    MOPHI_GPU_CALL(cudaMalloc(&d_row_counts, static_cast<size_t>(n_coef) * sizeof(int)));
+    MOPHI_GPU_CALL(cudaMemset(d_row_counts, 0, static_cast<size_t>(n_coef) * sizeof(int)));
 
     {
         constexpr int threads = 256;
         const int blocks = (nnz + threads - 1) / threads;
         decode_mass_keys_kernel<<<blocks, threads>>>(d_keys, nnz, d_csr_columns, d_row_counts);
-        HANDLE_ERROR(cudaDeviceSynchronize());
+        MOPHI_GPU_CALL(cudaDeviceSynchronize());
     }
 
     thrust::device_ptr<int> row_counts_begin(d_row_counts);
@@ -401,17 +401,17 @@ void GPU_FEAT10_Data::BuildMassCSRPattern() {
 
     {
         set_last_offset_kernel<<<1, 1>>>(d_csr_offsets, n_coef, nnz);
-        HANDLE_ERROR(cudaDeviceSynchronize());
+        MOPHI_GPU_CALL(cudaDeviceSynchronize());
     }
 
-    HANDLE_ERROR(cudaMemcpy(d_nnz, &nnz, sizeof(int), cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemset(d_csr_values, 0, static_cast<size_t>(nnz) * sizeof(double)));
+    MOPHI_GPU_CALL(cudaMemcpy(d_nnz, &nnz, sizeof(int), cudaMemcpyHostToDevice));
+    MOPHI_GPU_CALL(cudaMemset(d_csr_values, 0, static_cast<size_t>(nnz) * sizeof(double)));
 
-    HANDLE_ERROR(cudaFree(d_row_counts));
-    HANDLE_ERROR(cudaFree(d_keys));
+    MOPHI_GPU_CALL(cudaFree(d_row_counts));
+    MOPHI_GPU_CALL(cudaFree(d_keys));
 
     is_csr_setup = true;
-    HANDLE_ERROR(cudaMemcpy(d_data, this, sizeof(GPU_FEAT10_Data), cudaMemcpyHostToDevice));
+    MOPHI_GPU_CALL(cudaMemcpy(d_data, this, sizeof(GPU_FEAT10_Data), cudaMemcpyHostToDevice));
 }
 
 namespace {
@@ -483,24 +483,24 @@ void GPU_FEAT10_Data::ConvertToCSR_ConstraintJac() {
 
     const int nnz = n_constraint;
 
-    HANDLE_ERROR(cudaMalloc((void**)&d_j_csr_offsets, static_cast<size_t>(n_constraint + 1) * sizeof(int)));
-    HANDLE_ERROR(cudaMalloc((void**)&d_j_csr_columns, static_cast<size_t>(nnz) * sizeof(int)));
-    HANDLE_ERROR(cudaMalloc((void**)&d_j_csr_values, static_cast<size_t>(nnz) * sizeof(double)));
-    HANDLE_ERROR(cudaMalloc((void**)&d_j_nnz, sizeof(int)));
+    MOPHI_GPU_CALL(cudaMalloc((void**)&d_j_csr_offsets, static_cast<size_t>(n_constraint + 1) * sizeof(int)));
+    MOPHI_GPU_CALL(cudaMalloc((void**)&d_j_csr_columns, static_cast<size_t>(nnz) * sizeof(int)));
+    MOPHI_GPU_CALL(cudaMalloc((void**)&d_j_csr_values, static_cast<size_t>(nnz) * sizeof(double)));
+    MOPHI_GPU_CALL(cudaMalloc((void**)&d_j_nnz, sizeof(int)));
 
     {
         constexpr int threads = 256;
         const int blocks = (n_constraint + threads - 1) / threads;
         build_constraint_j_csr_kernel<<<blocks, threads>>>(n_constraint, d_fixed_nodes, d_j_csr_offsets,
                                                            d_j_csr_columns, d_j_csr_values);
-        HANDLE_ERROR(cudaDeviceSynchronize());
+        MOPHI_GPU_CALL(cudaDeviceSynchronize());
         set_last_offset_kernel<<<1, 1>>>(d_j_csr_offsets, n_constraint, nnz);
-        HANDLE_ERROR(cudaDeviceSynchronize());
+        MOPHI_GPU_CALL(cudaDeviceSynchronize());
     }
 
-    HANDLE_ERROR(cudaMemcpy(d_j_nnz, &nnz, sizeof(int), cudaMemcpyHostToDevice));
+    MOPHI_GPU_CALL(cudaMemcpy(d_j_nnz, &nnz, sizeof(int), cudaMemcpyHostToDevice));
     is_j_csr_setup = true;
-    HANDLE_ERROR(cudaMemcpy(d_data, this, sizeof(GPU_FEAT10_Data), cudaMemcpyHostToDevice));
+    MOPHI_GPU_CALL(cudaMemcpy(d_data, this, sizeof(GPU_FEAT10_Data), cudaMemcpyHostToDevice));
 }
 
 // This function converts the TRANSPOSE of the constraint Jacobian matrix to CSR
@@ -516,22 +516,22 @@ void GPU_FEAT10_Data::ConvertToCSR_ConstraintJacT() {
     const int num_rows = n_coef * 3;
     const int nnz = n_constraint;
 
-    HANDLE_ERROR(cudaMalloc((void**)&d_cj_csr_offsets, static_cast<size_t>(num_rows + 1) * sizeof(int)));
-    HANDLE_ERROR(cudaMalloc((void**)&d_cj_csr_columns, static_cast<size_t>(nnz) * sizeof(int)));
-    HANDLE_ERROR(cudaMalloc((void**)&d_cj_csr_values, static_cast<size_t>(nnz) * sizeof(double)));
-    HANDLE_ERROR(cudaMalloc((void**)&d_cj_nnz, sizeof(int)));
+    MOPHI_GPU_CALL(cudaMalloc((void**)&d_cj_csr_offsets, static_cast<size_t>(num_rows + 1) * sizeof(int)));
+    MOPHI_GPU_CALL(cudaMalloc((void**)&d_cj_csr_columns, static_cast<size_t>(nnz) * sizeof(int)));
+    MOPHI_GPU_CALL(cudaMalloc((void**)&d_cj_csr_values, static_cast<size_t>(nnz) * sizeof(double)));
+    MOPHI_GPU_CALL(cudaMalloc((void**)&d_cj_nnz, sizeof(int)));
 
     int* d_row_counts = nullptr;
     int* d_row_positions = nullptr;
-    HANDLE_ERROR(cudaMalloc(&d_row_counts, static_cast<size_t>(num_rows) * sizeof(int)));
-    HANDLE_ERROR(cudaMalloc(&d_row_positions, static_cast<size_t>(num_rows) * sizeof(int)));
-    HANDLE_ERROR(cudaMemset(d_row_counts, 0, static_cast<size_t>(num_rows) * sizeof(int)));
+    MOPHI_GPU_CALL(cudaMalloc(&d_row_counts, static_cast<size_t>(num_rows) * sizeof(int)));
+    MOPHI_GPU_CALL(cudaMalloc(&d_row_positions, static_cast<size_t>(num_rows) * sizeof(int)));
+    MOPHI_GPU_CALL(cudaMemset(d_row_counts, 0, static_cast<size_t>(num_rows) * sizeof(int)));
 
     {
         constexpr int threads = 256;
         const int blocks = (n_constraint + threads - 1) / threads;
         build_constraint_jt_row_counts_kernel<<<blocks, threads>>>(n_constraint, d_fixed_nodes, d_row_counts);
-        HANDLE_ERROR(cudaDeviceSynchronize());
+        MOPHI_GPU_CALL(cudaDeviceSynchronize());
     }
 
     thrust::device_ptr<int> counts_begin(d_row_counts);
@@ -539,32 +539,32 @@ void GPU_FEAT10_Data::ConvertToCSR_ConstraintJacT() {
     thrust::exclusive_scan(thrust::device, counts_begin, counts_begin + num_rows, offsets_begin);
 
     set_last_offset_kernel<<<1, 1>>>(d_cj_csr_offsets, num_rows, nnz);
-    HANDLE_ERROR(cudaDeviceSynchronize());
+    MOPHI_GPU_CALL(cudaDeviceSynchronize());
 
-    HANDLE_ERROR(cudaMemset(d_row_positions, 0, static_cast<size_t>(num_rows) * sizeof(int)));
+    MOPHI_GPU_CALL(cudaMemset(d_row_positions, 0, static_cast<size_t>(num_rows) * sizeof(int)));
 
     {
         constexpr int threads = 256;
         const int blocks = (n_constraint + threads - 1) / threads;
         build_constraint_jt_fill_kernel<<<blocks, threads>>>(n_constraint, d_fixed_nodes, d_cj_csr_offsets,
                                                              d_row_positions, d_cj_csr_columns, d_cj_csr_values);
-        HANDLE_ERROR(cudaDeviceSynchronize());
+        MOPHI_GPU_CALL(cudaDeviceSynchronize());
     }
 
-    HANDLE_ERROR(cudaFree(d_row_counts));
-    HANDLE_ERROR(cudaFree(d_row_positions));
+    MOPHI_GPU_CALL(cudaFree(d_row_counts));
+    MOPHI_GPU_CALL(cudaFree(d_row_positions));
 
-    HANDLE_ERROR(cudaMemcpy(d_cj_nnz, &nnz, sizeof(int), cudaMemcpyHostToDevice));
+    MOPHI_GPU_CALL(cudaMemcpy(d_cj_nnz, &nnz, sizeof(int), cudaMemcpyHostToDevice));
     is_cj_csr_setup = true;
-    HANDLE_ERROR(cudaMemcpy(d_data, this, sizeof(GPU_FEAT10_Data), cudaMemcpyHostToDevice));
+    MOPHI_GPU_CALL(cudaMemcpy(d_data, this, sizeof(GPU_FEAT10_Data), cudaMemcpyHostToDevice));
 }
 
 void GPU_FEAT10_Data::RetrieveDetJToCPU(std::vector<std::vector<double>>& detJ) {
     detJ.resize(n_elem);
     for (int elem_idx = 0; elem_idx < n_elem; elem_idx++) {
         detJ[elem_idx].resize(Quadrature::N_QP_T10_5);
-        HANDLE_ERROR(cudaMemcpy(detJ[elem_idx].data(), d_detJ_ref + elem_idx * Quadrature::N_QP_T10_5,
-                                Quadrature::N_QP_T10_5 * sizeof(double), cudaMemcpyDeviceToHost));
+        MOPHI_GPU_CALL(cudaMemcpy(detJ[elem_idx].data(), d_detJ_ref + elem_idx * Quadrature::N_QP_T10_5,
+                                  Quadrature::N_QP_T10_5 * sizeof(double), cudaMemcpyDeviceToHost));
     }
 }
 
@@ -583,7 +583,7 @@ void GPU_FEAT10_Data::RetrieveDnDuPreToCPU(std::vector<std::vector<Eigen::Matrix
             int offset = (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 10 * 3;
             int size = 10 * 3 * sizeof(double);
 
-            HANDLE_ERROR(
+            MOPHI_GPU_CALL(
                 cudaMemcpy(dn_du_pre[elem_idx][qp_idx].data(), d_grad_N_ref + offset, size, cudaMemcpyDeviceToHost));
         }
     }
@@ -601,16 +601,16 @@ void GPU_FEAT10_Data::RetrieveMassCSRToCPU(std::vector<int>& offsets,
     }
 
     int h_nnz = 0;
-    HANDLE_ERROR(cudaMemcpy(&h_nnz, d_nnz, sizeof(int), cudaMemcpyDeviceToHost));
+    MOPHI_GPU_CALL(cudaMemcpy(&h_nnz, d_nnz, sizeof(int), cudaMemcpyDeviceToHost));
 
     columns.resize(static_cast<size_t>(h_nnz));
     values.resize(static_cast<size_t>(h_nnz));
 
-    HANDLE_ERROR(cudaMemcpy(offsets.data(), d_csr_offsets, static_cast<size_t>(n_coef + 1) * sizeof(int),
-                            cudaMemcpyDeviceToHost));
-    HANDLE_ERROR(
+    MOPHI_GPU_CALL(cudaMemcpy(offsets.data(), d_csr_offsets, static_cast<size_t>(n_coef + 1) * sizeof(int),
+                              cudaMemcpyDeviceToHost));
+    MOPHI_GPU_CALL(
         cudaMemcpy(columns.data(), d_csr_columns, static_cast<size_t>(h_nnz) * sizeof(int), cudaMemcpyDeviceToHost));
-    HANDLE_ERROR(
+    MOPHI_GPU_CALL(
         cudaMemcpy(values.data(), d_csr_values, static_cast<size_t>(h_nnz) * sizeof(double), cudaMemcpyDeviceToHost));
 }
 
@@ -630,7 +630,7 @@ void GPU_FEAT10_Data::RetrievePFromFToCPU(std::vector<std::vector<Eigen::MatrixX
             int offset = (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 3 * 3;
             int size = 3 * 3 * sizeof(double);
 
-            HANDLE_ERROR(cudaMemcpy(p_from_F[elem_idx][qp_idx].data(), d_P + offset, size, cudaMemcpyDeviceToHost));
+            MOPHI_GPU_CALL(cudaMemcpy(p_from_F[elem_idx][qp_idx].data(), d_P + offset, size, cudaMemcpyDeviceToHost));
         }
     }
 }
@@ -641,7 +641,7 @@ void GPU_FEAT10_Data::RetrieveInternalForceToCPU(Eigen::VectorXd& internal_force
     internal_force.resize(total_dofs);
 
     // Copy from device to host
-    HANDLE_ERROR(cudaMemcpy(internal_force.data(), d_f_int, total_dofs * sizeof(double), cudaMemcpyDeviceToHost));
+    MOPHI_GPU_CALL(cudaMemcpy(internal_force.data(), d_f_int, total_dofs * sizeof(double), cudaMemcpyDeviceToHost));
 }
 
 void GPU_FEAT10_Data::RetrieveExternalForceToCPU(Eigen::VectorXd& external_force) {
@@ -650,7 +650,7 @@ void GPU_FEAT10_Data::RetrieveExternalForceToCPU(Eigen::VectorXd& external_force
     external_force.resize(total_dofs);
 
     // Copy from device to host
-    HANDLE_ERROR(cudaMemcpy(external_force.data(), d_f_ext, total_dofs * sizeof(double), cudaMemcpyDeviceToHost));
+    MOPHI_GPU_CALL(cudaMemcpy(external_force.data(), d_f_ext, total_dofs * sizeof(double), cudaMemcpyDeviceToHost));
 }
 
 void GPU_FEAT10_Data::RetrievePositionToCPU(Eigen::VectorXd& x12, Eigen::VectorXd& y12, Eigen::VectorXd& z12) {
@@ -661,9 +661,9 @@ void GPU_FEAT10_Data::RetrievePositionToCPU(Eigen::VectorXd& x12, Eigen::VectorX
     z12.resize(total_nodes);
 
     // Copy from device to host
-    HANDLE_ERROR(cudaMemcpy(x12.data(), d_h_x12, total_nodes * sizeof(double), cudaMemcpyDeviceToHost));
-    HANDLE_ERROR(cudaMemcpy(y12.data(), d_h_y12, total_nodes * sizeof(double), cudaMemcpyDeviceToHost));
-    HANDLE_ERROR(cudaMemcpy(z12.data(), d_h_z12, total_nodes * sizeof(double), cudaMemcpyDeviceToHost));
+    MOPHI_GPU_CALL(cudaMemcpy(x12.data(), d_h_x12, total_nodes * sizeof(double), cudaMemcpyDeviceToHost));
+    MOPHI_GPU_CALL(cudaMemcpy(y12.data(), d_h_y12, total_nodes * sizeof(double), cudaMemcpyDeviceToHost));
+    MOPHI_GPU_CALL(cudaMemcpy(z12.data(), d_h_z12, total_nodes * sizeof(double), cudaMemcpyDeviceToHost));
 }
 
 void GPU_FEAT10_Data::SetNodalFixed(const Eigen::VectorXi& fixed_nodes) {
@@ -674,16 +674,16 @@ void GPU_FEAT10_Data::SetNodalFixed(const Eigen::VectorXi& fixed_nodes) {
 
     n_constraint = fixed_nodes.size() * 3;
 
-    HANDLE_ERROR(cudaMalloc(&d_constraint, n_constraint * sizeof(double)));
-    HANDLE_ERROR(cudaMalloc(&d_fixed_nodes, fixed_nodes.size() * sizeof(int)));
+    MOPHI_GPU_CALL(cudaMalloc(&d_constraint, n_constraint * sizeof(double)));
+    MOPHI_GPU_CALL(cudaMalloc(&d_fixed_nodes, fixed_nodes.size() * sizeof(int)));
 
-    HANDLE_ERROR(cudaMemset(d_constraint, 0, n_constraint * sizeof(double)));
-    HANDLE_ERROR(
+    MOPHI_GPU_CALL(cudaMemset(d_constraint, 0, n_constraint * sizeof(double)));
+    MOPHI_GPU_CALL(
         cudaMemcpy(d_fixed_nodes, fixed_nodes.data(), fixed_nodes.size() * sizeof(int), cudaMemcpyHostToDevice));
 
     is_constraints_setup = true;
     if (d_data) {
-        HANDLE_ERROR(cudaMemcpy(d_data, this, sizeof(GPU_FEAT10_Data), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_data, this, sizeof(GPU_FEAT10_Data), cudaMemcpyHostToDevice));
     }
 }
 
@@ -699,15 +699,15 @@ void GPU_FEAT10_Data::UpdateNodalFixed(const Eigen::VectorXi& fixed_nodes) {
     // If number of constraints changed, reallocate
     if (new_n_constraint != n_constraint) {
         // Free old buffers
-        HANDLE_ERROR(cudaFree(d_constraint));
-        HANDLE_ERROR(cudaFree(d_fixed_nodes));
+        MOPHI_GPU_CALL(cudaFree(d_constraint));
+        MOPHI_GPU_CALL(cudaFree(d_fixed_nodes));
 
         // Free old CSR buffers if they exist
         if (is_cj_csr_setup) {
-            HANDLE_ERROR(cudaFree(d_cj_csr_offsets));
-            HANDLE_ERROR(cudaFree(d_cj_csr_columns));
-            HANDLE_ERROR(cudaFree(d_cj_csr_values));
-            HANDLE_ERROR(cudaFree(d_cj_nnz));
+            MOPHI_GPU_CALL(cudaFree(d_cj_csr_offsets));
+            MOPHI_GPU_CALL(cudaFree(d_cj_csr_columns));
+            MOPHI_GPU_CALL(cudaFree(d_cj_csr_values));
+            MOPHI_GPU_CALL(cudaFree(d_cj_nnz));
             d_cj_csr_offsets = nullptr;
             d_cj_csr_columns = nullptr;
             d_cj_csr_values = nullptr;
@@ -716,10 +716,10 @@ void GPU_FEAT10_Data::UpdateNodalFixed(const Eigen::VectorXi& fixed_nodes) {
         }
 
         if (is_j_csr_setup) {
-            HANDLE_ERROR(cudaFree(d_j_csr_offsets));
-            HANDLE_ERROR(cudaFree(d_j_csr_columns));
-            HANDLE_ERROR(cudaFree(d_j_csr_values));
-            HANDLE_ERROR(cudaFree(d_j_nnz));
+            MOPHI_GPU_CALL(cudaFree(d_j_csr_offsets));
+            MOPHI_GPU_CALL(cudaFree(d_j_csr_columns));
+            MOPHI_GPU_CALL(cudaFree(d_j_csr_values));
+            MOPHI_GPU_CALL(cudaFree(d_j_nnz));
             d_j_csr_offsets = nullptr;
             d_j_csr_columns = nullptr;
             d_j_csr_values = nullptr;
@@ -730,22 +730,22 @@ void GPU_FEAT10_Data::UpdateNodalFixed(const Eigen::VectorXi& fixed_nodes) {
         n_constraint = new_n_constraint;
 
         // Allocate new buffers
-        HANDLE_ERROR(cudaMalloc(&d_constraint, n_constraint * sizeof(double)));
-        HANDLE_ERROR(cudaMalloc(&d_fixed_nodes, fixed_nodes.size() * sizeof(int)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_constraint, n_constraint * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_fixed_nodes, fixed_nodes.size() * sizeof(int)));
     }
 
     // Clear and update constraint data
-    HANDLE_ERROR(cudaMemset(d_constraint, 0, n_constraint * sizeof(double)));
-    HANDLE_ERROR(
+    MOPHI_GPU_CALL(cudaMemset(d_constraint, 0, n_constraint * sizeof(double)));
+    MOPHI_GPU_CALL(
         cudaMemcpy(d_fixed_nodes, fixed_nodes.data(), fixed_nodes.size() * sizeof(int), cudaMemcpyHostToDevice));
 
     // Invalidate Jacobian CSR caches: fixed nodes may have changed even if the
     // constraint count stayed the same.
     if (is_cj_csr_setup) {
-        HANDLE_ERROR(cudaFree(d_cj_csr_offsets));
-        HANDLE_ERROR(cudaFree(d_cj_csr_columns));
-        HANDLE_ERROR(cudaFree(d_cj_csr_values));
-        HANDLE_ERROR(cudaFree(d_cj_nnz));
+        MOPHI_GPU_CALL(cudaFree(d_cj_csr_offsets));
+        MOPHI_GPU_CALL(cudaFree(d_cj_csr_columns));
+        MOPHI_GPU_CALL(cudaFree(d_cj_csr_values));
+        MOPHI_GPU_CALL(cudaFree(d_cj_nnz));
         d_cj_csr_offsets = nullptr;
         d_cj_csr_columns = nullptr;
         d_cj_csr_values = nullptr;
@@ -754,10 +754,10 @@ void GPU_FEAT10_Data::UpdateNodalFixed(const Eigen::VectorXi& fixed_nodes) {
     }
 
     if (is_j_csr_setup) {
-        HANDLE_ERROR(cudaFree(d_j_csr_offsets));
-        HANDLE_ERROR(cudaFree(d_j_csr_columns));
-        HANDLE_ERROR(cudaFree(d_j_csr_values));
-        HANDLE_ERROR(cudaFree(d_j_nnz));
+        MOPHI_GPU_CALL(cudaFree(d_j_csr_offsets));
+        MOPHI_GPU_CALL(cudaFree(d_j_csr_columns));
+        MOPHI_GPU_CALL(cudaFree(d_j_csr_values));
+        MOPHI_GPU_CALL(cudaFree(d_j_nnz));
         d_j_csr_offsets = nullptr;
         d_j_csr_columns = nullptr;
         d_j_csr_values = nullptr;
@@ -765,13 +765,13 @@ void GPU_FEAT10_Data::UpdateNodalFixed(const Eigen::VectorXi& fixed_nodes) {
         is_j_csr_setup = false;
     }
 
-    HANDLE_ERROR(cudaMemcpy(d_data, this, sizeof(GPU_FEAT10_Data), cudaMemcpyHostToDevice));
+    MOPHI_GPU_CALL(cudaMemcpy(d_data, this, sizeof(GPU_FEAT10_Data), cudaMemcpyHostToDevice));
 }
 
 void GPU_FEAT10_Data::RetrieveConnectivityToCPU(Eigen::MatrixXi& connectivity) {
     connectivity.resize(n_elem, Quadrature::N_NODE_T10_10);
-    HANDLE_ERROR(cudaMemcpy(connectivity.data(), d_element_connectivity,
-                            n_elem * Quadrature::N_NODE_T10_10 * sizeof(int), cudaMemcpyDeviceToHost));
+    MOPHI_GPU_CALL(cudaMemcpy(connectivity.data(), d_element_connectivity,
+                              n_elem * Quadrature::N_NODE_T10_10 * sizeof(int), cudaMemcpyDeviceToHost));
 }
 
 void GPU_FEAT10_Data::WriteOutputVTK(const std::string& filename) {

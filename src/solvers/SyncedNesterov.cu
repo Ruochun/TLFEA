@@ -361,13 +361,13 @@ template __global__ void one_step_nesterov_kernel<GPU_FEAT10_Data>(GPU_FEAT10_Da
 
 void SyncedNesterovSolver::OneStepNesterov() {
     cudaEvent_t start, stop;
-    HANDLE_ERROR(cudaEventCreate(&start));
-    HANDLE_ERROR(cudaEventCreate(&stop));
+    MOPHI_GPU_CALL(cudaEventCreate(&start));
+    MOPHI_GPU_CALL(cudaEventCreate(&stop));
 
     int threads = 128;
 
     cudaDeviceProp props;
-    HANDLE_ERROR(cudaGetDeviceProperties(&props, 0));
+    MOPHI_GPU_CALL(cudaGetDeviceProperties(&props, 0));
 
     int maxBlocksPerSm = 0;
     void* kernelPtr = nullptr;
@@ -381,7 +381,7 @@ void SyncedNesterovSolver::OneStepNesterov() {
         kernelPtr = (void*)one_step_nesterov_kernel<GPU_FEAT10_Data>;
     }
 
-    HANDLE_ERROR(cudaOccupancyMaxActiveBlocksPerMultiprocessor(&maxBlocksPerSm, kernelPtr, threads, 0));
+    MOPHI_GPU_CALL(cudaOccupancyMaxActiveBlocksPerMultiprocessor(&maxBlocksPerSm, kernelPtr, threads, 0));
     int maxCoopBlocks = maxBlocksPerSm * props.multiProcessorCount;
 
     int N = 3 * n_coef_;
@@ -390,17 +390,17 @@ void SyncedNesterovSolver::OneStepNesterov() {
 
     void* args[] = {&d_data_, &d_nesterov_solver_};
 
-    HANDLE_ERROR(cudaEventRecord(start));
-    HANDLE_ERROR(cudaLaunchCooperativeKernel(kernelPtr, blocks, threads, args));
-    HANDLE_ERROR(cudaEventRecord(stop));
+    MOPHI_GPU_CALL(cudaEventRecord(start));
+    MOPHI_GPU_CALL(cudaLaunchCooperativeKernel(kernelPtr, blocks, threads, args));
+    MOPHI_GPU_CALL(cudaEventRecord(stop));
 
-    HANDLE_ERROR(cudaDeviceSynchronize());
+    MOPHI_GPU_CALL(cudaDeviceSynchronize());
 
     float milliseconds = 0;
-    HANDLE_ERROR(cudaEventElapsedTime(&milliseconds, start, stop));
+    MOPHI_GPU_CALL(cudaEventElapsedTime(&milliseconds, start, stop));
 
     // std::cout << "OneStepNesterov kernel time: " << milliseconds << " ms" << std::endl;
 
-    HANDLE_ERROR(cudaEventDestroy(start));
-    HANDLE_ERROR(cudaEventDestroy(stop));
+    MOPHI_GPU_CALL(cudaEventDestroy(start));
+    MOPHI_GPU_CALL(cudaEventDestroy(stop));
 }

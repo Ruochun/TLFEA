@@ -12,10 +12,6 @@
 #include <MoPhiEssentials.h>
 
 // Use MoPhiEssentials' MOPHI_GPU_CALL macro for error handling
-// For backward compatibility, alias HANDLE_ERROR to MOPHI_GPU_CALL
-#ifndef HANDLE_ERROR
-    #define HANDLE_ERROR(err) MOPHI_GPU_CALL(err)
-#endif
 
 #ifndef CHECK_CUSPARSE_MACRO
     #define CHECK_CUSPARSE_MACRO
