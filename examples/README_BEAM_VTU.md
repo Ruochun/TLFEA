@@ -6,9 +6,9 @@ This example demonstrates loading a tetrahedral mesh from a VTU file and perform
 
 The `beam_vtu_demo` program showcases the following workflow:
 
-1. **Load mesh from VTU file** - Uses MoPhiEssentials' `mophi::LoadVtu()` function to load the mesh from `data/meshes/T10/beam.vtu`
+1. **Load mesh from VTU file** - Uses MoPhiEssentials' `mophi::LoadVtu()` function to load node geometry from `data/meshes/T10/beam.vtu`
 2. **Store in mophi::Mesh** - The loaded mesh data is stored in a `mophi::Mesh` object
-3. **Convert to TLFEA format** - Converts the 4-node tetrahedral elements to 10-node FEAT10 elements by generating mid-edge nodes
+3. **Parse FEAT10 elements** - Manually parses 10-node tetrahedral elements from the VTU file (since mophi::LoadVtu only supports 4-node linear tets)
 4. **Apply boundary conditions** - Fixes all nodes at the left end (where x ≈ 0) to simulate a fixed support
 5. **Apply loads** - Applies a downward force at the right end (where x ≈ 10) to simulate a load
 6. **Solve with TLFEA** - Uses the SyncedNesterov solver to compute the beam's response
@@ -119,12 +119,12 @@ The demo uses MoPhiEssentials' VTU loader which provides:
 - Automatic handling of node ownership and halo information
 - Conversion to efficient internal mesh representation
 
-### FEAT10 Element Conversion
-Since VTU files typically store linear tetrahedral elements (4 nodes), the demo automatically:
-- Generates mid-edge nodes for each element edge
-- Creates a shared mid-edge node map to avoid duplicates
-- Converts 4-node tets to 10-node FEAT10 elements
-- Updates the node coordinate matrix accordingly
+### FEAT10 Element Parsing
+The demo uses MoPhiEssentials' VTU loader to get node coordinates, then manually parses the element connectivity:
+- The beam.vtu file contains 10-node quadratic tetrahedral elements
+- mophi::LoadVtu() only supports 4-node linear tets, so it won't load the elements
+- The demo uses pugixml (included with MoPhiEssentials) to parse the VTU connectivity directly
+- Extracts all 10-node tetrahedral elements for use with TLFEA's FEAT10 solver
 
 ### Boundary Conditions
 The demo demonstrates how to:
@@ -153,7 +153,7 @@ This demo is similar to `cantilever_beam_simulation.cc` but differs in:
 - Ensure MoPhiEssentials is properly built
 
 **Issue**: Solver fails to converge
-- Try reducing the time step (increase `params.time_step`)
+- Try reducing the time step (decrease `params.time_step`)
 - Increase damping (second parameter in `SetDamping()`)
 - Check that boundary conditions are properly applied
 
