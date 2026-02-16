@@ -47,7 +47,7 @@ From the build directory:
 
 ## Output Files
 
-The simulation generates VTK files with the naming pattern `output_beam_#####.vtk` where ##### is the timestep number (00000, 00010, 00020, etc.).
+The simulation generates VTK files with the naming pattern `output_beam_#####.vtk` where ##### is the timestep number (00000, 00100, 00200, etc.).
 
 These files contain:
 - Deformed node positions
@@ -80,7 +80,10 @@ You can modify the simulation by editing `examples/beam_simulation.cc`:
 - `OUTPUT_FREQUENCY`: How often to save VTK files (default: every 100 steps)
 - `total_load`: Total applied load in Newtons (default: -1000 N downward)
 - Material properties (E, nu, rho0)
-- Solver parameters (timestep h, tolerances, etc.)
+- Solver parameters:
+  - `time_step`: Timestep size (default: 1.0e-4 s)
+  - `inner_tol`, `outer_tol`: Convergence tolerances
+  - `max_outer`, `max_inner`: Maximum iteration counts
 
 ## Expected Results
 
