@@ -76,8 +76,8 @@ paraview output_beam_*.vtk
 
 You can modify the simulation by editing `examples/beam_simulation.cc`:
 
-- `N_TIMESTEPS`: Number of simulation steps (default: 100)
-- `OUTPUT_FREQUENCY`: How often to save VTK files (default: every 10 steps)
+- `N_TIMESTEPS`: Number of simulation steps (default: 10000)
+- `OUTPUT_FREQUENCY`: How often to save VTK files (default: every 100 steps)
 - `total_load`: Total applied load in Newtons (default: -1000 N downward)
 - Material properties (E, nu, rho0)
 - Solver parameters (timestep h, tolerances, etc.)
