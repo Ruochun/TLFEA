@@ -1,5 +1,5 @@
 /**
- * VTU Beam Simulation
+ * Beam Simulation
  *
  * Author: GitHub Copilot Agent
  *
@@ -39,7 +39,7 @@ const int OUTPUT_FREQUENCY = 100;  // Output every N timesteps
 
 int main() {
     std::cout << "=======================================================" << std::endl;
-    std::cout << "  VTU Beam Simulation" << std::endl;
+    std::cout << "  Beam Simulation" << std::endl;
     std::cout << "=======================================================" << std::endl;
 
     // ==========================================================================
