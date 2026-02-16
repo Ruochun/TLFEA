@@ -10,8 +10,8 @@ The simulation performs the following steps:
 2. **Extract Data**: Converts the mophi::Mesh data structure to TLFEA's format (Eigen matrices)
 3. **Apply Boundary Conditions**: Fixes all nodes at x≈0 (one end of the beam)
 4. **Apply Loading**: Applies a concentrated downward force at x≈10 (the free end)
-5. **Run Simulation**: Executes 100 timesteps using the SyncedNesterov solver
-6. **Export Results**: Saves the deformed mesh to VTK files every 10 timesteps
+5. **Run Simulation**: Executes 10000 timesteps using the SyncedNesterov solver
+6. **Export Results**: Saves the deformed mesh to VTK files every 100 timesteps
 
 ## Features
 

@@ -10,8 +10,8 @@
  * 3. Run a dynamic simulation using TLFEA's solvers
  * 4. Export the results to VTK files for visualization
  *
- * This simulates a cantilever beam with one end fixed and a load applied to the
- * free end, similar to a structural engineering test setup.
+ * This simulates a cantilever beam with one end fixed and a concentrated load
+ * applied to the free end, similar to a structural engineering test setup.
  */
 
 #include <cuda_runtime.h>
