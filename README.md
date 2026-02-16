@@ -51,36 +51,21 @@ cd build
 
 This example tests the FEAT10 element and SyncedNesterov solver infrastructure.
 
-#### Cantilever Beam Simulation (Realistic Use Case)
+#### Beam Simulation (VTU Mesh Loading)
 
 ```bash
 cd build
-./bin/cantilever_beam_simulation
+./bin/beam_simulation
 ```
 
-This example demonstrates a realistic physics simulation:
-- Loads a tetrahedral mesh representing a cantilever beam
-- Applies boundary conditions (fixed end)
-- Simulates the beam deflecting under gravity
-- Exports results to VTK files for visualization in ParaView
-
-See [examples/README_CANTILEVER.md](examples/README_CANTILEVER.md) for detailed information about this example.
-
-#### VTU Beam Simulation (VTU Mesh Loading)
-
-```bash
-cd build
-./bin/vtu_beam_simulation
-```
-
-This example demonstrates loading a mesh from a VTU file:
+This example demonstrates loading a mesh from a VTU file and performing realistic engineering analysis:
 - Uses MoPhiEssentials' VTU loader to read beam.vtu
 - Works with industry-standard VTU mesh format
 - Applies boundary conditions and concentrated load
 - Simulates cantilever beam deflection
 - Exports results to VTK files for visualization
 
-See [examples/README_VTU_BEAM.md](examples/README_VTU_BEAM.md) for detailed information about this example.
+See [examples/README_BEAM.md](examples/README_BEAM.md) for detailed information about this example.
 
 ## Project Structure
 
@@ -124,9 +109,8 @@ The integration provides consistent error handling and logging across the codeba
 - ✅ GPU acceleration via CUDA
 - ✅ CMake build system
 - ✅ Basic infrastructure test example
-- ✅ Realistic cantilever beam simulation example with VTK output
 - ✅ VTU mesh loading capability via MoPhiEssentials
-- ✅ VTU beam simulation demo using mophi::Mesh
+- ✅ Beam simulation demo using mophi::Mesh with VTU loading
 - ✅ MoPhiEssentials integration for error handling and logging
 
 ### Future Extensions

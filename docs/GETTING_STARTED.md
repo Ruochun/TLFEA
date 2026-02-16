@@ -42,7 +42,7 @@ make -j$(nproc)
 
 ## Running Your First Simulation
 
-The included example (`test_feat10_nesterov`) simulates a cantilever beam:
+The included example (`test_feat10_nesterov`) demonstrates the FEA framework:
 
 ```bash
 cd build
@@ -52,7 +52,7 @@ cd build
 ### What the Example Does
 
 1. Loads a cubic tetrahedral mesh from `data/meshes/T10/cube.1.node`
-2. Fixes all nodes on the z=0 plane (creating a cantilever)
+2. Fixes all nodes on the z=0 plane
 3. Applies a horizontal point load
 4. Solves for equilibrium using the Nesterov solver
 5. Prints the deformed positions

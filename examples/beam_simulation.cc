@@ -230,7 +230,7 @@ int main() {
     gpu_t10_data.RetrievePositionToCPU(x12, y12, z12);
 
     std::stringstream ss;
-    ss << "output_vtu_beam_" << std::setfill('0') << std::setw(5) << 0 << ".vtk";
+    ss << "output_beam_" << std::setfill('0') << std::setw(5) << 0 << ".vtk";
     bool success = ANCFCPUUtils::WriteFEAT10ToVTK(ss.str(), nodes, elements, x12, y12, z12);
     if (success) {
         std::cout << "Saved initial state to " << ss.str() << std::endl;
@@ -249,7 +249,7 @@ int main() {
 
             // Create filename with timestep
             std::stringstream filename;
-            filename << "output_vtu_beam_" << std::setfill('0') << std::setw(5) << step << ".vtk";
+            filename << "output_beam_" << std::setfill('0') << std::setw(5) << step << ".vtk";
 
             bool write_success = ANCFCPUUtils::WriteFEAT10ToVTK(filename.str(), nodes, elements, x12, y12, z12);
             if (write_success) {
@@ -268,8 +268,8 @@ int main() {
 
     std::cout << "=======================================================" << std::endl;
     std::cout << "  Simulation Complete!" << std::endl;
-    std::cout << "  Output files: output_vtu_beam_*.vtk" << std::endl;
-    std::cout << "  Visualize with: paraview output_vtu_beam_*.vtk" << std::endl;
+    std::cout << "  Output files: output_beam_*.vtk" << std::endl;
+    std::cout << "  Visualize with: paraview output_beam_*.vtk" << std::endl;
     std::cout << "=======================================================" << std::endl;
 
     return 0;
