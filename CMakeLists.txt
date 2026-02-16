@@ -52,72 +52,8 @@ target_include_directories(tlfea_lib PUBLIC
     ${CMAKE_SOURCE_DIR}/external/MoPhiEssentials/src
 )
 
-# Add the example executable
-add_executable(test_feat10_nesterov
-    examples/test_feat10_nesterov.cc
-)
-
-target_link_libraries(test_feat10_nesterov
-    tlfea_lib
-    Eigen3::Eigen
-    CUDA::cudart
-    CUDA::cusparse
-    mophi_essentials
-)
-
-target_include_directories(test_feat10_nesterov PRIVATE
-    ${CMAKE_SOURCE_DIR}/src
-    ${CMAKE_SOURCE_DIR}/external/MoPhiEssentials/src
-)
-
-# Set the runtime path for the data directory
-set_target_properties(test_feat10_nesterov PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-)
-
-# Add the cantilever beam simulation example
-add_executable(cantilever_beam_simulation
-    examples/cantilever_beam_simulation.cc
-)
-
-target_link_libraries(cantilever_beam_simulation
-    tlfea_lib
-    Eigen3::Eigen
-    CUDA::cudart
-    CUDA::cusparse
-    mophi_essentials
-)
-
-target_include_directories(cantilever_beam_simulation PRIVATE
-    ${CMAKE_SOURCE_DIR}/src
-    ${CMAKE_SOURCE_DIR}/external/MoPhiEssentials/src
-)
-
-set_target_properties(cantilever_beam_simulation PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-)
-
-# Add the VTU beam simulation example
-add_executable(vtu_beam_simulation
-    examples/vtu_beam_simulation.cc
-)
-
-target_link_libraries(vtu_beam_simulation
-    tlfea_lib
-    Eigen3::Eigen
-    CUDA::cudart
-    CUDA::cusparse
-    mophi_essentials
-)
-
-target_include_directories(vtu_beam_simulation PRIVATE
-    ${CMAKE_SOURCE_DIR}/src
-    ${CMAKE_SOURCE_DIR}/external/MoPhiEssentials/src
-)
-
-set_target_properties(vtu_beam_simulation PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-)
+# Add examples subdirectory
+add_subdirectory(examples)
 
 # Copy data directory to build directory
 file(COPY ${CMAKE_SOURCE_DIR}/data DESTINATION ${CMAKE_BINARY_DIR})
