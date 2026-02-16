@@ -29,13 +29,13 @@
 #include "utils/quadrature_utils.h"
 
 // Material properties for aluminum
-const double E = 7e8;      // Young's modulus: 7e10 Pa (70 GPa) - Aluminum
-const double nu = 0.33;    // Poisson's ratio - Aluminum
-const double rho0 = 2700;  // Density (kg/m³) - Aluminum
+const double E = 7e10;     // Young's modulus: 7e10 Pa (70 GPa)
+const double nu = 0.33;    // Poisson's ratio
+const double rho0 = 2700;  // Density (kg/m³)
 
 // Simulation parameters
-const int N_TIMESTEPS = 100;      // Number of timesteps to simulate
-const int OUTPUT_FREQUENCY = 10;  // Output every N timesteps
+const int N_TIMESTEPS = 10000;     // Number of timesteps to simulate
+const int OUTPUT_FREQUENCY = 100;  // Output every N timesteps
 
 int main() {
     std::cout << "=======================================================" << std::endl;
@@ -209,7 +209,7 @@ int main() {
     // ==========================================================================
 
     // alpha, rho, inner_tol, outer_tol, max_outer, max_inner, time_step
-    SyncedNesterovParams params = {1.0e-8, 1e14, 1.0e-6, 1.0e-6, 5, 300, 1.0e-3};
+    SyncedNesterovParams params = {1.0e-8, 1e14, 1.0e-6, 1.0e-6, 5, 300, 1.0e-4};
 
     SyncedNesterovSolver solver(&gpu_t10_data, gpu_t10_data.get_n_constraint());
     solver.Setup();
