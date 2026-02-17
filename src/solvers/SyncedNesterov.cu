@@ -26,28 +26,28 @@
 namespace cg = cooperative_groups;
 
 template <typename ElementType>
-__device__ double solver_grad_L(int tid, ElementType* data, SyncedNesterovSolver* d_solver) {
-    double res = 0.0;
+__device__ Real solver_grad_L(int tid, ElementType* data, SyncedNesterovSolver* d_solver) {
+    Real res = 0.0;
 
     int node_i = tid / 3;
     int dof_i = tid % 3;
 
-    const double inv_dt = 1.0 / d_solver->solver_time_step();
-    const double dt = d_solver->solver_time_step();
+    const Real inv_dt = 1.0 / d_solver->solver_time_step();
+    const Real dt = d_solver->solver_time_step();
 
     // Mass matrix contribution using CSR format
     int* offsets = data->csr_offsets();
     int* columns = data->csr_columns();
-    double* values = data->csr_values();
+    Real* values = data->csr_values();
 
     int row_start = offsets[node_i];
     int row_end = offsets[node_i + 1];
 
     for (int idx = row_start; idx < row_end; idx++) {
         int node_j = columns[idx];
-        double mass_ij = values[idx];
+        Real mass_ij = values[idx];
         int tid_j = node_j * 3 + dof_i;
-        double v_diff = d_solver->v_guess()[tid_j] - d_solver->v_prev()[tid_j];
+        Real v_diff = d_solver->v_guess()[tid_j] - d_solver->v_prev()[tid_j];
         res += mass_ij * v_diff * inv_dt;
     }
 
@@ -62,15 +62,15 @@ __device__ double solver_grad_L(int tid, ElementType* data, SyncedNesterovSolver
 
     if (n_constraints > 0) {
         // Python: h * (J.T @ (lam_mult + rho_bb * cA))
-        const double rho = *d_solver->solver_rho();
+        const Real rho = *d_solver->solver_rho();
 
-        const double* __restrict__ lam = d_solver->lambda_guess().data();
-        const double* __restrict__ con = data->constraint().data();
+        const Real* __restrict__ lam = d_solver->lambda_guess().data();
+        const Real* __restrict__ con = data->constraint().data();
 
         // CSR format stores J^T (transpose of constraint Jacobian)
         const int* __restrict__ cjT_offsets = data->cj_csr_offsets();
         const int* __restrict__ cjT_columns = data->cj_csr_columns();
-        const double* __restrict__ cjT_values = data->cj_csr_values();
+        const Real* __restrict__ cjT_values = data->cj_csr_values();
 
         // Get all constraints that affect this DOF (tid)
         const int col_start = cjT_offsets[tid];
@@ -79,8 +79,8 @@ __device__ double solver_grad_L(int tid, ElementType* data, SyncedNesterovSolver
         // Loop through all constraints affecting this DOF
         for (int idx = col_start; idx < col_end; idx++) {
             const int constraint_idx = cjT_columns[idx];
-            const double constraint_jac_val = cjT_values[idx];
-            const double constraint_val = con[constraint_idx];
+            const Real constraint_jac_val = cjT_values[idx];
+            const Real constraint_val = con[constraint_idx];
 
             // Add constraint contribution: h * J^T * (lambda + rho*c)
             res += dt * constraint_jac_val * (lam[constraint_idx] + rho * constraint_val);
@@ -115,10 +115,10 @@ __global__ void one_step_nesterov_kernel(ElementType* data, SyncedNesterovSolver
     for (int outer_iter = 0; outer_iter < d_nesterov_solver->solver_max_outer(); outer_iter++) {
         if (*d_nesterov_solver->outer_flag() == 0) {
             // Initialize variables for each thread
-            double v_k = 0.0;
-            double v_next = 0.0;
-            double v_km1 = 0.0;
-            double t = 1.0;
+            Real v_k = 0.0;
+            Real v_next = 0.0;
+            Real v_km1 = 0.0;
+            Real t = 1.0;
 
             if (tid == 0) {
                 *d_nesterov_solver->prev_norm_g() = 0.0;
@@ -134,7 +134,7 @@ __global__ void one_step_nesterov_kernel(ElementType* data, SyncedNesterovSolver
                 t = 1.0;
             }
 
-            double t_next = 1.0;
+            Real t_next = 1.0;
 
             for (int inner_iter = 0; inner_iter < d_nesterov_solver->solver_max_inner(); inner_iter++) {
                 grid.sync();
@@ -145,10 +145,10 @@ __global__ void one_step_nesterov_kernel(ElementType* data, SyncedNesterovSolver
                     // }
 
                     // Step 1: Compute look-ahead velocity
-                    double y = 0.0;
+                    Real y = 0.0;
                     if (tid < d_nesterov_solver->get_n_coef() * 3) {
                         t_next = 0.5 * (1.0 + sqrt(1.0 + 4.0 * t * t));
-                        double beta = (t - 1.0) / t_next;
+                        Real beta = (t - 1.0) / t_next;
                         y = v_k + beta * (v_k - v_km1);
 
                         d_nesterov_solver->v_guess()(tid) = y;
@@ -212,7 +212,7 @@ __global__ void one_step_nesterov_kernel(ElementType* data, SyncedNesterovSolver
 
                     // Compute gradient
                     if (tid < d_nesterov_solver->get_n_coef() * 3) {
-                        double g = solver_grad_L(tid, data, d_nesterov_solver);
+                        Real g = solver_grad_L(tid, data, d_nesterov_solver);
                         d_nesterov_solver->g()[tid] = g;
                     }
 
@@ -220,7 +220,7 @@ __global__ void one_step_nesterov_kernel(ElementType* data, SyncedNesterovSolver
 
                     if (tid == 0) {
                         // Calculate norm of g
-                        double norm_g = 0.0;
+                        Real norm_g = 0.0;
                         for (int i = 0; i < 3 * d_nesterov_solver->get_n_coef(); i++) {
                             norm_g += d_nesterov_solver->g()(i) * d_nesterov_solver->g()(i);
                         }
@@ -249,8 +249,8 @@ __global__ void one_step_nesterov_kernel(ElementType* data, SyncedNesterovSolver
 
                     // Check velocity convergence
                     if (tid == 0) {
-                        double norm_v_next = 0.0;
-                        double norm_v_k = 0.0;
+                        Real norm_v_next = 0.0;
+                        Real norm_v_k = 0.0;
                         for (int i = 0; i < 3 * d_nesterov_solver->get_n_coef(); i++) {
                             norm_v_next += d_nesterov_solver->v_next()(i) * d_nesterov_solver->v_next()(i);
                             norm_v_k += d_nesterov_solver->v_k()(i) * d_nesterov_solver->v_k()(i);
@@ -314,7 +314,7 @@ __global__ void one_step_nesterov_kernel(ElementType* data, SyncedNesterovSolver
             // Dual variable update
             int n_constraints = d_nesterov_solver->gpu_n_constraints();
             for (int i = tid; i < n_constraints; i += grid.size()) {
-                double constraint_val = data->constraint()[i];
+                Real constraint_val = data->constraint()[i];
                 d_nesterov_solver->lambda_guess()[i] +=
                     *d_nesterov_solver->solver_rho() * d_nesterov_solver->solver_time_step() * constraint_val;
             }
@@ -322,9 +322,9 @@ __global__ void one_step_nesterov_kernel(ElementType* data, SyncedNesterovSolver
 
             if (tid == 0) {
                 // Check constraint convergence
-                double norm_constraint = 0.0;
+                Real norm_constraint = 0.0;
                 for (int i = 0; i < d_nesterov_solver->gpu_n_constraints(); i++) {
-                    double constraint_val = data->constraint()[i];
+                    Real constraint_val = data->constraint()[i];
                     norm_constraint += constraint_val * constraint_val;
                 }
                 norm_constraint = sqrt(norm_constraint);

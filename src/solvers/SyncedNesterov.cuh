@@ -20,14 +20,15 @@
 #include "../elements/FEAT10Data.cuh"
 #include "SolverBase.h"
 #include <MoPhiEssentials.h>
+#include "../types.h"
 
 // this is a true first order Nesterov method
 // fully synced, and each inner iteration will compute the full gradient
 
 struct SyncedNesterovParams {
-    double alpha, rho, inner_tol, outer_tol;
+    Real alpha, rho, inner_tol, outer_tol;
     int max_outer, max_inner;
-    double time_step;
+    Real time_step;
 };
 
 class SyncedNesterovSolver : public SolverBase {
@@ -64,29 +65,29 @@ class SyncedNesterovSolver : public SolverBase {
             MOPHI_ERROR("d_data_ is null in SyncedNesterovSolver constructor");
         }
 
-        cudaMalloc(&d_v_guess_, n_coef_ * 3 * sizeof(double));
-        cudaMalloc(&d_v_prev_, n_coef_ * 3 * sizeof(double));
-        cudaMalloc(&d_v_k_, n_coef_ * 3 * sizeof(double));
-        cudaMalloc(&d_v_next_, n_coef_ * 3 * sizeof(double));
-        cudaMalloc(&d_lambda_guess_, n_constraints_ * sizeof(double));
-        cudaMalloc(&d_g_, n_coef_ * 3 * sizeof(double));
-        cudaMalloc(&d_prev_norm_g_, sizeof(double));
-        cudaMalloc(&d_norm_g_, sizeof(double));
+        cudaMalloc(&d_v_guess_, n_coef_ * 3 * sizeof(Real));
+        cudaMalloc(&d_v_prev_, n_coef_ * 3 * sizeof(Real));
+        cudaMalloc(&d_v_k_, n_coef_ * 3 * sizeof(Real));
+        cudaMalloc(&d_v_next_, n_coef_ * 3 * sizeof(Real));
+        cudaMalloc(&d_lambda_guess_, n_constraints_ * sizeof(Real));
+        cudaMalloc(&d_g_, n_coef_ * 3 * sizeof(Real));
+        cudaMalloc(&d_prev_norm_g_, sizeof(Real));
+        cudaMalloc(&d_norm_g_, sizeof(Real));
         cudaMalloc(&d_inner_flag_, sizeof(int));
         cudaMalloc(&d_outer_flag_, sizeof(int));
-        cudaMalloc(&d_alpha_, sizeof(double));
-        cudaMalloc(&d_inner_tol_, sizeof(double));
-        cudaMalloc(&d_outer_tol_, sizeof(double));
+        cudaMalloc(&d_alpha_, sizeof(Real));
+        cudaMalloc(&d_inner_tol_, sizeof(Real));
+        cudaMalloc(&d_outer_tol_, sizeof(Real));
         cudaMalloc(&d_max_outer_, sizeof(int));
         cudaMalloc(&d_max_inner_, sizeof(int));
-        cudaMalloc(&d_time_step_, sizeof(double));
-        cudaMalloc(&d_solver_rho_, sizeof(double));
+        cudaMalloc(&d_time_step_, sizeof(Real));
+        cudaMalloc(&d_solver_rho_, sizeof(Real));
 
         cudaMalloc(&d_nesterov_solver_, sizeof(SyncedNesterovSolver));
 
-        cudaMalloc(&d_x12_prev, n_coef_ * sizeof(double));
-        cudaMalloc(&d_y12_prev, n_coef_ * sizeof(double));
-        cudaMalloc(&d_z12_prev, n_coef_ * sizeof(double));
+        cudaMalloc(&d_x12_prev, n_coef_ * sizeof(Real));
+        cudaMalloc(&d_y12_prev, n_coef_ * sizeof(Real));
+        cudaMalloc(&d_z12_prev, n_coef_ * sizeof(Real));
     }
 
     ~SyncedNesterovSolver() {
@@ -117,53 +118,53 @@ class SyncedNesterovSolver : public SolverBase {
 
     void SetParameters(void* params) override {
         SyncedNesterovParams* p = static_cast<SyncedNesterovParams*>(params);
-        cudaMemcpy(d_alpha_, &p->alpha, sizeof(double), cudaMemcpyHostToDevice);
-        cudaMemcpy(d_inner_tol_, &p->inner_tol, sizeof(double), cudaMemcpyHostToDevice);
-        cudaMemcpy(d_outer_tol_, &p->outer_tol, sizeof(double), cudaMemcpyHostToDevice);
+        cudaMemcpy(d_alpha_, &p->alpha, sizeof(Real), cudaMemcpyHostToDevice);
+        cudaMemcpy(d_inner_tol_, &p->inner_tol, sizeof(Real), cudaMemcpyHostToDevice);
+        cudaMemcpy(d_outer_tol_, &p->outer_tol, sizeof(Real), cudaMemcpyHostToDevice);
         cudaMemcpy(d_max_outer_, &p->max_outer, sizeof(int), cudaMemcpyHostToDevice);
         cudaMemcpy(d_max_inner_, &p->max_inner, sizeof(int), cudaMemcpyHostToDevice);
-        cudaMemcpy(d_time_step_, &p->time_step, sizeof(double), cudaMemcpyHostToDevice);
-        cudaMemcpy(d_solver_rho_, &p->rho, sizeof(double), cudaMemcpyHostToDevice);
+        cudaMemcpy(d_time_step_, &p->time_step, sizeof(Real), cudaMemcpyHostToDevice);
+        cudaMemcpy(d_solver_rho_, &p->rho, sizeof(Real), cudaMemcpyHostToDevice);
 
-        cudaMemset(d_v_guess_, 0, n_coef_ * 3 * sizeof(double));
-        cudaMemset(d_v_prev_, 0, n_coef_ * 3 * sizeof(double));
-        cudaMemset(d_lambda_guess_, 0, n_constraints_ * sizeof(double));
+        cudaMemset(d_v_guess_, 0, n_coef_ * 3 * sizeof(Real));
+        cudaMemset(d_v_prev_, 0, n_coef_ * 3 * sizeof(Real));
+        cudaMemset(d_lambda_guess_, 0, n_constraints_ * sizeof(Real));
     }
 
     void Setup() {
-        cudaMemset(d_x12_prev, 0, n_coef_ * sizeof(double));
-        cudaMemset(d_y12_prev, 0, n_coef_ * sizeof(double));
-        cudaMemset(d_z12_prev, 0, n_coef_ * sizeof(double));
+        cudaMemset(d_x12_prev, 0, n_coef_ * sizeof(Real));
+        cudaMemset(d_y12_prev, 0, n_coef_ * sizeof(Real));
+        cudaMemset(d_z12_prev, 0, n_coef_ * sizeof(Real));
 
-        cudaMemset(d_v_guess_, 0, n_coef_ * 3 * sizeof(double));
-        cudaMemset(d_v_prev_, 0, n_coef_ * 3 * sizeof(double));
-        cudaMemset(d_v_k_, 0, n_coef_ * 3 * sizeof(double));
-        cudaMemset(d_v_next_, 0, n_coef_ * 3 * sizeof(double));
-        cudaMemset(d_lambda_guess_, 0, n_constraints_ * sizeof(double));
-        cudaMemset(d_g_, 0, n_coef_ * 3 * sizeof(double));
+        cudaMemset(d_v_guess_, 0, n_coef_ * 3 * sizeof(Real));
+        cudaMemset(d_v_prev_, 0, n_coef_ * 3 * sizeof(Real));
+        cudaMemset(d_v_k_, 0, n_coef_ * 3 * sizeof(Real));
+        cudaMemset(d_v_next_, 0, n_coef_ * 3 * sizeof(Real));
+        cudaMemset(d_lambda_guess_, 0, n_constraints_ * sizeof(Real));
+        cudaMemset(d_g_, 0, n_coef_ * 3 * sizeof(Real));
 
         MOPHI_GPU_CALL(cudaMemcpy(d_nesterov_solver_, this, sizeof(SyncedNesterovSolver), cudaMemcpyHostToDevice));
     }
 
 #if defined(__CUDACC__)
     // Device accessors (define as __device__ in .cuh or .cu as needed)
-    __device__ Eigen::Map<Eigen::VectorXd> v_guess() {
-        return Eigen::Map<Eigen::VectorXd>(d_v_guess_, n_coef_ * 3);
+    __device__ Eigen::Map<Eigen::VectorXR> v_guess() {
+        return Eigen::Map<Eigen::VectorXR>(d_v_guess_, n_coef_ * 3);
     }
-    __device__ Eigen::Map<Eigen::VectorXd> v_prev() {
-        return Eigen::Map<Eigen::VectorXd>(d_v_prev_, n_coef_ * 3);
+    __device__ Eigen::Map<Eigen::VectorXR> v_prev() {
+        return Eigen::Map<Eigen::VectorXR>(d_v_prev_, n_coef_ * 3);
     }
-    __device__ Eigen::Map<Eigen::VectorXd> v_k() {
-        return Eigen::Map<Eigen::VectorXd>(d_v_k_, n_coef_ * 3);
+    __device__ Eigen::Map<Eigen::VectorXR> v_k() {
+        return Eigen::Map<Eigen::VectorXR>(d_v_k_, n_coef_ * 3);
     }
-    __device__ Eigen::Map<Eigen::VectorXd> v_next() {
-        return Eigen::Map<Eigen::VectorXd>(d_v_next_, n_coef_ * 3);
+    __device__ Eigen::Map<Eigen::VectorXR> v_next() {
+        return Eigen::Map<Eigen::VectorXR>(d_v_next_, n_coef_ * 3);
     }
-    __device__ Eigen::Map<Eigen::VectorXd> lambda_guess() {
-        return Eigen::Map<Eigen::VectorXd>(d_lambda_guess_, n_constraints_);
+    __device__ Eigen::Map<Eigen::VectorXR> lambda_guess() {
+        return Eigen::Map<Eigen::VectorXR>(d_lambda_guess_, n_constraints_);
     }
-    __device__ Eigen::Map<Eigen::VectorXd> g() {
-        return Eigen::Map<Eigen::VectorXd>(d_g_, 3 * n_coef_);
+    __device__ Eigen::Map<Eigen::VectorXR> g() {
+        return Eigen::Map<Eigen::VectorXR>(d_g_, 3 * n_coef_);
     }
 
     __device__ int gpu_n_constraints() {
@@ -176,10 +177,10 @@ class SyncedNesterovSolver : public SolverBase {
         return n_shape_;
     }
 
-    __device__ double* prev_norm_g() {
+    __device__ Real* prev_norm_g() {
         return d_prev_norm_g_;
     }
-    __device__ double* norm_g() {
+    __device__ Real* norm_g() {
         return d_norm_g_;
     }
     __device__ int* inner_flag() {
@@ -188,16 +189,16 @@ class SyncedNesterovSolver : public SolverBase {
     __device__ int* outer_flag() {
         return d_outer_flag_;
     }
-    __device__ double* solver_rho() {
+    __device__ Real* solver_rho() {
         return d_solver_rho_;
     }
-    __device__ double solver_alpha() const {
+    __device__ Real solver_alpha() const {
         return *d_alpha_;
     }
-    __device__ double solver_inner_tol() const {
+    __device__ Real solver_inner_tol() const {
         return *d_inner_tol_;
     }
-    __device__ double solver_outer_tol() const {
+    __device__ Real solver_outer_tol() const {
         return *d_outer_tol_;
     }
     __device__ int solver_max_outer() const {
@@ -206,18 +207,18 @@ class SyncedNesterovSolver : public SolverBase {
     __device__ int solver_max_inner() const {
         return *d_max_inner_;
     }
-    __device__ double solver_time_step() const {
+    __device__ Real solver_time_step() const {
         return *d_time_step_;
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> x12_prev() {
-        return Eigen::Map<Eigen::VectorXd>(d_x12_prev, n_coef_);
+    __device__ Eigen::Map<Eigen::VectorXR> x12_prev() {
+        return Eigen::Map<Eigen::VectorXR>(d_x12_prev, n_coef_);
     }
-    __device__ Eigen::Map<Eigen::VectorXd> y12_prev() {
-        return Eigen::Map<Eigen::VectorXd>(d_y12_prev, n_coef_);
+    __device__ Eigen::Map<Eigen::VectorXR> y12_prev() {
+        return Eigen::Map<Eigen::VectorXR>(d_y12_prev, n_coef_);
     }
-    __device__ Eigen::Map<Eigen::VectorXd> z12_prev() {
-        return Eigen::Map<Eigen::VectorXd>(d_z12_prev, n_coef_);
+    __device__ Eigen::Map<Eigen::VectorXR> z12_prev() {
+        return Eigen::Map<Eigen::VectorXR>(d_z12_prev, n_coef_);
     }
 #endif
 
@@ -241,12 +242,12 @@ class SyncedNesterovSolver : public SolverBase {
     int n_total_qp_, n_shape_;
     int n_coef_, n_beam_, n_constraints_;
 
-    double *d_x12_prev, *d_y12_prev, *d_z12_prev;
+    Real *d_x12_prev, *d_y12_prev, *d_z12_prev;
 
-    double *d_v_guess_, *d_v_prev_, *d_v_k_, *d_v_next_;
-    double *d_lambda_guess_, *d_g_;
-    double *d_prev_norm_g_, *d_norm_g_;
+    Real *d_v_guess_, *d_v_prev_, *d_v_k_, *d_v_next_;
+    Real *d_lambda_guess_, *d_g_;
+    Real *d_prev_norm_g_, *d_norm_g_;
     int *d_inner_flag_, *d_outer_flag_;
-    double *d_alpha_, *d_inner_tol_, *d_outer_tol_, *d_time_step_, *d_solver_rho_;
+    Real *d_alpha_, *d_inner_tol_, *d_outer_tol_, *d_time_step_, *d_solver_rho_;
     int *d_max_inner_, *d_max_outer_;
 };
