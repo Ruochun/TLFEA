@@ -568,7 +568,7 @@ void GPU_FEAT10_Data::RetrieveDetJToCPU(std::vector<std::vector<double>>& detJ) 
     }
 }
 
-void GPU_FEAT10_Data::RetrieveDnDuPreToCPU(std::vector<std::vector<Eigen::MatrixXd>>& dn_du_pre) {
+void GPU_FEAT10_Data::RetrieveDnDuPreToCPU(std::vector<std::vector<Eigen::MatrixXR>>& dn_du_pre) {
     // Resize to [n_elem][N_QP_T10_5]
     dn_du_pre.resize(n_elem);
 
@@ -614,7 +614,7 @@ void GPU_FEAT10_Data::RetrieveMassCSRToCPU(std::vector<int>& offsets,
         cudaMemcpy(values.data(), d_csr_values, static_cast<size_t>(h_nnz) * sizeof(double), cudaMemcpyDeviceToHost));
 }
 
-void GPU_FEAT10_Data::RetrievePFromFToCPU(std::vector<std::vector<Eigen::MatrixXd>>& p_from_F) {
+void GPU_FEAT10_Data::RetrievePFromFToCPU(std::vector<std::vector<Eigen::MatrixXR>>& p_from_F) {
     // Resize to [n_elem][N_QP_T10_5]
     p_from_F.resize(n_elem);
 
@@ -635,7 +635,7 @@ void GPU_FEAT10_Data::RetrievePFromFToCPU(std::vector<std::vector<Eigen::MatrixX
     }
 }
 
-void GPU_FEAT10_Data::RetrieveInternalForceToCPU(Eigen::VectorXd& internal_force) {
+void GPU_FEAT10_Data::RetrieveInternalForceToCPU(Eigen::VectorXR& internal_force) {
     // Resize to total DOFs (3 * number of nodes)
     int total_dofs = 3 * n_coef;
     internal_force.resize(total_dofs);
@@ -644,7 +644,7 @@ void GPU_FEAT10_Data::RetrieveInternalForceToCPU(Eigen::VectorXd& internal_force
     MOPHI_GPU_CALL(cudaMemcpy(internal_force.data(), d_f_int, total_dofs * sizeof(double), cudaMemcpyDeviceToHost));
 }
 
-void GPU_FEAT10_Data::RetrieveExternalForceToCPU(Eigen::VectorXd& external_force) {
+void GPU_FEAT10_Data::RetrieveExternalForceToCPU(Eigen::VectorXR& external_force) {
     // Resize to total DOFs (3 * number of nodes)
     int total_dofs = 3 * n_coef;
     external_force.resize(total_dofs);
@@ -653,7 +653,7 @@ void GPU_FEAT10_Data::RetrieveExternalForceToCPU(Eigen::VectorXd& external_force
     MOPHI_GPU_CALL(cudaMemcpy(external_force.data(), d_f_ext, total_dofs * sizeof(double), cudaMemcpyDeviceToHost));
 }
 
-void GPU_FEAT10_Data::RetrievePositionToCPU(Eigen::VectorXd& x12, Eigen::VectorXd& y12, Eigen::VectorXd& z12) {
+void GPU_FEAT10_Data::RetrievePositionToCPU(Eigen::VectorXR& x12, Eigen::VectorXR& y12, Eigen::VectorXR& z12) {
     // Resize to total number of nodes
     int total_nodes = n_coef;
     x12.resize(total_nodes);
@@ -775,7 +775,7 @@ void GPU_FEAT10_Data::RetrieveConnectivityToCPU(Eigen::MatrixXi& connectivity) {
 }
 
 void GPU_FEAT10_Data::WriteOutputVTK(const std::string& filename) {
-    Eigen::VectorXd x12, y12, z12;
+    Eigen::VectorXR x12, y12, z12;
     this->RetrievePositionToCPU(x12, y12, z12);
 
     // Retrieve connectivity

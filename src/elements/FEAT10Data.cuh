@@ -325,21 +325,21 @@ struct GPU_FEAT10_Data : public ElementBase {
 
     void RetrieveMassCSRToCPU(std::vector<int>& offsets, std::vector<int>& columns, std::vector<double>& values);
 
-    void RetrieveInternalForceToCPU(Eigen::VectorXd& internal_force) override;
+    void RetrieveInternalForceToCPU(Eigen::VectorXR& internal_force) override;
 
-    void RetrieveExternalForceToCPU(Eigen::VectorXd& external_force);
+    void RetrieveExternalForceToCPU(Eigen::VectorXR& external_force);
 
-    void RetrieveConstraintDataToCPU(Eigen::VectorXd& constraint) override {}
+    void RetrieveConstraintDataToCPU(Eigen::VectorXR& constraint) override {}
 
-    void RetrieveConstraintJacobianToCPU(Eigen::MatrixXd& constraint_jac) override {}
+    void RetrieveConstraintJacobianToCPU(Eigen::MatrixXR& constraint_jac) override {}
 
-    void RetrievePositionToCPU(Eigen::VectorXd& x12, Eigen::VectorXd& y12, Eigen::VectorXd& z12) override;
+    void RetrievePositionToCPU(Eigen::VectorXR& x12, Eigen::VectorXR& y12, Eigen::VectorXR& z12) override;
 
-    void RetrieveDeformationGradientToCPU(std::vector<std::vector<Eigen::MatrixXd>>& deformation_gradient) override {}
+    void RetrieveDeformationGradientToCPU(std::vector<std::vector<Eigen::MatrixXR>>& deformation_gradient) override {}
 
-    void RetrievePFromFToCPU(std::vector<std::vector<Eigen::MatrixXd>>& p_from_F) override;
+    void RetrievePFromFToCPU(std::vector<std::vector<Eigen::MatrixXR>>& p_from_F) override;
 
-    void RetrieveDnDuPreToCPU(std::vector<std::vector<Eigen::MatrixXd>>& dn_du_pre);
+    void RetrieveDnDuPreToCPU(std::vector<std::vector<Eigen::MatrixXR>>& dn_du_pre);
 
     void RetrieveDetJToCPU(std::vector<std::vector<double>>& detJ);
 
@@ -394,13 +394,13 @@ struct GPU_FEAT10_Data : public ElementBase {
         MOPHI_GPU_CALL(cudaMalloc(&d_data, sizeof(GPU_FEAT10_Data)));
     }
 
-    void Setup(const Eigen::VectorXd& tet5pt_x_host,
-               const Eigen::VectorXd& tet5pt_y_host,
-               const Eigen::VectorXd& tet5pt_z_host,
-               const Eigen::VectorXd& tet5pt_weights_host,
-               const Eigen::VectorXd& h_x12,
-               const Eigen::VectorXd& h_y12,
-               const Eigen::VectorXd& h_z12,
+    void Setup(const Eigen::VectorXR& tet5pt_x_host,
+               const Eigen::VectorXR& tet5pt_y_host,
+               const Eigen::VectorXR& tet5pt_z_host,
+               const Eigen::VectorXR& tet5pt_weights_host,
+               const Eigen::VectorXR& h_x12,
+               const Eigen::VectorXR& h_y12,
+               const Eigen::VectorXR& h_z12,
                const Eigen::MatrixXi& element_connectivity) {
         if (is_setup) {
             MOPHI_ERROR(std::string("GPU_FEAT10_Data is already set up."));
@@ -551,7 +551,7 @@ struct GPU_FEAT10_Data : public ElementBase {
         MOPHI_GPU_CALL(cudaMemcpy(d_kappa, &kappa, sizeof(double), cudaMemcpyHostToDevice));
     }
 
-    void SetExternalForce(const Eigen::VectorXd& h_f_ext) {
+    void SetExternalForce(const Eigen::VectorXR& h_f_ext) {
         if (h_f_ext.size() != n_coef * 3) {
             MOPHI_ERROR("External force vector size mismatch.");
             return;
@@ -584,7 +584,7 @@ struct GPU_FEAT10_Data : public ElementBase {
     /**
      * Update node positions on GPU (for prescribed motion of fixed nodes).
      */
-    void UpdatePositions(const Eigen::VectorXd& h_x12, const Eigen::VectorXd& h_y12, const Eigen::VectorXd& h_z12) {
+    void UpdatePositions(const Eigen::VectorXR& h_x12, const Eigen::VectorXR& h_y12, const Eigen::VectorXR& h_z12) {
         if (h_x12.size() != n_coef || h_y12.size() != n_coef || h_z12.size() != n_coef) {
             MOPHI_ERROR("Position vector size mismatch.");
             return;
@@ -594,9 +594,9 @@ struct GPU_FEAT10_Data : public ElementBase {
         MOPHI_GPU_CALL(cudaMemcpy(d_h_z12, h_z12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
     }
 
-    void UpdateConstraintTargets(const Eigen::VectorXd& h_x12,
-                                 const Eigen::VectorXd& h_y12,
-                                 const Eigen::VectorXd& h_z12) {
+    void UpdateConstraintTargets(const Eigen::VectorXR& h_x12,
+                                 const Eigen::VectorXR& h_y12,
+                                 const Eigen::VectorXR& h_z12) {
         if (h_x12.size() != n_coef || h_y12.size() != n_coef || h_z12.size() != n_coef) {
             MOPHI_ERROR("Position vector size mismatch.");
             return;
