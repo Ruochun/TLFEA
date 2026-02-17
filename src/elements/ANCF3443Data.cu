@@ -100,39 +100,39 @@ __global__ void precompute_reference_kernel(GPU_ANCF3443_Data* d_data) {
     const int ieta = (qp_idx / Quadrature::N_QP_3) % Quadrature::N_QP_4;
     const int izeta = qp_idx % Quadrature::N_QP_3;
 
-    const double xi = d_data->gauss_xi()(ixi);
-    const double eta = d_data->gauss_eta()(ieta);
-    const double zeta = d_data->gauss_zeta()(izeta);
+    const Real xi = d_data->gauss_xi()(ixi);
+    const Real eta = d_data->gauss_eta()(ieta);
+    const Real zeta = d_data->gauss_zeta()(izeta);
 
-    const double L = d_data->L(elem_idx);
-    const double W = d_data->W(elem_idx);
-    const double H = d_data->H(elem_idx);
+    const Real L = d_data->L(elem_idx);
+    const Real W = d_data->W(elem_idx);
+    const Real H = d_data->H(elem_idx);
 
-    double db_dxi[Quadrature::N_SHAPE_3443];
-    double db_deta[Quadrature::N_SHAPE_3443];
-    double db_dzeta[Quadrature::N_SHAPE_3443];
+    Real db_dxi[Quadrature::N_SHAPE_3443];
+    Real db_deta[Quadrature::N_SHAPE_3443];
+    Real db_dzeta[Quadrature::N_SHAPE_3443];
     ancf3443_db_dxi(xi, eta, zeta, L, W, H, db_dxi);
     ancf3443_db_deta(xi, eta, zeta, L, W, H, db_deta);
     ancf3443_db_dzeta(xi, eta, zeta, L, W, H, db_dzeta);
 
-    double ds_dxi[Quadrature::N_SHAPE_3443];
-    double ds_deta[Quadrature::N_SHAPE_3443];
-    double ds_dzeta[Quadrature::N_SHAPE_3443];
+    Real ds_dxi[Quadrature::N_SHAPE_3443];
+    Real ds_deta[Quadrature::N_SHAPE_3443];
+    Real ds_dzeta[Quadrature::N_SHAPE_3443];
     ancf3443_mat_vec_mul(d_data->B_inv(elem_idx), db_dxi, ds_dxi);
     ancf3443_mat_vec_mul(d_data->B_inv(elem_idx), db_deta, ds_deta);
     ancf3443_mat_vec_mul(d_data->B_inv(elem_idx), db_dzeta, ds_dzeta);
 
-    double x_local_arr[Quadrature::N_SHAPE_3443];
-    double y_local_arr[Quadrature::N_SHAPE_3443];
-    double z_local_arr[Quadrature::N_SHAPE_3443];
+    Real x_local_arr[Quadrature::N_SHAPE_3443];
+    Real y_local_arr[Quadrature::N_SHAPE_3443];
+    Real z_local_arr[Quadrature::N_SHAPE_3443];
     d_data->x12_jac_elem(elem_idx, x_local_arr);
     d_data->y12_jac_elem(elem_idx, y_local_arr);
     d_data->z12_jac_elem(elem_idx, z_local_arr);
-    Eigen::Map<Eigen::VectorXd> x_loc(x_local_arr, Quadrature::N_SHAPE_3443);
-    Eigen::Map<Eigen::VectorXd> y_loc(y_local_arr, Quadrature::N_SHAPE_3443);
-    Eigen::Map<Eigen::VectorXd> z_loc(z_local_arr, Quadrature::N_SHAPE_3443);
+    Eigen::Map<Eigen::VectorXR> x_loc(x_local_arr, Quadrature::N_SHAPE_3443);
+    Eigen::Map<Eigen::VectorXR> y_loc(y_local_arr, Quadrature::N_SHAPE_3443);
+    Eigen::Map<Eigen::VectorXR> z_loc(z_local_arr, Quadrature::N_SHAPE_3443);
 
-    double J[3][3] = {{0.0}};
+    Real J[3][3] = {{0.0}};
 #pragma unroll
     for (int a = 0; a < Quadrature::N_SHAPE_3443; ++a) {
         J[0][0] += x_loc(a) * ds_dxi[a];
@@ -148,12 +148,12 @@ __global__ void precompute_reference_kernel(GPU_ANCF3443_Data* d_data) {
         J[2][2] += z_loc(a) * ds_dzeta[a];
     }
 
-    const double detJ = J[0][0] * (J[1][1] * J[2][2] - J[1][2] * J[2][1]) -
+    const Real detJ = J[0][0] * (J[1][1] * J[2][2] - J[1][2] * J[2][1]) -
                         J[0][1] * (J[1][0] * J[2][2] - J[1][2] * J[2][0]) +
                         J[0][2] * (J[1][0] * J[2][1] - J[1][1] * J[2][0]);
     d_data->detJ_ref(elem_idx, qp_idx) = detJ;
 
-    double JT[3][3];
+    Real JT[3][3];
 #pragma unroll
     for (int i = 0; i < 3; ++i) {
 #pragma unroll
@@ -164,8 +164,8 @@ __global__ void precompute_reference_kernel(GPU_ANCF3443_Data* d_data) {
 
 #pragma unroll
     for (int a = 0; a < Quadrature::N_SHAPE_3443; ++a) {
-        double rhs[3] = {ds_dxi[a], ds_deta[a], ds_dzeta[a]};
-        double grad[3] = {0.0, 0.0, 0.0};
+        Real rhs[3] = {ds_dxi[a], ds_deta[a], ds_dzeta[a]};
+        Real grad[3] = {0.0, 0.0, 0.0};
         ancf3443_solve_3x3_system(JT, rhs, grad);
         d_data->grad_N_ref(elem_idx, qp_idx)(a, 0) = grad[0];
         d_data->grad_N_ref(elem_idx, qp_idx)(a, 1) = grad[1];
@@ -187,36 +187,36 @@ __global__ void mass_matrix_qp_kernel(GPU_ANCF3443_Data* d_data) {
         int ieta = (qp_local / Quadrature::N_QP_3) % Quadrature::N_QP_7;
         int izeta = qp_local % Quadrature::N_QP_3;
 
-        double xi = d_data->gauss_xi_m()(ixi);
-        double eta = d_data->gauss_eta_m()(ieta);
-        double zeta = d_data->gauss_zeta_m()(izeta);
-        double weight = d_data->weight_xi_m()(ixi) * d_data->weight_eta_m()(ieta) * d_data->weight_zeta_m()(izeta);
+        Real xi = d_data->gauss_xi_m()(ixi);
+        Real eta = d_data->gauss_eta_m()(ieta);
+        Real zeta = d_data->gauss_zeta_m()(izeta);
+        Real weight = d_data->weight_xi_m()(ixi) * d_data->weight_eta_m()(ieta) * d_data->weight_zeta_m()(izeta);
 
         // Get local nodal coordinates for this element
-        double x_local_arr[Quadrature::N_SHAPE_3443], y_local_arr[Quadrature::N_SHAPE_3443],
+        Real x_local_arr[Quadrature::N_SHAPE_3443], y_local_arr[Quadrature::N_SHAPE_3443],
             z_local_arr[Quadrature::N_SHAPE_3443];
         d_data->x12_jac_elem(elem, x_local_arr);
         d_data->y12_jac_elem(elem, y_local_arr);
         d_data->z12_jac_elem(elem, z_local_arr);
-        Eigen::Map<Eigen::VectorXd> x_loc(x_local_arr, Quadrature::N_SHAPE_3443);
-        Eigen::Map<Eigen::VectorXd> y_loc(y_local_arr, Quadrature::N_SHAPE_3443);
-        Eigen::Map<Eigen::VectorXd> z_loc(z_local_arr, Quadrature::N_SHAPE_3443);
+        Eigen::Map<Eigen::VectorXR> x_loc(x_local_arr, Quadrature::N_SHAPE_3443);
+        Eigen::Map<Eigen::VectorXR> y_loc(y_local_arr, Quadrature::N_SHAPE_3443);
+        Eigen::Map<Eigen::VectorXR> z_loc(z_local_arr, Quadrature::N_SHAPE_3443);
 
         // Compute shape function at this QP
-        double b[Quadrature::N_SHAPE_3443];
-        const double L = d_data->L(elem);
-        const double W = d_data->W(elem);
-        const double H = d_data->H(elem);
+        Real b[Quadrature::N_SHAPE_3443];
+        const Real L = d_data->L(elem);
+        const Real W = d_data->W(elem);
+        const Real H = d_data->H(elem);
         ancf3443_b_vec_xi(xi, eta, zeta, L, W, H, b);
 
         // Compute s = B_inv @ b
-        double s[Quadrature::N_SHAPE_3443];
+        Real s[Quadrature::N_SHAPE_3443];
         ancf3443_mat_vec_mul(d_data->B_inv(elem), b, s);
 
         // Compute Jacobian determinant
-        double J[9];
+        Real J[9];
         ancf3443_calc_det_J_xi(xi, eta, zeta, d_data->B_inv(elem), x_loc, y_loc, z_loc, L, W, H, J);
-        double detJ = ancf3443_det3x3(J);
+        Real detJ = ancf3443_det3x3(J);
 
         // For each local node, output (global_node, value)
         int i_local = item_local / Quadrature::N_SHAPE_3443;
@@ -224,7 +224,7 @@ __global__ void mass_matrix_qp_kernel(GPU_ANCF3443_Data* d_data) {
         int i_global = d_data->element_connectivity()(elem, i_local / 4) * 4 + (i_local % 4);
         int j_global = d_data->element_connectivity()(elem, j_local / 4) * 4 + (j_local % 4);
 
-        const double mass_contrib = d_data->rho0() * s[i_local] * s[j_local] * weight * detJ;
+        const Real mass_contrib = d_data->rho0() * s[i_local] * s[j_local] * weight * detJ;
         const int row_start = d_data->csr_offsets()[i_global];
         const int row_end = d_data->csr_offsets()[i_global + 1];
         const int n_cols = row_end - row_start;
@@ -275,8 +275,8 @@ void GPU_ANCF3443_Data::PrintDsDuPre() {
     const int mat_stride = Quadrature::N_SHAPE_3443 * 3;
     const int total_size = n_beam * n_qp * mat_stride;
 
-    std::vector<double> h_grad(static_cast<size_t>(total_size));
-    std::vector<double> h_detJ(static_cast<size_t>(n_beam * n_qp));
+    std::vector<Real> h_grad(static_cast<size_t>(total_size));
+    std::vector<Real> h_detJ(static_cast<size_t>(n_beam * n_qp));
 
     MOPHI_GPU_CALL(cudaMemcpy(h_grad.data(), d_grad_N_ref, static_cast<size_t>(total_size) * sizeof(double),
                               cudaMemcpyDeviceToHost));
@@ -288,8 +288,8 @@ void GPU_ANCF3443_Data::PrintDsDuPre() {
             std::cout << "\n=== Elem " << e << " Quadrature Point " << qp << " detJ_ref=" << h_detJ[e * n_qp + qp]
                       << " ===" << std::endl;
 
-            double* qp_data = h_grad.data() + (e * n_qp + qp) * mat_stride;
-            Eigen::Map<Eigen::MatrixXd> grad_matrix(qp_data, Quadrature::N_SHAPE_3443, 3);
+            Real* qp_data = h_grad.data() + (e * n_qp + qp) * mat_stride;
+            Eigen::Map<Eigen::MatrixXR> grad_matrix(qp_data, Quadrature::N_SHAPE_3443, 3);
             std::cout << "        dN/dx       dN/dy       dN/dz" << std::endl;
             for (int i = 0; i < Quadrature::N_SHAPE_3443; ++i) {
                 std::cout << "Shape " << i << ": ";
@@ -302,10 +302,10 @@ void GPU_ANCF3443_Data::PrintDsDuPre() {
     }
 }
 
-void GPU_ANCF3443_Data::RetrieveDetJToCPU(std::vector<std::vector<double>>& detJ) {
+void GPU_ANCF3443_Data::RetrieveDetJToCPU(std::vector<std::vector<Real>>& detJ) {
     const int n_qp = Quadrature::N_TOTAL_QP_4_4_3;
-    detJ.assign(static_cast<size_t>(n_beam), std::vector<double>(n_qp));
-    std::vector<double> flat(static_cast<size_t>(n_beam * n_qp));
+    detJ.assign(static_cast<size_t>(n_beam), std::vector<Real>(n_qp));
+    std::vector<Real> flat(static_cast<size_t>(n_beam * n_qp));
     MOPHI_GPU_CALL(cudaMemcpy(flat.data(), d_detJ_ref, static_cast<size_t>(n_beam * n_qp) * sizeof(double),
                               cudaMemcpyDeviceToHost));
     for (int e = 0; e < n_beam; ++e) {
@@ -400,7 +400,7 @@ __global__ void build_constraint_j_csr_3443_kernel(int n_constraint,
                                                    const int* fixed_nodes,
                                                    int* j_offsets,
                                                    int* j_columns,
-                                                   double* j_values) {
+                                                   Real* j_values) {
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     if (tid >= n_constraint) {
         return;
@@ -433,7 +433,7 @@ __global__ void build_constraint_jt_fill_3443_kernel(int n_constraint,
                                                      const int* offsets,
                                                      int* row_positions,
                                                      int* columns,
-                                                     double* values) {
+                                                     Real* values) {
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     if (tid >= n_constraint) {
         return;
@@ -548,7 +548,7 @@ void GPU_ANCF3443_Data::RetrieveConnectivityToCPU(Eigen::MatrixXi& connectivity)
 
 void GPU_ANCF3443_Data::RetrieveMassCSRToCPU(std::vector<int>& offsets,
                                              std::vector<int>& columns,
-                                             std::vector<double>& values) {
+                                             std::vector<Real>& values) {
     offsets.assign(static_cast<size_t>(n_coef) + 1, 0);
     columns.clear();
     values.clear();
@@ -571,7 +571,7 @@ void GPU_ANCF3443_Data::RetrieveMassCSRToCPU(std::vector<int>& offsets,
         cudaMemcpy(values.data(), d_csr_values, static_cast<size_t>(h_nnz) * sizeof(double), cudaMemcpyDeviceToHost));
 }
 
-void GPU_ANCF3443_Data::RetrieveInternalForceToCPU(Eigen::VectorXd& internal_force) {
+void GPU_ANCF3443_Data::RetrieveInternalForceToCPU(Eigen::VectorXR& internal_force) {
     int expected_size = n_coef * 3;
     internal_force.resize(expected_size);
 
@@ -580,7 +580,7 @@ void GPU_ANCF3443_Data::RetrieveInternalForceToCPU(Eigen::VectorXd& internal_for
 
 void GPU_ANCF3443_Data::RetrieveConstraintJacobianCSRToCPU(std::vector<int>& offsets,
                                                            std::vector<int>& columns,
-                                                           std::vector<double>& values) {
+                                                           std::vector<Real>& values) {
     offsets.assign(static_cast<size_t>(n_constraint) + 1, 0);
     columns.clear();
     values.clear();
@@ -612,7 +612,7 @@ void GPU_ANCF3443_Data::RetrieveConstraintJacobianCSRToCPU(std::vector<int>& off
 }
 
 void GPU_ANCF3443_Data::RetrieveDeformationGradientToCPU(
-    std::vector<std::vector<Eigen::MatrixXd>>& deformation_gradient) {
+    std::vector<std::vector<Eigen::MatrixXR>>& deformation_gradient) {
     deformation_gradient.resize(n_beam);
     for (int i = 0; i < n_beam; i++) {
         deformation_gradient[i].resize(Quadrature::N_TOTAL_QP_4_4_3);
@@ -625,7 +625,7 @@ void GPU_ANCF3443_Data::RetrieveDeformationGradientToCPU(
     }
 }
 
-void GPU_ANCF3443_Data::RetrievePFromFToCPU(std::vector<std::vector<Eigen::MatrixXd>>& p_from_F) {
+void GPU_ANCF3443_Data::RetrievePFromFToCPU(std::vector<std::vector<Eigen::MatrixXR>>& p_from_F) {
     p_from_F.resize(n_beam);
     for (int i = 0; i < n_beam; i++) {
         p_from_F[i].resize(Quadrature::N_TOTAL_QP_4_4_3);
@@ -637,13 +637,13 @@ void GPU_ANCF3443_Data::RetrievePFromFToCPU(std::vector<std::vector<Eigen::Matri
     }
 }
 
-void GPU_ANCF3443_Data::RetrieveConstraintDataToCPU(Eigen::VectorXd& constraint) {
+void GPU_ANCF3443_Data::RetrieveConstraintDataToCPU(Eigen::VectorXR& constraint) {
     int expected_size = n_constraint;
     constraint.resize(expected_size);
     MOPHI_GPU_CALL(cudaMemcpy(constraint.data(), d_constraint, expected_size * sizeof(double), cudaMemcpyDeviceToHost));
 }
 
-void GPU_ANCF3443_Data::RetrieveConstraintJacobianToCPU(Eigen::MatrixXd& constraint_jac) {
+void GPU_ANCF3443_Data::RetrieveConstraintJacobianToCPU(Eigen::MatrixXR& constraint_jac) {
     constraint_jac.resize(n_constraint, n_coef * 3);
     constraint_jac.setZero();
 
@@ -657,7 +657,7 @@ void GPU_ANCF3443_Data::RetrieveConstraintJacobianToCPU(Eigen::MatrixXd& constra
         }
         std::vector<int> offsets;
         std::vector<int> columns;
-        std::vector<double> values;
+        std::vector<Real> values;
         RetrieveConstraintJacobianCSRToCPU(offsets, columns, values);
         if (static_cast<int>(offsets.size()) != n_constraint + 1) {
             return;
@@ -687,7 +687,7 @@ void GPU_ANCF3443_Data::RetrieveConstraintJacobianToCPU(Eigen::MatrixXd& constra
     }
 }
 
-void GPU_ANCF3443_Data::RetrievePositionToCPU(Eigen::VectorXd& x12, Eigen::VectorXd& y12, Eigen::VectorXd& z12) {
+void GPU_ANCF3443_Data::RetrievePositionToCPU(Eigen::VectorXR& x12, Eigen::VectorXR& y12, Eigen::VectorXR& z12) {
     int expected_size = n_coef;
     x12.resize(expected_size);
     y12.resize(expected_size);
