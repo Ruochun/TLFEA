@@ -24,6 +24,7 @@
 
 #include "elements/FEAT10Data.cuh"
 #include "solvers/SyncedNesterov.cuh"
+#include "types.h"
 #include "utils/cpu_utils.h"
 #include "utils/mesh_utils.h"
 #include "utils/quadrature_utils.h"
@@ -81,7 +82,7 @@ int main() {
     int n_elems = mesh.NumOwnedTet10s();
 
     // Convert mophi::Mesh geometry to Eigen format
-    Eigen::MatrixXd nodes(n_nodes, 3);
+    Eigen::MatrixXR nodes(n_nodes, 3);
     for (int i = 0; i < n_nodes; i++) {
         const auto& node = mesh.geom.nodes[i];
         nodes(i, 0) = node.x();
@@ -108,7 +109,7 @@ int main() {
     gpu_t10_data.Initialize();
 
     // Extract coordinate vectors from nodes matrix
-    Eigen::VectorXd h_x12(n_nodes), h_y12(n_nodes), h_z12(n_nodes);
+    Eigen::VectorXR h_x12(n_nodes), h_y12(n_nodes), h_z12(n_nodes);
     for (int i = 0; i < n_nodes; i++) {
         h_x12(i) = nodes(i, 0);  // X coordinates
         h_y12(i) = nodes(i, 1);  // Y coordinates
@@ -147,7 +148,7 @@ int main() {
     // Apply external forces
     // ==========================================================================
 
-    Eigen::VectorXd h_f_ext(gpu_t10_data.get_n_coef() * 3);
+    Eigen::VectorXR h_f_ext(gpu_t10_data.get_n_coef() * 3);
     h_f_ext.setZero();
 
     // Apply a concentrated load at x ≈ x_max (the right end of the beam)
@@ -226,7 +227,7 @@ int main() {
               << std::endl;
 
     // Output initial configuration
-    Eigen::VectorXd x12, y12, z12;
+    Eigen::VectorXR x12, y12, z12;
     gpu_t10_data.RetrievePositionToCPU(x12, y12, z12);
 
     std::stringstream ss;
