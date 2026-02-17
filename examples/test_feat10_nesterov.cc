@@ -97,10 +97,10 @@ int main() {
     gpu_t10_data.SetExternalForce(h_f_ext);
 
     // Get quadrature data from quadrature_utils.h
-    const Eigen::VectorXd& tet5pt_x_host = Quadrature::tet5pt_x;
-    const Eigen::VectorXd& tet5pt_y_host = Quadrature::tet5pt_y;
-    const Eigen::VectorXd& tet5pt_z_host = Quadrature::tet5pt_z;
-    const Eigen::VectorXd& tet5pt_weights_host = Quadrature::tet5pt_weights;
+    const Eigen::VectorXR& tet5pt_x_host = Quadrature::tet5pt_x;
+    const Eigen::VectorXR& tet5pt_y_host = Quadrature::tet5pt_y;
+    const Eigen::VectorXR& tet5pt_z_host = Quadrature::tet5pt_z;
+    const Eigen::VectorXR& tet5pt_weights_host = Quadrature::tet5pt_weights;
 
     // Call Setup with all required parameters
     gpu_t10_data.Setup(tet5pt_x_host, tet5pt_y_host, tet5pt_z_host, tet5pt_weights_host, h_x12, h_y12, h_z12, elements);
