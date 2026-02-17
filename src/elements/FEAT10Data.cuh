@@ -39,12 +39,12 @@ struct GPU_FEAT10_Data : public ElementBase {
         return Eigen::Map<Eigen::MatrixXi>(d_element_connectivity, n_elem, Quadrature::N_NODE_T10_10);
     }
 
-    __device__ Eigen::Map<Eigen::MatrixXd> grad_N_ref(int elem_idx, int qp_idx) {
-        return Eigen::Map<Eigen::MatrixXd>(d_grad_N_ref + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 10 * 3, 10, 3);
+    __device__ Eigen::Map<Eigen::MatrixXR> grad_N_ref(int elem_idx, int qp_idx) {
+        return Eigen::Map<Eigen::MatrixXR>(d_grad_N_ref + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 10 * 3, 10, 3);
     }
 
-    __device__ const Eigen::Map<Eigen::MatrixXd> grad_N_ref(int elem_idx, int qp_idx) const {
-        return Eigen::Map<Eigen::MatrixXd>(d_grad_N_ref + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 10 * 3, 10, 3);
+    __device__ const Eigen::Map<Eigen::MatrixXR> grad_N_ref(int elem_idx, int qp_idx) const {
+        return Eigen::Map<Eigen::MatrixXR>(d_grad_N_ref + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 10 * 3, 10, 3);
     }
 
     __device__ double& detJ_ref(int elem_idx, int qp_idx) {
@@ -71,114 +71,114 @@ struct GPU_FEAT10_Data : public ElementBase {
         return d_tet5pt_weights[qp_idx];
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> x12() {
-        return Eigen::Map<Eigen::VectorXd>(d_h_x12, n_coef);
+    __device__ Eigen::Map<Eigen::VectorXR> x12() {
+        return Eigen::Map<Eigen::VectorXR>(d_h_x12, n_coef);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> const x12() const {
-        return Eigen::Map<Eigen::VectorXd>(d_h_x12, n_coef);
+    __device__ Eigen::Map<Eigen::VectorXR> const x12() const {
+        return Eigen::Map<Eigen::VectorXR>(d_h_x12, n_coef);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> y12() {
-        return Eigen::Map<Eigen::VectorXd>(d_h_y12, n_coef);
+    __device__ Eigen::Map<Eigen::VectorXR> y12() {
+        return Eigen::Map<Eigen::VectorXR>(d_h_y12, n_coef);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> const y12() const {
-        return Eigen::Map<Eigen::VectorXd>(d_h_y12, n_coef);
+    __device__ Eigen::Map<Eigen::VectorXR> const y12() const {
+        return Eigen::Map<Eigen::VectorXR>(d_h_y12, n_coef);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> z12() {
-        return Eigen::Map<Eigen::VectorXd>(d_h_z12, n_coef);
+    __device__ Eigen::Map<Eigen::VectorXR> z12() {
+        return Eigen::Map<Eigen::VectorXR>(d_h_z12, n_coef);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> const z12() const {
-        return Eigen::Map<Eigen::VectorXd>(d_h_z12, n_coef);
+    __device__ Eigen::Map<Eigen::VectorXR> const z12() const {
+        return Eigen::Map<Eigen::VectorXR>(d_h_z12, n_coef);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> const x12_jac() const {
-        return Eigen::Map<Eigen::VectorXd>(d_h_x12_jac, n_coef);
+    __device__ Eigen::Map<Eigen::VectorXR> const x12_jac() const {
+        return Eigen::Map<Eigen::VectorXR>(d_h_x12_jac, n_coef);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> const y12_jac() const {
-        return Eigen::Map<Eigen::VectorXd>(d_h_y12_jac, n_coef);
+    __device__ Eigen::Map<Eigen::VectorXR> const y12_jac() const {
+        return Eigen::Map<Eigen::VectorXR>(d_h_y12_jac, n_coef);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> const z12_jac() const {
-        return Eigen::Map<Eigen::VectorXd>(d_h_z12_jac, n_coef);
+    __device__ Eigen::Map<Eigen::VectorXR> const z12_jac() const {
+        return Eigen::Map<Eigen::VectorXR>(d_h_z12_jac, n_coef);
     }
 
-    __device__ Eigen::Map<Eigen::MatrixXd> F(int elem_idx, int qp_idx) {
-        return Eigen::Map<Eigen::MatrixXd>(d_F + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ Eigen::Map<Eigen::MatrixXR> F(int elem_idx, int qp_idx) {
+        return Eigen::Map<Eigen::MatrixXR>(d_F + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ const Eigen::Map<Eigen::MatrixXd> F(int elem_idx, int qp_idx) const {
-        return Eigen::Map<Eigen::MatrixXd>(d_F + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ const Eigen::Map<Eigen::MatrixXR> F(int elem_idx, int qp_idx) const {
+        return Eigen::Map<Eigen::MatrixXR>(d_F + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ Eigen::Map<Eigen::MatrixXd> P(int elem_idx, int qp_idx) {
-        return Eigen::Map<Eigen::MatrixXd>(d_P + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ Eigen::Map<Eigen::MatrixXR> P(int elem_idx, int qp_idx) {
+        return Eigen::Map<Eigen::MatrixXR>(d_P + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ const Eigen::Map<Eigen::MatrixXd> P(int elem_idx, int qp_idx) const {
-        return Eigen::Map<Eigen::MatrixXd>(d_P + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ const Eigen::Map<Eigen::MatrixXR> P(int elem_idx, int qp_idx) const {
+        return Eigen::Map<Eigen::MatrixXR>(d_P + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
     // Time-derivative of deformation gradient (viscous computation)
-    __device__ Eigen::Map<Eigen::MatrixXd> Fdot(int elem_idx, int qp_idx) {
-        return Eigen::Map<Eigen::MatrixXd>(d_Fdot + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ Eigen::Map<Eigen::MatrixXR> Fdot(int elem_idx, int qp_idx) {
+        return Eigen::Map<Eigen::MatrixXR>(d_Fdot + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ const Eigen::Map<Eigen::MatrixXd> Fdot(int elem_idx, int qp_idx) const {
-        return Eigen::Map<Eigen::MatrixXd>(d_Fdot + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ const Eigen::Map<Eigen::MatrixXR> Fdot(int elem_idx, int qp_idx) const {
+        return Eigen::Map<Eigen::MatrixXR>(d_Fdot + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
     // Viscous Piola stress storage
-    __device__ Eigen::Map<Eigen::MatrixXd> P_vis(int elem_idx, int qp_idx) {
-        return Eigen::Map<Eigen::MatrixXd>(d_P_vis + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ Eigen::Map<Eigen::MatrixXR> P_vis(int elem_idx, int qp_idx) {
+        return Eigen::Map<Eigen::MatrixXR>(d_P_vis + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ const Eigen::Map<Eigen::MatrixXd> P_vis(int elem_idx, int qp_idx) const {
-        return Eigen::Map<Eigen::MatrixXd>(d_P_vis + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ const Eigen::Map<Eigen::MatrixXR> P_vis(int elem_idx, int qp_idx) const {
+        return Eigen::Map<Eigen::MatrixXR>(d_P_vis + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> f_int(int global_node_idx) {
-        return Eigen::Map<Eigen::VectorXd>(d_f_int + global_node_idx * 3, 3);
+    __device__ Eigen::Map<Eigen::VectorXR> f_int(int global_node_idx) {
+        return Eigen::Map<Eigen::VectorXR>(d_f_int + global_node_idx * 3, 3);
     }
 
-    __device__ const Eigen::Map<Eigen::VectorXd> f_int(int global_node_idx) const {
-        return Eigen::Map<Eigen::VectorXd>(d_f_int + global_node_idx * 3, 3);
+    __device__ const Eigen::Map<Eigen::VectorXR> f_int(int global_node_idx) const {
+        return Eigen::Map<Eigen::VectorXR>(d_f_int + global_node_idx * 3, 3);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> f_int() {
-        return Eigen::Map<Eigen::VectorXd>(d_f_int, n_coef * 3);
+    __device__ Eigen::Map<Eigen::VectorXR> f_int() {
+        return Eigen::Map<Eigen::VectorXR>(d_f_int, n_coef * 3);
     }
 
-    __device__ const Eigen::Map<Eigen::VectorXd> f_int() const {
-        return Eigen::Map<Eigen::VectorXd>(d_f_int, n_coef * 3);
+    __device__ const Eigen::Map<Eigen::VectorXR> f_int() const {
+        return Eigen::Map<Eigen::VectorXR>(d_f_int, n_coef * 3);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> f_ext(int global_node_idx) {
-        return Eigen::Map<Eigen::VectorXd>(d_f_ext + global_node_idx * 3, 3);
+    __device__ Eigen::Map<Eigen::VectorXR> f_ext(int global_node_idx) {
+        return Eigen::Map<Eigen::VectorXR>(d_f_ext + global_node_idx * 3, 3);
     }
 
-    __device__ const Eigen::Map<Eigen::VectorXd> f_ext(int global_node_idx) const {
-        return Eigen::Map<Eigen::VectorXd>(d_f_ext + global_node_idx * 3, 3);
+    __device__ const Eigen::Map<Eigen::VectorXR> f_ext(int global_node_idx) const {
+        return Eigen::Map<Eigen::VectorXR>(d_f_ext + global_node_idx * 3, 3);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> f_ext() {
-        return Eigen::Map<Eigen::VectorXd>(d_f_ext, n_coef * 3);
+    __device__ Eigen::Map<Eigen::VectorXR> f_ext() {
+        return Eigen::Map<Eigen::VectorXR>(d_f_ext, n_coef * 3);
     }
 
-    __device__ const Eigen::Map<Eigen::VectorXd> f_ext() const {
-        return Eigen::Map<Eigen::VectorXd>(d_f_ext, n_coef * 3);
+    __device__ const Eigen::Map<Eigen::VectorXR> f_ext() const {
+        return Eigen::Map<Eigen::VectorXR>(d_f_ext, n_coef * 3);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> constraint() {
-        return Eigen::Map<Eigen::VectorXd>(d_constraint, n_constraint);
+    __device__ Eigen::Map<Eigen::VectorXR> constraint() {
+        return Eigen::Map<Eigen::VectorXR>(d_constraint, n_constraint);
     }
 
-    __device__ const Eigen::Map<Eigen::VectorXd> constraint() const {
-        return Eigen::Map<Eigen::VectorXd>(d_constraint, n_constraint);
+    __device__ const Eigen::Map<Eigen::VectorXR> constraint() const {
+        return Eigen::Map<Eigen::VectorXR>(d_constraint, n_constraint);
     }
 
     __device__ Eigen::Map<Eigen::VectorXi> fixed_nodes() {
