@@ -16,6 +16,7 @@
 
 #include <Eigen/Dense>
 #include <vector>
+#include "types.h"
 
 enum ElementType { TYPE_3243, TYPE_3443, TYPE_T10 };
 
@@ -37,10 +38,10 @@ class ElementBase {
     virtual void CalcInternalForce() = 0;
     virtual void CalcConstraintData() = 0;
     virtual void CalcP() = 0;
-    virtual void RetrieveInternalForceToCPU(Eigen::VectorXd& internal_force) = 0;
-    virtual void RetrieveConstraintDataToCPU(Eigen::VectorXd& constraint) = 0;
-    virtual void RetrieveConstraintJacobianToCPU(Eigen::MatrixXd& constraint_jac) = 0;
-    virtual void RetrievePositionToCPU(Eigen::VectorXd& x12, Eigen::VectorXd& y12, Eigen::VectorXd& z12) = 0;
-    virtual void RetrieveDeformationGradientToCPU(std::vector<std::vector<Eigen::MatrixXd>>& deformation_gradient) = 0;
-    virtual void RetrievePFromFToCPU(std::vector<std::vector<Eigen::MatrixXd>>& p_from_F) = 0;
+    virtual void RetrieveInternalForceToCPU(Eigen::VectorXR& internal_force) = 0;
+    virtual void RetrieveConstraintDataToCPU(Eigen::VectorXR& constraint) = 0;
+    virtual void RetrieveConstraintJacobianToCPU(Eigen::MatrixXR& constraint_jac) = 0;
+    virtual void RetrievePositionToCPU(Eigen::VectorXR& x12, Eigen::VectorXR& y12, Eigen::VectorXR& z12) = 0;
+    virtual void RetrieveDeformationGradientToCPU(std::vector<std::vector<Eigen::MatrixXR>>& deformation_gradient) = 0;
+    virtual void RetrievePFromFToCPU(std::vector<std::vector<Eigen::MatrixXR>>& p_from_F) = 0;
 };
