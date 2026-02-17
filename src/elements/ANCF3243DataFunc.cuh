@@ -17,18 +17,19 @@
 #include "../materials/MooneyRivlin.cuh"
 #include "../materials/SVK.cuh"
 #include "ANCF3243Data.cuh"
+#include "types.h"
 
 // forward-declare solver type (pointer-only used here)
 struct SyncedNewtonSolver;
 
-__device__ __forceinline__ void compute_p(int, int, GPU_ANCF3243_Data*, const double*, double);
+__device__ __forceinline__ void compute_p(int, int, GPU_ANCF3243_Data*, const Real*, Real);
 __device__ __forceinline__ void compute_internal_force(int, int, GPU_ANCF3243_Data*);
 __device__ __forceinline__ void compute_constraint_data(GPU_ANCF3243_Data*);
 
 // Solve 3x3 linear system: A * x = b (Gaussian elimination with pivoting).
-__device__ __forceinline__ void ancf3243_solve_3x3_system(double A[3][3], double b[3], double x[3]) {
-    constexpr double kEpsPivot = 1e-14;
-    double aug[3][4];
+__device__ __forceinline__ void ancf3243_solve_3x3_system(Real A[3][3], Real b[3], Real x[3]) {
+    constexpr Real kEpsPivot = 1e-14;
+    Real aug[3][4];
 #pragma unroll
     for (int i = 0; i < 3; i++) {
 #pragma unroll
@@ -40,9 +41,9 @@ __device__ __forceinline__ void ancf3243_solve_3x3_system(double A[3][3], double
 
     for (int k = 0; k < 3; k++) {
         int pivot_row = k;
-        double max_val = fabs(aug[k][k]);
+        Real max_val = fabs(aug[k][k]);
         for (int i = k + 1; i < 3; i++) {
-            double v = fabs(aug[i][k]);
+            Real v = fabs(aug[i][k]);
             if (v > max_val) {
                 max_val = v;
                 pivot_row = i;
@@ -52,7 +53,7 @@ __device__ __forceinline__ void ancf3243_solve_3x3_system(double A[3][3], double
         if (pivot_row != k) {
 #pragma unroll
             for (int j = 0; j < 4; j++) {
-                double tmp = aug[k][j];
+                Real tmp = aug[k][j];
                 aug[k][j] = aug[pivot_row][j];
                 aug[pivot_row][j] = tmp;
             }
@@ -64,7 +65,7 @@ __device__ __forceinline__ void ancf3243_solve_3x3_system(double A[3][3], double
         }
 
         for (int i = k + 1; i < 3; i++) {
-            double factor = aug[i][k] / aug[k][k];
+            Real factor = aug[i][k] / aug[k][k];
             for (int j = k; j < 4; j++) {
                 aug[i][j] -= factor * aug[k][j];
             }
@@ -84,7 +85,7 @@ __device__ __forceinline__ void ancf3243_solve_3x3_system(double A[3][3], double
 }
 
 // Device function: matrix-vector multiply (8x8 * 8x1)
-__device__ __forceinline__ void ancf3243_mat_vec_mul8(Eigen::Map<Eigen::MatrixXd> A, const double* x, double* out) {
+__device__ __forceinline__ void ancf3243_mat_vec_mul8(Eigen::Map<Eigen::MatrixXR> A, const Real* x, Real* out) {
 #pragma unroll
     for (int i = 0; i < Quadrature::N_SHAPE_3243; ++i) {
         out[i] = 0.0;
@@ -96,11 +97,11 @@ __device__ __forceinline__ void ancf3243_mat_vec_mul8(Eigen::Map<Eigen::MatrixXd
 }
 
 // Device function to compute determinant of 3x3 matrix
-__device__ __forceinline__ double ancf3243_det3x3(const double* J) {
+__device__ __forceinline__ Real ancf3243_det3x3(const Real* J) {
     return J[0] * (J[4] * J[8] - J[5] * J[7]) - J[1] * (J[3] * J[8] - J[5] * J[6]) + J[2] * (J[3] * J[7] - J[4] * J[6]);
 }
 
-__device__ __forceinline__ void ancf3243_b_vec(double u, double v, double w, double* out) {
+__device__ __forceinline__ void ancf3243_b_vec(Real u, Real v, Real w, Real* out) {
     out[0] = 1.0;
     out[1] = u;
     out[2] = v;
@@ -112,31 +113,31 @@ __device__ __forceinline__ void ancf3243_b_vec(double u, double v, double w, dou
 }
 
 __device__ __forceinline__ void
-ancf3243_b_vec_xi(double xi, double eta, double zeta, double L, double W, double H, double* out) {
-    double u = L * xi / 2.0;
-    double v = W * eta / 2.0;
-    double w = H * zeta / 2.0;
+ancf3243_b_vec_xi(Real xi, Real eta, Real zeta, Real L, Real W, Real H, Real* out) {
+    Real u = L * xi / 2.0;
+    Real v = W * eta / 2.0;
+    Real w = H * zeta / 2.0;
     ancf3243_b_vec(u, v, w, out);
 }
 
 // Device function for Jacobian determinant in normalized coordinates
-__device__ __forceinline__ void ancf3243_calc_det_J_xi(double xi,
-                                                       double eta,
-                                                       double zeta,
-                                                       Eigen::Map<Eigen::MatrixXd> B_inv,
-                                                       Eigen::Map<Eigen::VectorXd> x12_jac,
-                                                       Eigen::Map<Eigen::VectorXd> y12_jac,
-                                                       Eigen::Map<Eigen::VectorXd> z12_jac,
-                                                       double L,
-                                                       double W,
-                                                       double H,
-                                                       double* J_out) {
-    double db_dxi[Quadrature::N_SHAPE_3243] = {
+__device__ __forceinline__ void ancf3243_calc_det_J_xi(Real xi,
+                                                       Real eta,
+                                                       Real zeta,
+                                                       Eigen::Map<Eigen::MatrixXR> B_inv,
+                                                       Eigen::Map<Eigen::VectorXR> x12_jac,
+                                                       Eigen::Map<Eigen::VectorXR> y12_jac,
+                                                       Eigen::Map<Eigen::VectorXR> z12_jac,
+                                                       Real L,
+                                                       Real W,
+                                                       Real H,
+                                                       Real* J_out) {
+    Real db_dxi[Quadrature::N_SHAPE_3243] = {
         0.0, L / 2, 0.0, 0.0, (L * W / 4) * eta, (L * H / 4) * zeta, (L * L / 2) * xi, (3 * L * L * L / 8) * xi * xi};
-    double db_deta[Quadrature::N_SHAPE_3243] = {0.0, 0.0, W / 2, 0.0, (L * W / 4) * xi, 0.0, 0.0, 0.0};
-    double db_dzeta[Quadrature::N_SHAPE_3243] = {0.0, 0.0, 0.0, H / 2, 0.0, (L * H / 4) * xi, 0.0, 0.0};
+    Real db_deta[Quadrature::N_SHAPE_3243] = {0.0, 0.0, W / 2, 0.0, (L * W / 4) * xi, 0.0, 0.0, 0.0};
+    Real db_dzeta[Quadrature::N_SHAPE_3243] = {0.0, 0.0, 0.0, H / 2, 0.0, (L * H / 4) * xi, 0.0, 0.0};
 
-    double ds_dxi[Quadrature::N_SHAPE_3243], ds_deta[Quadrature::N_SHAPE_3243], ds_dzeta[Quadrature::N_SHAPE_3243];
+    Real ds_dxi[Quadrature::N_SHAPE_3243], ds_deta[Quadrature::N_SHAPE_3243], ds_dzeta[Quadrature::N_SHAPE_3243];
     ancf3243_mat_vec_mul8(B_inv, db_dxi, ds_dxi);
     ancf3243_mat_vec_mul8(B_inv, db_deta, ds_deta);
     ancf3243_mat_vec_mul8(B_inv, db_dzeta, ds_dzeta);
@@ -168,8 +169,8 @@ __device__ __forceinline__ void ancf3243_calc_det_J_xi(double xi,
 __device__ __forceinline__ void compute_p(int elem_idx,
                                           int qp_idx,
                                           GPU_ANCF3243_Data* d_data,
-                                          const double* __restrict__ v_guess,
-                                          double dt) {
+                                          const Real* __restrict__ v_guess,
+                                          Real dt) {
 // --- Compute C = F^T * F ---
 
 // Initialize F to zero
@@ -182,7 +183,7 @@ __device__ __forceinline__ void compute_p(int elem_idx,
     }
 
     // Extract local nodal coordinates (e vectors) using element connectivity
-    double e[8][3];  // 2 nodes × 4 DOFs = 8 entries
+    Real e[8][3];  // 2 nodes × 4 DOFs = 8 entries
 #pragma unroll
     for (int i = 0; i < 8; i++) {
         const int node_local = (i < 4) ? 0 : 1;
@@ -203,7 +204,7 @@ __device__ __forceinline__ void compute_p(int elem_idx,
         // Assuming ds_du_pre is laid out as [qp_total][8][3]
         // You'll need to provide the correct qp_idx for the current quadrature
         // point
-        double grad_s_i[3];
+        Real grad_s_i[3];
         grad_s_i[0] = d_data->grad_N_ref(elem_idx, qp_idx)(i, 0);
         grad_s_i[1] = d_data->grad_N_ref(elem_idx, qp_idx)(i, 1);
         grad_s_i[2] = d_data->grad_N_ref(elem_idx, qp_idx)(i, 2);
@@ -218,7 +219,7 @@ __device__ __forceinline__ void compute_p(int elem_idx,
         }
     }
 
-    double FtF[3][3] = {0.0};
+    Real FtF[3][3] = {0.0};
 
 #pragma unroll
     for (int i = 0; i < 3; ++i)
@@ -229,10 +230,10 @@ __device__ __forceinline__ void compute_p(int elem_idx,
                 FtF[i][j] += d_data->F(elem_idx, qp_idx)(k, i) * d_data->F(elem_idx, qp_idx)(k, j);
 
     // --- trace(F^T F) ---
-    double tr_FtF = FtF[0][0] + FtF[1][1] + FtF[2][2];
+    Real tr_FtF = FtF[0][0] + FtF[1][1] + FtF[2][2];
 
     // 1. Compute Ft (transpose of F)
-    double Ft[3][3] = {0};
+    Real Ft[3][3] = {0};
 #pragma unroll
     for (int i = 0; i < 3; ++i)
 #pragma unroll
@@ -241,7 +242,7 @@ __device__ __forceinline__ void compute_p(int elem_idx,
         }
 
     // 2. Compute G = F * Ft
-    double G[3][3] = {0};  // G = F * F^T
+    Real G[3][3] = {0};  // G = F * F^T
 #pragma unroll
     for (int i = 0; i < 3; ++i)
 #pragma unroll
@@ -252,7 +253,7 @@ __device__ __forceinline__ void compute_p(int elem_idx,
             }
 
     // 3. Compute FFF = G * F = (F * Ft) * F
-    double FFF[3][3] = {0};
+    Real FFF[3][3] = {0};
 #pragma unroll
     for (int i = 0; i < 3; ++i)
 #pragma unroll
@@ -263,14 +264,14 @@ __device__ __forceinline__ void compute_p(int elem_idx,
             }
 
     // --- Compute P ---
-    double F_local[3][3];
+    Real F_local[3][3];
 #pragma unroll
     for (int i = 0; i < 3; ++i)
 #pragma unroll
         for (int j = 0; j < 3; ++j)
             F_local[i][j] = d_data->F(elem_idx, qp_idx)(i, j);
 
-    double P_el[3][3];
+    Real P_el[3][3];
     if (d_data->material_model() == MATERIAL_MODEL_MOONEY_RIVLIN) {
         mr_compute_P(F_local, d_data->mu10(), d_data->mu01(), d_data->kappa(), P_el);
     } else {
@@ -283,16 +284,16 @@ __device__ __forceinline__ void compute_p(int elem_idx,
         for (int j = 0; j < 3; ++j)
             d_data->P(elem_idx, qp_idx)(i, j) = P_el[i][j];
 
-    double eta = d_data->eta_damp();
-    double lambda_d = d_data->lambda_damp();
+    Real eta = d_data->eta_damp();
+    Real lambda_d = d_data->lambda_damp();
     const bool do_damp = (v_guess != nullptr) && (eta != 0.0 || lambda_d != 0.0);
 
     if (do_damp) {
         // Compute Fdot = sum_i v_i ⊗ ∇s_i
-        double Fdot[3][3] = {{0.0}};
+        Real Fdot[3][3] = {{0.0}};
 #pragma unroll
         for (int i = 0; i < Quadrature::N_SHAPE_3243; i++) {
-            double v_i[3] = {0.0};
+            Real v_i[3] = {0.0};
             // coef index mapping used above
             const int node_local = (i < 4) ? 0 : 1;
             const int dof_local = i % 4;
@@ -305,15 +306,15 @@ __device__ __forceinline__ void compute_p(int elem_idx,
             for (int row = 0; row < 3; row++) {
 #pragma unroll
                 for (int col = 0; col < 3; col++) {
-                    double grad_si_col = d_data->grad_N_ref(elem_idx, qp_idx)(i, col);
+                    Real grad_si_col = d_data->grad_N_ref(elem_idx, qp_idx)(i, col);
                     Fdot[row][col] += v_i[row] * grad_si_col;
                 }
             }
         }
 
         // Edot = 0.5*(Fdot^T * F + F^T * Fdot)
-        double FdotT_F[3][3] = {{0.0}};
-        double Ft_Fdot[3][3] = {{0.0}};
+        Real FdotT_F[3][3] = {{0.0}};
+        Real Ft_Fdot[3][3] = {{0.0}};
 // reuse Ft declared earlier (transpose of F)
 #pragma unroll
         for (int i = 0; i < 3; i++)
@@ -328,21 +329,21 @@ __device__ __forceinline__ void compute_p(int elem_idx,
                 }
             }
         }
-        double Edot[3][3] = {{0.0}};
+        Real Edot[3][3] = {{0.0}};
 #pragma unroll
         for (int i = 0; i < 3; i++)
             for (int j = 0; j < 3; j++)
                 Edot[i][j] = 0.5 * (FdotT_F[i][j] + Ft_Fdot[i][j]);
 
-        double trEdot = Edot[0][0] + Edot[1][1] + Edot[2][2];
-        double S_vis[3][3] = {{0.0}};
+        Real trEdot = Edot[0][0] + Edot[1][1] + Edot[2][2];
+        Real S_vis[3][3] = {{0.0}};
 #pragma unroll
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 S_vis[i][j] = 2.0 * eta * Edot[i][j] + lambda_d * trEdot * (i == j ? 1.0 : 0.0);
             }
         }
-        double P_vis[3][3] = {{0.0}};
+        Real P_vis[3][3] = {{0.0}};
 #pragma unroll
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
@@ -377,7 +378,7 @@ __device__ __forceinline__ void compute_p(int elem_idx,
 }
 
 __device__ __forceinline__ void compute_internal_force(int elem_idx, int node_idx, GPU_ANCF3243_Data* d_data) {
-    double f_i[3] = {0};
+    Real f_i[3] = {0};
     // Map local node_idx (0-7) to global coefficient index using connectivity
     const int node_local = node_idx / 4;
     const int dof_local = node_idx % 4;
@@ -386,15 +387,15 @@ __device__ __forceinline__ void compute_internal_force(int elem_idx, int node_id
 
 #pragma unroll
     for (int qp_idx = 0; qp_idx < Quadrature::N_TOTAL_QP_3_2_2; qp_idx++) {
-        double grad_s[3];
+        Real grad_s[3];
         grad_s[0] = d_data->grad_N_ref(elem_idx, qp_idx)(node_idx, 0);
         grad_s[1] = d_data->grad_N_ref(elem_idx, qp_idx)(node_idx, 1);
         grad_s[2] = d_data->grad_N_ref(elem_idx, qp_idx)(node_idx, 2);
 
-        double scale = d_data->weight_xi()(qp_idx / (Quadrature::N_QP_2 * Quadrature::N_QP_2)) *
+        Real scale = d_data->weight_xi()(qp_idx / (Quadrature::N_QP_2 * Quadrature::N_QP_2)) *
                        d_data->weight_eta()((qp_idx / Quadrature::N_QP_2) % Quadrature::N_QP_2) *
                        d_data->weight_zeta()(qp_idx % Quadrature::N_QP_2);
-        const double dV = d_data->detJ_ref(elem_idx, qp_idx) * scale;
+        const Real dV = d_data->detJ_ref(elem_idx, qp_idx) * scale;
 #pragma unroll
         for (int r = 0; r < 3; ++r) {
 #pragma unroll
@@ -435,13 +436,13 @@ __device__ __forceinline__ void compute_constraint_data(GPU_ANCF3243_Data* d_dat
 
         const int start = d_data->j_csr_offsets()[row];
         const int end = d_data->j_csr_offsets()[row + 1];
-        double sum = 0.0;
+        Real sum = 0.0;
         for (int idx = start; idx < end; ++idx) {
             const int col = d_data->j_csr_columns()[idx];
-            const double w = d_data->j_csr_values()[idx];
+            const Real w = d_data->j_csr_values()[idx];
             const int coef = col / 3;
             const int comp = col - coef * 3;
-            double v = 0.0;
+            Real v = 0.0;
             if (comp == 0)
                 v = d_data->x12()(coef);
             if (comp == 1)
@@ -459,89 +460,89 @@ __device__ __forceinline__ void vbd_accumulate_residual_and_hessian_diag(int ele
                                                                          int qp_idx,
                                                                          int local_node,
                                                                          GPU_ANCF3243_Data* d_data,
-                                                                         double dt,
-                                                                         double& r0,
-                                                                         double& r1,
-                                                                         double& r2,
-                                                                         double& h00,
-                                                                         double& h01,
-                                                                         double& h02,
-                                                                         double& h10,
-                                                                         double& h11,
-                                                                         double& h12,
-                                                                         double& h20,
-                                                                         double& h21,
-                                                                         double& h22) {
-    const double ha0 = d_data->grad_N_ref(elem_idx, qp_idx)(local_node, 0);
-    const double ha1 = d_data->grad_N_ref(elem_idx, qp_idx)(local_node, 1);
-    const double ha2 = d_data->grad_N_ref(elem_idx, qp_idx)(local_node, 2);
-    const double scale = d_data->weight_xi()(qp_idx / (Quadrature::N_QP_2 * Quadrature::N_QP_2)) *
+                                                                         Real dt,
+                                                                         Real& r0,
+                                                                         Real& r1,
+                                                                         Real& r2,
+                                                                         Real& h00,
+                                                                         Real& h01,
+                                                                         Real& h02,
+                                                                         Real& h10,
+                                                                         Real& h11,
+                                                                         Real& h12,
+                                                                         Real& h20,
+                                                                         Real& h21,
+                                                                         Real& h22) {
+    const Real ha0 = d_data->grad_N_ref(elem_idx, qp_idx)(local_node, 0);
+    const Real ha1 = d_data->grad_N_ref(elem_idx, qp_idx)(local_node, 1);
+    const Real ha2 = d_data->grad_N_ref(elem_idx, qp_idx)(local_node, 2);
+    const Real scale = d_data->weight_xi()(qp_idx / (Quadrature::N_QP_2 * Quadrature::N_QP_2)) *
                          d_data->weight_eta()((qp_idx / Quadrature::N_QP_2) % Quadrature::N_QP_2) *
                          d_data->weight_zeta()(qp_idx % Quadrature::N_QP_2);
-    const double dV = d_data->detJ_ref(elem_idx, qp_idx) * scale;
+    const Real dV = d_data->detJ_ref(elem_idx, qp_idx) * scale;
 
-    const double P00 = d_data->P(elem_idx, qp_idx)(0, 0);
-    const double P01 = d_data->P(elem_idx, qp_idx)(0, 1);
-    const double P02 = d_data->P(elem_idx, qp_idx)(0, 2);
-    const double P10 = d_data->P(elem_idx, qp_idx)(1, 0);
-    const double P11 = d_data->P(elem_idx, qp_idx)(1, 1);
-    const double P12 = d_data->P(elem_idx, qp_idx)(1, 2);
-    const double P20 = d_data->P(elem_idx, qp_idx)(2, 0);
-    const double P21 = d_data->P(elem_idx, qp_idx)(2, 1);
-    const double P22 = d_data->P(elem_idx, qp_idx)(2, 2);
+    const Real P00 = d_data->P(elem_idx, qp_idx)(0, 0);
+    const Real P01 = d_data->P(elem_idx, qp_idx)(0, 1);
+    const Real P02 = d_data->P(elem_idx, qp_idx)(0, 2);
+    const Real P10 = d_data->P(elem_idx, qp_idx)(1, 0);
+    const Real P11 = d_data->P(elem_idx, qp_idx)(1, 1);
+    const Real P12 = d_data->P(elem_idx, qp_idx)(1, 2);
+    const Real P20 = d_data->P(elem_idx, qp_idx)(2, 0);
+    const Real P21 = d_data->P(elem_idx, qp_idx)(2, 1);
+    const Real P22 = d_data->P(elem_idx, qp_idx)(2, 2);
 
     r0 += (P00 * ha0 + P01 * ha1 + P02 * ha2) * dV;
     r1 += (P10 * ha0 + P11 * ha1 + P12 * ha2) * dV;
     r2 += (P20 * ha0 + P21 * ha1 + P22 * ha2) * dV;
 
-    const double F00 = d_data->F(elem_idx, qp_idx)(0, 0);
-    const double F01 = d_data->F(elem_idx, qp_idx)(0, 1);
-    const double F02 = d_data->F(elem_idx, qp_idx)(0, 2);
-    const double F10 = d_data->F(elem_idx, qp_idx)(1, 0);
-    const double F11 = d_data->F(elem_idx, qp_idx)(1, 1);
-    const double F12 = d_data->F(elem_idx, qp_idx)(1, 2);
-    const double F20 = d_data->F(elem_idx, qp_idx)(2, 0);
-    const double F21 = d_data->F(elem_idx, qp_idx)(2, 1);
-    const double F22 = d_data->F(elem_idx, qp_idx)(2, 2);
+    const Real F00 = d_data->F(elem_idx, qp_idx)(0, 0);
+    const Real F01 = d_data->F(elem_idx, qp_idx)(0, 1);
+    const Real F02 = d_data->F(elem_idx, qp_idx)(0, 2);
+    const Real F10 = d_data->F(elem_idx, qp_idx)(1, 0);
+    const Real F11 = d_data->F(elem_idx, qp_idx)(1, 1);
+    const Real F12 = d_data->F(elem_idx, qp_idx)(1, 2);
+    const Real F20 = d_data->F(elem_idx, qp_idx)(2, 0);
+    const Real F21 = d_data->F(elem_idx, qp_idx)(2, 1);
+    const Real F22 = d_data->F(elem_idx, qp_idx)(2, 2);
 
-    const double trFtF =
+    const Real trFtF =
         F00 * F00 + F01 * F01 + F02 * F02 + F10 * F10 + F11 * F11 + F12 * F12 + F20 * F20 + F21 * F21 + F22 * F22;
-    const double trE = 0.5 * (trFtF - 3.0);
+    const Real trE = 0.5 * (trFtF - 3.0);
 
-    const double FFT00 = F00 * F00 + F01 * F01 + F02 * F02;
-    const double FFT01 = F00 * F10 + F01 * F11 + F02 * F12;
-    const double FFT02 = F00 * F20 + F01 * F21 + F02 * F22;
-    const double FFT10 = FFT01;
-    const double FFT11 = F10 * F10 + F11 * F11 + F12 * F12;
-    const double FFT12 = F10 * F20 + F11 * F21 + F12 * F22;
-    const double FFT20 = FFT02;
-    const double FFT21 = FFT12;
-    const double FFT22 = F20 * F20 + F21 * F21 + F22 * F22;
+    const Real FFT00 = F00 * F00 + F01 * F01 + F02 * F02;
+    const Real FFT01 = F00 * F10 + F01 * F11 + F02 * F12;
+    const Real FFT02 = F00 * F20 + F01 * F21 + F02 * F22;
+    const Real FFT10 = FFT01;
+    const Real FFT11 = F10 * F10 + F11 * F11 + F12 * F12;
+    const Real FFT12 = F10 * F20 + F11 * F21 + F12 * F22;
+    const Real FFT20 = FFT02;
+    const Real FFT21 = FFT12;
+    const Real FFT22 = F20 * F20 + F21 * F21 + F22 * F22;
 
-    const double Fh0 = F00 * ha0 + F01 * ha1 + F02 * ha2;
-    const double Fh1 = F10 * ha0 + F11 * ha1 + F12 * ha2;
-    const double Fh2 = F20 * ha0 + F21 * ha1 + F22 * ha2;
+    const Real Fh0 = F00 * ha0 + F01 * ha1 + F02 * ha2;
+    const Real Fh1 = F10 * ha0 + F11 * ha1 + F12 * ha2;
+    const Real Fh2 = F20 * ha0 + F21 * ha1 + F22 * ha2;
 
-    const double hij = ha0 * ha0 + ha1 * ha1 + ha2 * ha2;
-    const double Fh_dot_Fh = Fh0 * Fh0 + Fh1 * Fh1 + Fh2 * Fh2;
-    const double weight_k = dt * dV;
+    const Real hij = ha0 * ha0 + ha1 * ha1 + ha2 * ha2;
+    const Real Fh_dot_Fh = Fh0 * Fh0 + Fh1 * Fh1 + Fh2 * Fh2;
+    const Real weight_k = dt * dV;
 
-    double Kblock[3][3];
+    Real Kblock[3][3];
     if (d_data->material_model() == MATERIAL_MODEL_MOONEY_RIVLIN) {
-        double F_local[3][3] = {{F00, F01, F02}, {F10, F11, F12}, {F20, F21, F22}};
-        double A_mr[3][3][3][3];
+        Real F_local[3][3] = {{F00, F01, F02}, {F10, F11, F12}, {F20, F21, F22}};
+        Real A_mr[3][3][3][3];
         mr_compute_tangent_tensor(F_local, d_data->mu10(), d_data->mu01(), d_data->kappa(), A_mr);
 #pragma unroll
         for (int d = 0; d < 3; ++d) {
 #pragma unroll
             for (int e = 0; e < 3; ++e) {
-                double sum = 0.0;
+                Real sum = 0.0;
 #pragma unroll
                 for (int J = 0; J < 3; ++J) {
 #pragma unroll
                     for (int L = 0; L < 3; ++L) {
-                        const double giJ = (J == 0 ? ha0 : (J == 1 ? ha1 : ha2));
-                        const double giL = (L == 0 ? ha0 : (L == 1 ? ha1 : ha2));
+                        const Real giJ = (J == 0 ? ha0 : (J == 1 ? ha1 : ha2));
+                        const Real giL = (L == 0 ? ha0 : (L == 1 ? ha1 : ha2));
                         sum += A_mr[d][J][e][L] * giJ * giL;
                     }
                 }
@@ -549,8 +550,8 @@ __device__ __forceinline__ void vbd_accumulate_residual_and_hessian_diag(int ele
             }
         }
     } else {
-        const double Fh_vec[3] = {Fh0, Fh1, Fh2};
-        const double FFT[3][3] = {{FFT00, FFT01, FFT02}, {FFT10, FFT11, FFT12}, {FFT20, FFT21, FFT22}};
+        const Real Fh_vec[3] = {Fh0, Fh1, Fh2};
+        const Real FFT[3][3] = {{FFT00, FFT01, FFT02}, {FFT10, FFT11, FFT12}, {FFT20, FFT21, FFT22}};
         svk_compute_tangent_block(Fh_vec, Fh_vec, hij, trE, Fh_dot_Fh, FFT, d_data->lambda(), d_data->mu(), weight_k,
                                   Kblock);
     }
@@ -597,8 +598,8 @@ __device__ __forceinline__ void compute_hessian_assemble_csr(ElementType* d_data
                                                              int qp_idx,
                                                              int* d_csr_row_offsets,
                                                              int* d_csr_col_indices,
-                                                             double* d_csr_values,
-                                                             double h);
+                                                             Real* d_csr_values,
+                                                             Real h);
 
 // Explicit specialization for GPU_ANCF3243_Data
 template <>
@@ -608,14 +609,14 @@ __device__ __forceinline__ void compute_hessian_assemble_csr<GPU_ANCF3243_Data>(
                                                                                 int qp_idx,
                                                                                 int* d_csr_row_offsets,
                                                                                 int* d_csr_col_indices,
-                                                                                double* d_csr_values,
-                                                                                double h) {
+                                                                                Real* d_csr_values,
+                                                                                Real h) {
     // Copy the element-local K construction (24×24) from
     // compute_hessian_assemble, then scatter to CSR using local mapping: coef_idx
     // = node_global * 4 + dof_local
 
     // Extract e[8][3]
-    double e[Quadrature::N_SHAPE_3243][3];
+    Real e[Quadrature::N_SHAPE_3243][3];
 #pragma unroll
     for (int i = 0; i < Quadrature::N_SHAPE_3243; i++) {
         const int node_local = (i < 4) ? 0 : 1;
@@ -628,7 +629,7 @@ __device__ __forceinline__ void compute_hessian_assemble_csr<GPU_ANCF3243_Data>(
         e[i][2] = d_data->z12()(coef_idx);
     }
 
-    double grad_s[Quadrature::N_SHAPE_3243][3];
+    Real grad_s[Quadrature::N_SHAPE_3243][3];
 #pragma unroll
     for (int i = 0; i < Quadrature::N_SHAPE_3243; i++) {
         grad_s[i][0] = d_data->grad_N_ref(elem_idx, qp_idx)(i, 0);
@@ -636,7 +637,7 @@ __device__ __forceinline__ void compute_hessian_assemble_csr<GPU_ANCF3243_Data>(
         grad_s[i][2] = d_data->grad_N_ref(elem_idx, qp_idx)(i, 2);
     }
 
-    double F[3][3] = {{0.0}};
+    Real F[3][3] = {{0.0}};
 #pragma unroll
     for (int i = 0; i < Quadrature::N_SHAPE_3243; i++) {
 #pragma unroll
@@ -648,7 +649,7 @@ __device__ __forceinline__ void compute_hessian_assemble_csr<GPU_ANCF3243_Data>(
         }
     }
 
-    double C[3][3] = {{0.0}};
+    Real C[3][3] = {{0.0}};
 #pragma unroll
     for (int i = 0; i < 3; i++) {
 #pragma unroll
@@ -660,10 +661,10 @@ __device__ __forceinline__ void compute_hessian_assemble_csr<GPU_ANCF3243_Data>(
         }
     }
 
-    double trC = C[0][0] + C[1][1] + C[2][2];
-    double trE = 0.5 * (trC - 3.0);
+    Real trC = C[0][0] + C[1][1] + C[2][2];
+    Real trE = 0.5 * (trC - 3.0);
 
-    double FFT[3][3] = {{0.0}};
+    Real FFT[3][3] = {{0.0}};
 #pragma unroll
     for (int i = 0; i < 3; i++) {
 #pragma unroll
@@ -675,7 +676,7 @@ __device__ __forceinline__ void compute_hessian_assemble_csr<GPU_ANCF3243_Data>(
         }
     }
 
-    double Fh[Quadrature::N_SHAPE_3243][3];
+    Real Fh[Quadrature::N_SHAPE_3243][3];
 #pragma unroll
     for (int i = 0; i < Quadrature::N_SHAPE_3243; i++) {
 #pragma unroll
@@ -688,21 +689,21 @@ __device__ __forceinline__ void compute_hessian_assemble_csr<GPU_ANCF3243_Data>(
         }
     }
 
-    double lambda = d_data->lambda();
-    double mu = d_data->mu();
-    double scale = d_data->weight_xi()(qp_idx / (Quadrature::N_QP_2 * Quadrature::N_QP_2)) *
+    Real lambda = d_data->lambda();
+    Real mu = d_data->mu();
+    Real scale = d_data->weight_xi()(qp_idx / (Quadrature::N_QP_2 * Quadrature::N_QP_2)) *
                    d_data->weight_eta()((qp_idx / Quadrature::N_QP_2) % Quadrature::N_QP_2) *
                    d_data->weight_zeta()(qp_idx % Quadrature::N_QP_2);
-    double dV = d_data->detJ_ref(elem_idx, qp_idx) * scale;
+    Real dV = d_data->detJ_ref(elem_idx, qp_idx) * scale;
 
     const bool use_mr = (d_data->material_model() == MATERIAL_MODEL_MOONEY_RIVLIN);
-    double A_mr[3][3][3][3];
+    Real A_mr[3][3][3][3];
     if (use_mr) {
         mr_compute_tangent_tensor(F, d_data->mu10(), d_data->mu01(), d_data->kappa(), A_mr);
     }
 
     // Local K_elem 24x24
-    double K_elem[24][24];
+    Real K_elem[24][24];
 #pragma unroll
     for (int ii = 0; ii < 24; ii++)
         for (int jj = 0; jj < 24; jj++)
@@ -712,16 +713,16 @@ __device__ __forceinline__ void compute_hessian_assemble_csr<GPU_ANCF3243_Data>(
     for (int i = 0; i < Quadrature::N_SHAPE_3243; i++) {
 #pragma unroll
         for (int j = 0; j < Quadrature::N_SHAPE_3243; j++) {
-            double h_ij = grad_s[j][0] * grad_s[i][0] + grad_s[j][1] * grad_s[i][1] + grad_s[j][2] * grad_s[i][2];
-            double Fhj_dot_Fhi = Fh[j][0] * Fh[i][0] + Fh[j][1] * Fh[i][1] + Fh[j][2] * Fh[i][2];
+            Real h_ij = grad_s[j][0] * grad_s[i][0] + grad_s[j][1] * grad_s[i][1] + grad_s[j][2] * grad_s[i][2];
+            Real Fhj_dot_Fhi = Fh[j][0] * Fh[i][0] + Fh[j][1] * Fh[i][1] + Fh[j][2] * Fh[i][2];
 
-            double Kblock[3][3];
+            Real Kblock[3][3];
             if (use_mr) {
 #pragma unroll
                 for (int d = 0; d < 3; d++) {
 #pragma unroll
                     for (int e = 0; e < 3; e++) {
-                        double sum = 0.0;
+                        Real sum = 0.0;
 #pragma unroll
                         for (int J = 0; J < 3; J++) {
 #pragma unroll
@@ -781,8 +782,8 @@ __device__ __forceinline__ void compute_hessian_assemble_csr<GPU_ANCF3243_Data>(
         }
     }
 
-    double eta_d = d_data->eta_damp();
-    double lambda_d = d_data->lambda_damp();
+    Real eta_d = d_data->eta_damp();
+    Real lambda_d = d_data->lambda_damp();
     if (eta_d == 0.0 && lambda_d == 0.0) {
         return;
     }
@@ -790,7 +791,7 @@ __device__ __forceinline__ void compute_hessian_assemble_csr<GPU_ANCF3243_Data>(
     // --- Viscous tangent (Kelvin-Voigt) assembly: C_elem (Nloc*3 x Nloc*3) ---
     const int Nloc = Quadrature::N_SHAPE_3243;
     const int Ndof = Nloc * 3;
-    double C_elem_loc[24][24];
+    Real C_elem_loc[24][24];
 #pragma unroll
     for (int ii = 0; ii < Ndof; ii++)
         for (int jj = 0; jj < Ndof; jj++)
@@ -798,33 +799,33 @@ __device__ __forceinline__ void compute_hessian_assemble_csr<GPU_ANCF3243_Data>(
 
 #pragma unroll
     for (int a = 0; a < Nloc; a++) {
-        double h_a0 = grad_s[a][0];
-        double h_a1 = grad_s[a][1];
-        double h_a2 = grad_s[a][2];
-        double Fh_a0 = Fh[a][0];
-        double Fh_a1 = Fh[a][1];
-        double Fh_a2 = Fh[a][2];
+        Real h_a0 = grad_s[a][0];
+        Real h_a1 = grad_s[a][1];
+        Real h_a2 = grad_s[a][2];
+        Real Fh_a0 = Fh[a][0];
+        Real Fh_a1 = Fh[a][1];
+        Real Fh_a2 = Fh[a][2];
 #pragma unroll
         for (int b = 0; b < Nloc; b++) {
-            double h_b0 = grad_s[b][0];
-            double h_b1 = grad_s[b][1];
-            double h_b2 = grad_s[b][2];
-            double Fh_b0 = Fh[b][0];
-            double Fh_b1 = Fh[b][1];
-            double Fh_b2 = Fh[b][2];
+            Real h_b0 = grad_s[b][0];
+            Real h_b1 = grad_s[b][1];
+            Real h_b2 = grad_s[b][2];
+            Real Fh_b0 = Fh[b][0];
+            Real Fh_b1 = Fh[b][1];
+            Real Fh_b2 = Fh[b][2];
 
-            double hdot = h_a0 * h_b0 + h_a1 * h_b1 + h_a2 * h_b2;
+            Real hdot = h_a0 * h_b0 + h_a1 * h_b1 + h_a2 * h_b2;
 
             // build 3x3 block
-            double B00 = (eta_d * (Fh_b0 * Fh_a0) + eta_d * FFT[0][0] * hdot + lambda_d * (Fh_a0 * Fh_b0)) * dV;
-            double B01 = (eta_d * (Fh_b0 * Fh_a1) + eta_d * FFT[0][1] * hdot + lambda_d * (Fh_a0 * Fh_b1)) * dV;
-            double B02 = (eta_d * (Fh_b0 * Fh_a2) + eta_d * FFT[0][2] * hdot + lambda_d * (Fh_a0 * Fh_b2)) * dV;
-            double B10 = (eta_d * (Fh_b1 * Fh_a0) + eta_d * FFT[1][0] * hdot + lambda_d * (Fh_a1 * Fh_b0)) * dV;
-            double B11 = (eta_d * (Fh_b1 * Fh_a1) + eta_d * FFT[1][1] * hdot + lambda_d * (Fh_a1 * Fh_b1)) * dV;
-            double B12 = (eta_d * (Fh_b1 * Fh_a2) + eta_d * FFT[1][2] * hdot + lambda_d * (Fh_a1 * Fh_b2)) * dV;
-            double B20 = (eta_d * (Fh_b2 * Fh_a0) + eta_d * FFT[2][0] * hdot + lambda_d * (Fh_a2 * Fh_b0)) * dV;
-            double B21 = (eta_d * (Fh_b2 * Fh_a1) + eta_d * FFT[2][1] * hdot + lambda_d * (Fh_a2 * Fh_b1)) * dV;
-            double B22 = (eta_d * (Fh_b2 * Fh_a2) + eta_d * FFT[2][2] * hdot + lambda_d * (Fh_a2 * Fh_b2)) * dV;
+            Real B00 = (eta_d * (Fh_b0 * Fh_a0) + eta_d * FFT[0][0] * hdot + lambda_d * (Fh_a0 * Fh_b0)) * dV;
+            Real B01 = (eta_d * (Fh_b0 * Fh_a1) + eta_d * FFT[0][1] * hdot + lambda_d * (Fh_a0 * Fh_b1)) * dV;
+            Real B02 = (eta_d * (Fh_b0 * Fh_a2) + eta_d * FFT[0][2] * hdot + lambda_d * (Fh_a0 * Fh_b2)) * dV;
+            Real B10 = (eta_d * (Fh_b1 * Fh_a0) + eta_d * FFT[1][0] * hdot + lambda_d * (Fh_a1 * Fh_b0)) * dV;
+            Real B11 = (eta_d * (Fh_b1 * Fh_a1) + eta_d * FFT[1][1] * hdot + lambda_d * (Fh_a1 * Fh_b1)) * dV;
+            Real B12 = (eta_d * (Fh_b1 * Fh_a2) + eta_d * FFT[1][2] * hdot + lambda_d * (Fh_a1 * Fh_b2)) * dV;
+            Real B20 = (eta_d * (Fh_b2 * Fh_a0) + eta_d * FFT[2][0] * hdot + lambda_d * (Fh_a2 * Fh_b0)) * dV;
+            Real B21 = (eta_d * (Fh_b2 * Fh_a1) + eta_d * FFT[2][1] * hdot + lambda_d * (Fh_a2 * Fh_b1)) * dV;
+            Real B22 = (eta_d * (Fh_b2 * Fh_a2) + eta_d * FFT[2][2] * hdot + lambda_d * (Fh_a2 * Fh_b2)) * dV;
 
             int row0 = 3 * a;
             int col0 = 3 * b;
