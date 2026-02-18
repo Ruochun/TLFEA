@@ -21,10 +21,10 @@ struct GPU_FEAT10_Data : public ElementBase {
 #if defined(__CUDACC__)
 
     // Helper: gather 16 DOFs for an element using connectivity
-    __device__ void gather_element_dofs(const double* global,
+    __device__ void gather_element_dofs(const Real* global,
                                         Eigen::Map<Eigen::MatrixXi> connectivity,
                                         int elem,
-                                        double* local) const {
+                                        Real* local) const {
         // Each element has 4 nodes, each node has 4 DOFs
         for (int n = 0; n < 4; ++n) {
             int node = connectivity(elem, n);
@@ -39,146 +39,146 @@ struct GPU_FEAT10_Data : public ElementBase {
         return Eigen::Map<Eigen::MatrixXi>(d_element_connectivity, n_elem, Quadrature::N_NODE_T10_10);
     }
 
-    __device__ Eigen::Map<Eigen::MatrixXd> grad_N_ref(int elem_idx, int qp_idx) {
-        return Eigen::Map<Eigen::MatrixXd>(d_grad_N_ref + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 10 * 3, 10, 3);
+    __device__ Eigen::Map<Eigen::MatrixXR> grad_N_ref(int elem_idx, int qp_idx) {
+        return Eigen::Map<Eigen::MatrixXR>(d_grad_N_ref + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 10 * 3, 10, 3);
     }
 
-    __device__ const Eigen::Map<Eigen::MatrixXd> grad_N_ref(int elem_idx, int qp_idx) const {
-        return Eigen::Map<Eigen::MatrixXd>(d_grad_N_ref + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 10 * 3, 10, 3);
+    __device__ const Eigen::Map<Eigen::MatrixXR> grad_N_ref(int elem_idx, int qp_idx) const {
+        return Eigen::Map<Eigen::MatrixXR>(d_grad_N_ref + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 10 * 3, 10, 3);
     }
 
-    __device__ double& detJ_ref(int elem_idx, int qp_idx) {
+    __device__ Real& detJ_ref(int elem_idx, int qp_idx) {
         return d_detJ_ref[elem_idx * Quadrature::N_QP_T10_5 + qp_idx];
     }
 
-    __device__ double detJ_ref(int elem_idx, int qp_idx) const {
+    __device__ Real detJ_ref(int elem_idx, int qp_idx) const {
         return d_detJ_ref[elem_idx * Quadrature::N_QP_T10_5 + qp_idx];
     }
 
-    __device__ double tet5pt_x(int qp_idx) {
+    __device__ Real tet5pt_x(int qp_idx) {
         return d_tet5pt_x[qp_idx];
     }
 
-    __device__ double tet5pt_y(int qp_idx) {
+    __device__ Real tet5pt_y(int qp_idx) {
         return d_tet5pt_y[qp_idx];
     }
 
-    __device__ double tet5pt_z(int qp_idx) {
+    __device__ Real tet5pt_z(int qp_idx) {
         return d_tet5pt_z[qp_idx];
     }
 
-    __device__ double tet5pt_weights(int qp_idx) {
+    __device__ Real tet5pt_weights(int qp_idx) {
         return d_tet5pt_weights[qp_idx];
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> x12() {
-        return Eigen::Map<Eigen::VectorXd>(d_h_x12, n_coef);
+    __device__ Eigen::Map<Eigen::VectorXR> x12() {
+        return Eigen::Map<Eigen::VectorXR>(d_h_x12, n_coef);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> const x12() const {
-        return Eigen::Map<Eigen::VectorXd>(d_h_x12, n_coef);
+    __device__ Eigen::Map<Eigen::VectorXR> const x12() const {
+        return Eigen::Map<Eigen::VectorXR>(d_h_x12, n_coef);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> y12() {
-        return Eigen::Map<Eigen::VectorXd>(d_h_y12, n_coef);
+    __device__ Eigen::Map<Eigen::VectorXR> y12() {
+        return Eigen::Map<Eigen::VectorXR>(d_h_y12, n_coef);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> const y12() const {
-        return Eigen::Map<Eigen::VectorXd>(d_h_y12, n_coef);
+    __device__ Eigen::Map<Eigen::VectorXR> const y12() const {
+        return Eigen::Map<Eigen::VectorXR>(d_h_y12, n_coef);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> z12() {
-        return Eigen::Map<Eigen::VectorXd>(d_h_z12, n_coef);
+    __device__ Eigen::Map<Eigen::VectorXR> z12() {
+        return Eigen::Map<Eigen::VectorXR>(d_h_z12, n_coef);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> const z12() const {
-        return Eigen::Map<Eigen::VectorXd>(d_h_z12, n_coef);
+    __device__ Eigen::Map<Eigen::VectorXR> const z12() const {
+        return Eigen::Map<Eigen::VectorXR>(d_h_z12, n_coef);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> const x12_jac() const {
-        return Eigen::Map<Eigen::VectorXd>(d_h_x12_jac, n_coef);
+    __device__ Eigen::Map<Eigen::VectorXR> const x12_jac() const {
+        return Eigen::Map<Eigen::VectorXR>(d_h_x12_jac, n_coef);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> const y12_jac() const {
-        return Eigen::Map<Eigen::VectorXd>(d_h_y12_jac, n_coef);
+    __device__ Eigen::Map<Eigen::VectorXR> const y12_jac() const {
+        return Eigen::Map<Eigen::VectorXR>(d_h_y12_jac, n_coef);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> const z12_jac() const {
-        return Eigen::Map<Eigen::VectorXd>(d_h_z12_jac, n_coef);
+    __device__ Eigen::Map<Eigen::VectorXR> const z12_jac() const {
+        return Eigen::Map<Eigen::VectorXR>(d_h_z12_jac, n_coef);
     }
 
-    __device__ Eigen::Map<Eigen::MatrixXd> F(int elem_idx, int qp_idx) {
-        return Eigen::Map<Eigen::MatrixXd>(d_F + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ Eigen::Map<Eigen::MatrixXR> F(int elem_idx, int qp_idx) {
+        return Eigen::Map<Eigen::MatrixXR>(d_F + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ const Eigen::Map<Eigen::MatrixXd> F(int elem_idx, int qp_idx) const {
-        return Eigen::Map<Eigen::MatrixXd>(d_F + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ const Eigen::Map<Eigen::MatrixXR> F(int elem_idx, int qp_idx) const {
+        return Eigen::Map<Eigen::MatrixXR>(d_F + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ Eigen::Map<Eigen::MatrixXd> P(int elem_idx, int qp_idx) {
-        return Eigen::Map<Eigen::MatrixXd>(d_P + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ Eigen::Map<Eigen::MatrixXR> P(int elem_idx, int qp_idx) {
+        return Eigen::Map<Eigen::MatrixXR>(d_P + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ const Eigen::Map<Eigen::MatrixXd> P(int elem_idx, int qp_idx) const {
-        return Eigen::Map<Eigen::MatrixXd>(d_P + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ const Eigen::Map<Eigen::MatrixXR> P(int elem_idx, int qp_idx) const {
+        return Eigen::Map<Eigen::MatrixXR>(d_P + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
     // Time-derivative of deformation gradient (viscous computation)
-    __device__ Eigen::Map<Eigen::MatrixXd> Fdot(int elem_idx, int qp_idx) {
-        return Eigen::Map<Eigen::MatrixXd>(d_Fdot + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ Eigen::Map<Eigen::MatrixXR> Fdot(int elem_idx, int qp_idx) {
+        return Eigen::Map<Eigen::MatrixXR>(d_Fdot + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ const Eigen::Map<Eigen::MatrixXd> Fdot(int elem_idx, int qp_idx) const {
-        return Eigen::Map<Eigen::MatrixXd>(d_Fdot + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ const Eigen::Map<Eigen::MatrixXR> Fdot(int elem_idx, int qp_idx) const {
+        return Eigen::Map<Eigen::MatrixXR>(d_Fdot + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
     // Viscous Piola stress storage
-    __device__ Eigen::Map<Eigen::MatrixXd> P_vis(int elem_idx, int qp_idx) {
-        return Eigen::Map<Eigen::MatrixXd>(d_P_vis + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ Eigen::Map<Eigen::MatrixXR> P_vis(int elem_idx, int qp_idx) {
+        return Eigen::Map<Eigen::MatrixXR>(d_P_vis + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ const Eigen::Map<Eigen::MatrixXd> P_vis(int elem_idx, int qp_idx) const {
-        return Eigen::Map<Eigen::MatrixXd>(d_P_vis + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ const Eigen::Map<Eigen::MatrixXR> P_vis(int elem_idx, int qp_idx) const {
+        return Eigen::Map<Eigen::MatrixXR>(d_P_vis + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> f_int(int global_node_idx) {
-        return Eigen::Map<Eigen::VectorXd>(d_f_int + global_node_idx * 3, 3);
+    __device__ Eigen::Map<Eigen::VectorXR> f_int(int global_node_idx) {
+        return Eigen::Map<Eigen::VectorXR>(d_f_int + global_node_idx * 3, 3);
     }
 
-    __device__ const Eigen::Map<Eigen::VectorXd> f_int(int global_node_idx) const {
-        return Eigen::Map<Eigen::VectorXd>(d_f_int + global_node_idx * 3, 3);
+    __device__ const Eigen::Map<Eigen::VectorXR> f_int(int global_node_idx) const {
+        return Eigen::Map<Eigen::VectorXR>(d_f_int + global_node_idx * 3, 3);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> f_int() {
-        return Eigen::Map<Eigen::VectorXd>(d_f_int, n_coef * 3);
+    __device__ Eigen::Map<Eigen::VectorXR> f_int() {
+        return Eigen::Map<Eigen::VectorXR>(d_f_int, n_coef * 3);
     }
 
-    __device__ const Eigen::Map<Eigen::VectorXd> f_int() const {
-        return Eigen::Map<Eigen::VectorXd>(d_f_int, n_coef * 3);
+    __device__ const Eigen::Map<Eigen::VectorXR> f_int() const {
+        return Eigen::Map<Eigen::VectorXR>(d_f_int, n_coef * 3);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> f_ext(int global_node_idx) {
-        return Eigen::Map<Eigen::VectorXd>(d_f_ext + global_node_idx * 3, 3);
+    __device__ Eigen::Map<Eigen::VectorXR> f_ext(int global_node_idx) {
+        return Eigen::Map<Eigen::VectorXR>(d_f_ext + global_node_idx * 3, 3);
     }
 
-    __device__ const Eigen::Map<Eigen::VectorXd> f_ext(int global_node_idx) const {
-        return Eigen::Map<Eigen::VectorXd>(d_f_ext + global_node_idx * 3, 3);
+    __device__ const Eigen::Map<Eigen::VectorXR> f_ext(int global_node_idx) const {
+        return Eigen::Map<Eigen::VectorXR>(d_f_ext + global_node_idx * 3, 3);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> f_ext() {
-        return Eigen::Map<Eigen::VectorXd>(d_f_ext, n_coef * 3);
+    __device__ Eigen::Map<Eigen::VectorXR> f_ext() {
+        return Eigen::Map<Eigen::VectorXR>(d_f_ext, n_coef * 3);
     }
 
-    __device__ const Eigen::Map<Eigen::VectorXd> f_ext() const {
-        return Eigen::Map<Eigen::VectorXd>(d_f_ext, n_coef * 3);
+    __device__ const Eigen::Map<Eigen::VectorXR> f_ext() const {
+        return Eigen::Map<Eigen::VectorXR>(d_f_ext, n_coef * 3);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXd> constraint() {
-        return Eigen::Map<Eigen::VectorXd>(d_constraint, n_constraint);
+    __device__ Eigen::Map<Eigen::VectorXR> constraint() {
+        return Eigen::Map<Eigen::VectorXR>(d_constraint, n_constraint);
     }
 
-    __device__ const Eigen::Map<Eigen::VectorXd> constraint() const {
-        return Eigen::Map<Eigen::VectorXd>(d_constraint, n_constraint);
+    __device__ const Eigen::Map<Eigen::VectorXR> constraint() const {
+        return Eigen::Map<Eigen::VectorXR>(d_constraint, n_constraint);
     }
 
     __device__ Eigen::Map<Eigen::VectorXi> fixed_nodes() {
@@ -186,31 +186,31 @@ struct GPU_FEAT10_Data : public ElementBase {
     }
 
     // ================================
-    __device__ double rho0() const {
+    __device__ Real rho0() const {
         return *d_rho0;
     }
 
-    __device__ double nu() const {
+    __device__ Real nu() const {
         return *d_nu;
     }
 
-    __device__ double E() const {
+    __device__ Real E() const {
         return *d_E;
     }
 
-    __device__ double lambda() const {
+    __device__ Real lambda() const {
         return *d_lambda;
     }
 
-    __device__ double eta_damp() const {
+    __device__ Real eta_damp() const {
         return *d_eta_damp;
     }
 
-    __device__ double lambda_damp() const {
+    __device__ Real lambda_damp() const {
         return *d_lambda_damp;
     }
 
-    __device__ double mu() const {
+    __device__ Real mu() const {
         return *d_mu;
     }
 
@@ -218,15 +218,15 @@ struct GPU_FEAT10_Data : public ElementBase {
         return *d_material_model;
     }
 
-    __device__ double mu10() const {
+    __device__ Real mu10() const {
         return *d_mu10;
     }
 
-    __device__ double mu01() const {
+    __device__ Real mu01() const {
         return *d_mu01;
     }
 
-    __device__ double kappa() const {
+    __device__ Real kappa() const {
         return *d_kappa;
     }
 
@@ -252,7 +252,7 @@ struct GPU_FEAT10_Data : public ElementBase {
         return d_csr_columns;
     }
 
-    __device__ double* csr_values() {
+    __device__ Real* csr_values() {
         return d_csr_values;
     }
 
@@ -264,7 +264,7 @@ struct GPU_FEAT10_Data : public ElementBase {
         return d_cj_csr_columns;
     }
 
-    __device__ double* cj_csr_values() {
+    __device__ Real* cj_csr_values() {
         return d_cj_csr_values;
     }
 
@@ -276,7 +276,7 @@ struct GPU_FEAT10_Data : public ElementBase {
         return d_j_csr_columns;
     }
 
-    __device__ double* j_csr_values() {
+    __device__ Real* j_csr_values() {
         return d_j_csr_values;
     }
 
@@ -323,25 +323,25 @@ struct GPU_FEAT10_Data : public ElementBase {
 
     void CalcP() override;
 
-    void RetrieveMassCSRToCPU(std::vector<int>& offsets, std::vector<int>& columns, std::vector<double>& values);
+    void RetrieveMassCSRToCPU(std::vector<int>& offsets, std::vector<int>& columns, std::vector<Real>& values);
 
-    void RetrieveInternalForceToCPU(Eigen::VectorXd& internal_force) override;
+    void RetrieveInternalForceToCPU(Eigen::VectorXR& internal_force) override;
 
-    void RetrieveExternalForceToCPU(Eigen::VectorXd& external_force);
+    void RetrieveExternalForceToCPU(Eigen::VectorXR& external_force);
 
-    void RetrieveConstraintDataToCPU(Eigen::VectorXd& constraint) override {}
+    void RetrieveConstraintDataToCPU(Eigen::VectorXR& constraint) override {}
 
-    void RetrieveConstraintJacobianToCPU(Eigen::MatrixXd& constraint_jac) override {}
+    void RetrieveConstraintJacobianToCPU(Eigen::MatrixXR& constraint_jac) override {}
 
-    void RetrievePositionToCPU(Eigen::VectorXd& x12, Eigen::VectorXd& y12, Eigen::VectorXd& z12) override;
+    void RetrievePositionToCPU(Eigen::VectorXR& x12, Eigen::VectorXR& y12, Eigen::VectorXR& z12) override;
 
-    void RetrieveDeformationGradientToCPU(std::vector<std::vector<Eigen::MatrixXd>>& deformation_gradient) override {}
+    void RetrieveDeformationGradientToCPU(std::vector<std::vector<Eigen::MatrixXR>>& deformation_gradient) override {}
 
-    void RetrievePFromFToCPU(std::vector<std::vector<Eigen::MatrixXd>>& p_from_F) override;
+    void RetrievePFromFToCPU(std::vector<std::vector<Eigen::MatrixXR>>& p_from_F) override;
 
-    void RetrieveDnDuPreToCPU(std::vector<std::vector<Eigen::MatrixXd>>& dn_du_pre);
+    void RetrieveDnDuPreToCPU(std::vector<std::vector<Eigen::MatrixXR>>& dn_du_pre);
 
-    void RetrieveDetJToCPU(std::vector<std::vector<double>>& detJ);
+    void RetrieveDetJToCPU(std::vector<std::vector<Real>>& detJ);
 
     void RetrieveConnectivityToCPU(Eigen::MatrixXi& connectivity);
 
@@ -353,114 +353,114 @@ struct GPU_FEAT10_Data : public ElementBase {
     }
 
     void Initialize() {
-        MOPHI_GPU_CALL(cudaMalloc(&d_h_x12, n_coef * sizeof(double)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_h_y12, n_coef * sizeof(double)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_h_z12, n_coef * sizeof(double)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_h_x12_jac, n_coef * sizeof(double)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_h_y12_jac, n_coef * sizeof(double)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_h_z12_jac, n_coef * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_h_x12, n_coef * sizeof(Real)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_h_y12, n_coef * sizeof(Real)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_h_z12, n_coef * sizeof(Real)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_h_x12_jac, n_coef * sizeof(Real)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_h_y12_jac, n_coef * sizeof(Real)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_h_z12_jac, n_coef * sizeof(Real)));
         MOPHI_GPU_CALL(cudaMalloc(&d_element_connectivity, n_elem * Quadrature::N_NODE_T10_10 * sizeof(int)));
 
-        MOPHI_GPU_CALL(cudaMalloc(&d_tet5pt_x, Quadrature::N_QP_T10_5 * sizeof(double)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_tet5pt_y, Quadrature::N_QP_T10_5 * sizeof(double)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_tet5pt_z, Quadrature::N_QP_T10_5 * sizeof(double)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_tet5pt_weights, Quadrature::N_QP_T10_5 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_tet5pt_x, Quadrature::N_QP_T10_5 * sizeof(Real)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_tet5pt_y, Quadrature::N_QP_T10_5 * sizeof(Real)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_tet5pt_z, Quadrature::N_QP_T10_5 * sizeof(Real)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_tet5pt_weights, Quadrature::N_QP_T10_5 * sizeof(Real)));
 
-        MOPHI_GPU_CALL(cudaMalloc(&d_grad_N_ref, n_elem * Quadrature::N_QP_T10_5 * 10 * 3 * sizeof(double)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_detJ_ref, n_elem * Quadrature::N_QP_T10_5 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_grad_N_ref, n_elem * Quadrature::N_QP_T10_5 * 10 * 3 * sizeof(Real)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_detJ_ref, n_elem * Quadrature::N_QP_T10_5 * sizeof(Real)));
 
-        MOPHI_GPU_CALL(cudaMalloc(&d_F, n_elem * Quadrature::N_QP_T10_5 * 3 * 3 * sizeof(double)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_P, n_elem * Quadrature::N_QP_T10_5 * 3 * 3 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_F, n_elem * Quadrature::N_QP_T10_5 * 3 * 3 * sizeof(Real)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_P, n_elem * Quadrature::N_QP_T10_5 * 3 * 3 * sizeof(Real)));
         // Viscous-related buffers
-        MOPHI_GPU_CALL(cudaMalloc(&d_Fdot, n_elem * Quadrature::N_QP_T10_5 * 3 * 3 * sizeof(double)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_P_vis, n_elem * Quadrature::N_QP_T10_5 * 3 * 3 * sizeof(double)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_f_int, n_coef * 3 * sizeof(double)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_f_ext, n_coef * 3 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_Fdot, n_elem * Quadrature::N_QP_T10_5 * 3 * 3 * sizeof(Real)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_P_vis, n_elem * Quadrature::N_QP_T10_5 * 3 * 3 * sizeof(Real)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_f_int, n_coef * 3 * sizeof(Real)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_f_ext, n_coef * 3 * sizeof(Real)));
 
-        MOPHI_GPU_CALL(cudaMalloc(&d_rho0, sizeof(double)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_nu, sizeof(double)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_E, sizeof(double)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_lambda, sizeof(double)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_mu, sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_rho0, sizeof(Real)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_nu, sizeof(Real)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_E, sizeof(Real)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_lambda, sizeof(Real)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_mu, sizeof(Real)));
         MOPHI_GPU_CALL(cudaMalloc(&d_material_model, sizeof(int)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_mu10, sizeof(double)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_mu01, sizeof(double)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_kappa, sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_mu10, sizeof(Real)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_mu01, sizeof(Real)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_kappa, sizeof(Real)));
         // damping parameters
-        MOPHI_GPU_CALL(cudaMalloc(&d_eta_damp, sizeof(double)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_lambda_damp, sizeof(double)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_eta_damp, sizeof(Real)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_lambda_damp, sizeof(Real)));
 
         //     // copy struct to device
         MOPHI_GPU_CALL(cudaMalloc(&d_data, sizeof(GPU_FEAT10_Data)));
     }
 
-    void Setup(const Eigen::VectorXd& tet5pt_x_host,
-               const Eigen::VectorXd& tet5pt_y_host,
-               const Eigen::VectorXd& tet5pt_z_host,
-               const Eigen::VectorXd& tet5pt_weights_host,
-               const Eigen::VectorXd& h_x12,
-               const Eigen::VectorXd& h_y12,
-               const Eigen::VectorXd& h_z12,
+    void Setup(const Eigen::VectorXR& tet5pt_x_host,
+               const Eigen::VectorXR& tet5pt_y_host,
+               const Eigen::VectorXR& tet5pt_z_host,
+               const Eigen::VectorXR& tet5pt_weights_host,
+               const Eigen::VectorXR& h_x12,
+               const Eigen::VectorXR& h_y12,
+               const Eigen::VectorXR& h_z12,
                const Eigen::MatrixXi& element_connectivity) {
         if (is_setup) {
             MOPHI_ERROR(std::string("GPU_FEAT10_Data is already set up."));
             return;
         }
 
-        MOPHI_GPU_CALL(cudaMemcpy(d_h_x12, h_x12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_h_y12, h_y12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_h_z12, h_z12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_h_x12_jac, h_x12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_h_y12_jac, h_y12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_h_z12_jac, h_z12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_h_x12, h_x12.data(), n_coef * sizeof(Real), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_h_y12, h_y12.data(), n_coef * sizeof(Real), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_h_z12, h_z12.data(), n_coef * sizeof(Real), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_h_x12_jac, h_x12.data(), n_coef * sizeof(Real), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_h_y12_jac, h_y12.data(), n_coef * sizeof(Real), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_h_z12_jac, h_z12.data(), n_coef * sizeof(Real), cudaMemcpyHostToDevice));
 
         MOPHI_GPU_CALL(cudaMemcpy(d_element_connectivity, element_connectivity.data(),
                                   n_elem * Quadrature::N_NODE_T10_10 * sizeof(int), cudaMemcpyHostToDevice));
 
-        MOPHI_GPU_CALL(cudaMemcpy(d_tet5pt_x, tet5pt_x_host.data(), Quadrature::N_QP_T10_5 * sizeof(double),
+        MOPHI_GPU_CALL(cudaMemcpy(d_tet5pt_x, tet5pt_x_host.data(), Quadrature::N_QP_T10_5 * sizeof(Real),
                                   cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_tet5pt_y, tet5pt_y_host.data(), Quadrature::N_QP_T10_5 * sizeof(double),
+        MOPHI_GPU_CALL(cudaMemcpy(d_tet5pt_y, tet5pt_y_host.data(), Quadrature::N_QP_T10_5 * sizeof(Real),
                                   cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_tet5pt_z, tet5pt_z_host.data(), Quadrature::N_QP_T10_5 * sizeof(double),
+        MOPHI_GPU_CALL(cudaMemcpy(d_tet5pt_z, tet5pt_z_host.data(), Quadrature::N_QP_T10_5 * sizeof(Real),
                                   cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_tet5pt_weights, tet5pt_weights_host.data(), Quadrature::N_QP_T10_5 * sizeof(double),
+        MOPHI_GPU_CALL(cudaMemcpy(d_tet5pt_weights, tet5pt_weights_host.data(), Quadrature::N_QP_T10_5 * sizeof(Real),
                                   cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemset(d_grad_N_ref, 0, n_elem * Quadrature::N_QP_T10_5 * 10 * 3 * sizeof(double)));
-        MOPHI_GPU_CALL(cudaMemset(d_detJ_ref, 0, n_elem * Quadrature::N_QP_T10_5 * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMemset(d_grad_N_ref, 0, n_elem * Quadrature::N_QP_T10_5 * 10 * 3 * sizeof(Real)));
+        MOPHI_GPU_CALL(cudaMemset(d_detJ_ref, 0, n_elem * Quadrature::N_QP_T10_5 * sizeof(Real)));
 
-        cudaMemset(d_f_int, 0, n_coef * 3 * sizeof(double));
+        cudaMemset(d_f_int, 0, n_coef * 3 * sizeof(Real));
 
-        cudaMemset(d_F, 0, n_elem * Quadrature::N_QP_T10_5 * 3 * 3 * sizeof(double));
-        cudaMemset(d_P, 0, n_elem * Quadrature::N_QP_T10_5 * 3 * 3 * sizeof(double));
+        cudaMemset(d_F, 0, n_elem * Quadrature::N_QP_T10_5 * 3 * 3 * sizeof(Real));
+        cudaMemset(d_P, 0, n_elem * Quadrature::N_QP_T10_5 * 3 * 3 * sizeof(Real));
         // initialize viscous buffers to zero
-        cudaMemset(d_Fdot, 0, n_elem * Quadrature::N_QP_T10_5 * 3 * 3 * sizeof(double));
-        cudaMemset(d_P_vis, 0, n_elem * Quadrature::N_QP_T10_5 * 3 * 3 * sizeof(double));
+        cudaMemset(d_Fdot, 0, n_elem * Quadrature::N_QP_T10_5 * 3 * 3 * sizeof(Real));
+        cudaMemset(d_P_vis, 0, n_elem * Quadrature::N_QP_T10_5 * 3 * 3 * sizeof(Real));
 
-        double rho0 = 0.0;
-        double nu = 0.0;
-        double E = 0.0;
+        Real rho0 = 0.0;
+        Real nu = 0.0;
+        Real E = 0.0;
         // Compute material constants
-        double mu = E / (2 * (1 + nu));                        // Shear modulus μ
-        double lambda = (E * nu) / ((1 + nu) * (1 - 2 * nu));  // Lamé's first parameter λ
-        double eta_damp = 0.0;
-        double lambda_damp = 0.0;
+        Real mu = E / (2 * (1 + nu));                        // Shear modulus μ
+        Real lambda = (E * nu) / ((1 + nu) * (1 - 2 * nu));  // Lamé's first parameter λ
+        Real eta_damp = 0.0;
+        Real lambda_damp = 0.0;
         int material_model = MATERIAL_MODEL_SVK;
-        double mu10 = 0.0;
-        double mu01 = 0.0;
-        double kappa = 0.0;
+        Real mu10 = 0.0;
+        Real mu01 = 0.0;
+        Real kappa = 0.0;
 
-        MOPHI_GPU_CALL(cudaMemcpy(d_rho0, &rho0, sizeof(double), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_nu, &nu, sizeof(double), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_E, &E, sizeof(double), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_mu, &mu, sizeof(double), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_lambda, &lambda, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_rho0, &rho0, sizeof(Real), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_nu, &nu, sizeof(Real), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_E, &E, sizeof(Real), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_mu, &mu, sizeof(Real), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_lambda, &lambda, sizeof(Real), cudaMemcpyHostToDevice));
         // copy damping parameters
-        MOPHI_GPU_CALL(cudaMemcpy(d_eta_damp, &eta_damp, sizeof(double), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_lambda_damp, &lambda_damp, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_eta_damp, &eta_damp, sizeof(Real), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_lambda_damp, &lambda_damp, sizeof(Real), cudaMemcpyHostToDevice));
         MOPHI_GPU_CALL(cudaMemcpy(d_material_model, &material_model, sizeof(int), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_mu10, &mu10, sizeof(double), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_mu01, &mu01, sizeof(double), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_kappa, &kappa, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_mu10, &mu10, sizeof(Real), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_mu01, &mu01, sizeof(Real), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_kappa, &kappa, sizeof(Real), cudaMemcpyHostToDevice));
 
         MOPHI_GPU_CALL(cudaMemcpy(d_data, this, sizeof(GPU_FEAT10_Data), cudaMemcpyHostToDevice));
 
@@ -470,12 +470,12 @@ struct GPU_FEAT10_Data : public ElementBase {
     /**
      * Set reference density (used for mass/inertial terms).
      */
-    void SetDensity(double rho0) {
+    void SetDensity(Real rho0) {
         if (!is_setup) {
             MOPHI_ERROR("GPU_FEAT10_Data must be set up before setting density.");
             return;
         }
-        MOPHI_GPU_CALL(cudaMemcpy(d_rho0, &rho0, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_rho0, &rho0, sizeof(Real), cudaMemcpyHostToDevice));
     }
 
     /**
@@ -483,13 +483,13 @@ struct GPU_FEAT10_Data : public ElementBase {
      * eta_damp: shear-like damping coefficient
      * lambda_damp: volumetric-like damping coefficient
      */
-    void SetDamping(double eta_damp, double lambda_damp) {
+    void SetDamping(Real eta_damp, Real lambda_damp) {
         if (!is_setup) {
             MOPHI_ERROR("GPU_FEAT10_Data must be set up before setting damping.");
             return;
         }
-        MOPHI_GPU_CALL(cudaMemcpy(d_eta_damp, &eta_damp, sizeof(double), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_lambda_damp, &lambda_damp, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_eta_damp, &eta_damp, sizeof(Real), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_lambda_damp, &lambda_damp, sizeof(Real), cudaMemcpyHostToDevice));
     }
 
     /**
@@ -502,13 +502,13 @@ struct GPU_FEAT10_Data : public ElementBase {
         }
 
         int material_model = MATERIAL_MODEL_SVK;
-        double mu10 = 0.0;
-        double mu01 = 0.0;
-        double kappa = 0.0;
+        Real mu10 = 0.0;
+        Real mu01 = 0.0;
+        Real kappa = 0.0;
         MOPHI_GPU_CALL(cudaMemcpy(d_material_model, &material_model, sizeof(int), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_mu10, &mu10, sizeof(double), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_mu01, &mu01, sizeof(double), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_kappa, &kappa, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_mu10, &mu10, sizeof(Real), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_mu01, &mu01, sizeof(Real), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_kappa, &kappa, sizeof(Real), cudaMemcpyHostToDevice));
     }
 
     /**
@@ -516,19 +516,19 @@ struct GPU_FEAT10_Data : public ElementBase {
      * E: Young's modulus
      * nu: Poisson's ratio
      */
-    void SetSVK(double E, double nu) {
+    void SetSVK(Real E, Real nu) {
         if (!is_setup) {
             MOPHI_ERROR("GPU_FEAT10_Data must be set up before setting material.");
             return;
         }
 
-        MOPHI_GPU_CALL(cudaMemcpy(d_nu, &nu, sizeof(double), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_E, &E, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_nu, &nu, sizeof(Real), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_E, &E, sizeof(Real), cudaMemcpyHostToDevice));
 
-        double mu = E / (2 * (1 + nu));
-        double lambda = (E * nu) / ((1 + nu) * (1 - 2 * nu));
-        MOPHI_GPU_CALL(cudaMemcpy(d_mu, &mu, sizeof(double), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_lambda, &lambda, sizeof(double), cudaMemcpyHostToDevice));
+        Real mu = E / (2 * (1 + nu));
+        Real lambda = (E * nu) / ((1 + nu) * (1 - 2 * nu));
+        MOPHI_GPU_CALL(cudaMemcpy(d_mu, &mu, sizeof(Real), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_lambda, &lambda, sizeof(Real), cudaMemcpyHostToDevice));
 
         SetSVK();
     }
@@ -538,7 +538,7 @@ struct GPU_FEAT10_Data : public ElementBase {
      * mu10, mu01: isochoric Mooney-Rivlin coefficients
      * kappa: volumetric penalty (bulk-modulus-like) coefficient
      */
-    void SetMooneyRivlin(double mu10, double mu01, double kappa) {
+    void SetMooneyRivlin(Real mu10, Real mu01, Real kappa) {
         if (!is_setup) {
             MOPHI_ERROR("GPU_FEAT10_Data must be set up before setting material.");
             return;
@@ -546,64 +546,64 @@ struct GPU_FEAT10_Data : public ElementBase {
 
         int material_model = MATERIAL_MODEL_MOONEY_RIVLIN;
         MOPHI_GPU_CALL(cudaMemcpy(d_material_model, &material_model, sizeof(int), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_mu10, &mu10, sizeof(double), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_mu01, &mu01, sizeof(double), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_kappa, &kappa, sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_mu10, &mu10, sizeof(Real), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_mu01, &mu01, sizeof(Real), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_kappa, &kappa, sizeof(Real), cudaMemcpyHostToDevice));
     }
 
-    void SetExternalForce(const Eigen::VectorXd& h_f_ext) {
+    void SetExternalForce(const Eigen::VectorXR& h_f_ext) {
         if (h_f_ext.size() != n_coef * 3) {
             MOPHI_ERROR("External force vector size mismatch.");
             return;
         }
 
-        cudaMemset(d_f_ext, 0, n_coef * 3 * sizeof(double));
-        MOPHI_GPU_CALL(cudaMemcpy(d_f_ext, h_f_ext.data(), n_coef * 3 * sizeof(double), cudaMemcpyHostToDevice));
+        cudaMemset(d_f_ext, 0, n_coef * 3 * sizeof(Real));
+        MOPHI_GPU_CALL(cudaMemcpy(d_f_ext, h_f_ext.data(), n_coef * 3 * sizeof(Real), cudaMemcpyHostToDevice));
     }
 
-    const double* GetX12DevicePtr() const {
+    const Real* GetX12DevicePtr() const {
         return d_h_x12;
     }
 
-    const double* GetY12DevicePtr() const {
+    const Real* GetY12DevicePtr() const {
         return d_h_y12;
     }
 
-    const double* GetZ12DevicePtr() const {
+    const Real* GetZ12DevicePtr() const {
         return d_h_z12;
     }
 
-    double* GetExternalForceDevicePtr() {
+    Real* GetExternalForceDevicePtr() {
         return d_f_ext;
     }
 
-    const double* GetExternalForceDevicePtr() const {
+    const Real* GetExternalForceDevicePtr() const {
         return d_f_ext;
     }
 
     /**
      * Update node positions on GPU (for prescribed motion of fixed nodes).
      */
-    void UpdatePositions(const Eigen::VectorXd& h_x12, const Eigen::VectorXd& h_y12, const Eigen::VectorXd& h_z12) {
+    void UpdatePositions(const Eigen::VectorXR& h_x12, const Eigen::VectorXR& h_y12, const Eigen::VectorXR& h_z12) {
         if (h_x12.size() != n_coef || h_y12.size() != n_coef || h_z12.size() != n_coef) {
             MOPHI_ERROR("Position vector size mismatch.");
             return;
         }
-        MOPHI_GPU_CALL(cudaMemcpy(d_h_x12, h_x12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_h_y12, h_y12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_h_z12, h_z12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_h_x12, h_x12.data(), n_coef * sizeof(Real), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_h_y12, h_y12.data(), n_coef * sizeof(Real), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_h_z12, h_z12.data(), n_coef * sizeof(Real), cudaMemcpyHostToDevice));
     }
 
-    void UpdateConstraintTargets(const Eigen::VectorXd& h_x12,
-                                 const Eigen::VectorXd& h_y12,
-                                 const Eigen::VectorXd& h_z12) {
+    void UpdateConstraintTargets(const Eigen::VectorXR& h_x12,
+                                 const Eigen::VectorXR& h_y12,
+                                 const Eigen::VectorXR& h_z12) {
         if (h_x12.size() != n_coef || h_y12.size() != n_coef || h_z12.size() != n_coef) {
             MOPHI_ERROR("Position vector size mismatch.");
             return;
         }
-        MOPHI_GPU_CALL(cudaMemcpy(d_h_x12_jac, h_x12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_h_y12_jac, h_y12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_h_z12_jac, h_z12.data(), n_coef * sizeof(double), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_h_x12_jac, h_x12.data(), n_coef * sizeof(Real), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_h_y12_jac, h_y12.data(), n_coef * sizeof(Real), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_h_z12_jac, h_z12.data(), n_coef * sizeof(Real), cudaMemcpyHostToDevice));
     }
 
     void SetNodalFixed(const Eigen::VectorXi& fixed_nodes);
@@ -684,7 +684,7 @@ struct GPU_FEAT10_Data : public ElementBase {
         }
     }
 
-    double* Get_Constraint_Ptr() {
+    Real* Get_Constraint_Ptr() {
         return d_constraint;
     }
 
@@ -700,8 +700,8 @@ struct GPU_FEAT10_Data : public ElementBase {
 
   private:
     // Node positions (global, or per element)
-    double *d_h_x12, *d_h_y12, *d_h_z12;  // (n_coef, 1)
-    double *d_h_x12_jac, *d_h_y12_jac, *d_h_z12_jac;
+    Real *d_h_x12, *d_h_y12, *d_h_z12;  // (n_coef, 1)
+    Real *d_h_x12_jac, *d_h_y12_jac, *d_h_z12_jac;
 
     // Element connectivity
     int* d_element_connectivity;  // (n_elem, 10)
@@ -709,46 +709,46 @@ struct GPU_FEAT10_Data : public ElementBase {
     // Mass Matrix
     // Mass Matrix in CSR format
     int *d_csr_offsets, *d_csr_columns;
-    double* d_csr_values;
+    Real* d_csr_values;
     int* d_nnz;
 
     // Quadrature points and weights
-    double *d_tet5pt_x, *d_tet5pt_y, *d_tet5pt_z;
-    double* d_tet5pt_weights;  // (5,)
+    Real *d_tet5pt_x, *d_tet5pt_y, *d_tet5pt_z;
+    Real* d_tet5pt_weights;  // (5,)
 
     // Precomputed reference gradients
-    double* d_grad_N_ref;  // (n_elem, 5, 10, 3)
-    double* d_detJ_ref;    // (n_elem, 5)
+    Real* d_grad_N_ref;  // (n_elem, 5, 10, 3)
+    Real* d_detJ_ref;    // (n_elem, 5)
 
     // Deformation gradient and Piola stress
-    double* d_F;  // (n_elem, n_qp, 3, 3)
-    double* d_P;  // (n_elem, n_qp, 3, 3)
+    Real* d_F;  // (n_elem, n_qp, 3, 3)
+    Real* d_P;  // (n_elem, n_qp, 3, 3)
     // Time-derivative of deformation gradient and viscous Piola
-    double* d_Fdot;   // (n_elem, n_qp, 3, 3)
-    double* d_P_vis;  // (n_elem, n_qp, 3, 3)
+    Real* d_Fdot;   // (n_elem, n_qp, 3, 3)
+    Real* d_P_vis;  // (n_elem, n_qp, 3, 3)
 
     // Material properties
-    double *d_E, *d_nu, *d_rho0, *d_lambda, *d_mu;
+    Real *d_E, *d_nu, *d_rho0, *d_lambda, *d_mu;
     int* d_material_model;
-    double *d_mu10, *d_mu01, *d_kappa;
+    Real *d_mu10, *d_mu01, *d_kappa;
     // Damping parameters
-    double *d_eta_damp, *d_lambda_damp;
+    Real *d_eta_damp, *d_lambda_damp;
 
     // Constraint data
-    double* d_constraint;
+    Real* d_constraint;
     int* d_fixed_nodes;
     // Constraint Jacobian J^T in CSR format
     int *d_cj_csr_offsets, *d_cj_csr_columns;
-    double* d_cj_csr_values;
+    Real* d_cj_csr_values;
     int* d_cj_nnz;
 
     // Constraint Jacobian J in CSR format
     int *d_j_csr_offsets, *d_j_csr_columns;
-    double* d_j_csr_values;
+    Real* d_j_csr_values;
     int* d_j_nnz;
 
     // Force vectors
-    double *d_f_int, *d_f_ext;  // (n_nodes*3)
+    Real *d_f_int, *d_f_ext;  // (n_nodes*3)
 
     bool is_setup = false;
     bool is_constraints_setup = false;

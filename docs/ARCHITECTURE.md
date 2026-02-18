@@ -32,6 +32,7 @@ TLFEA/
 │   │   └── MooneyRivlin.cuh           # Stub (for future extension)
 │   │
 │   └── utils/          # Utility functions
+│       ├── types.h                     # Type definitions (Real, MatrixXR, VectorXR)
 │       ├── cpu_utils.h/cc             # CPU-side utilities (mesh I/O, etc.)
 │       ├── cuda_utils.h               # CUDA helper macros and functions
 │       ├── quadrature_utils.h         # Gauss quadrature rules
@@ -84,6 +85,11 @@ TLFEA/
 - Extensible to other models (Neo-Hookean, Mooney-Rivlin, etc.)
 
 ### 4. Utilities (`src/utils/`)
+
+**types.h**: Type definitions
+- `Real`: Central floating-point type (typedef for double)
+- `MatrixXR`, `VectorXR`: Eigen matrix/vector types using Real
+- Allows easy switching between precision levels (float/double)
 
 **cpu_utils**: CPU-side helpers
 - Mesh file I/O (reads .node and .ele files)

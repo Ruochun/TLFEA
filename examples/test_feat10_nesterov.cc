@@ -19,19 +19,20 @@
 
 #include "elements/FEAT10Data.cuh"
 #include "solvers/SyncedNesterov.cuh"
+#include "types.h"
 #include "utils/cpu_utils.h"
 #include "utils/quadrature_utils.h"
 
-const double E = 7e8;      // Young's modulus
-const double nu = 0.33;    // Poisson's ratio
-const double rho0 = 2700;  // Density
+const Real E = 7e8;      // Young's modulus
+const Real nu = 0.33;    // Poisson's ratio
+const Real rho0 = 2700;  // Density
 
 int main() {
     // Initialize MoPhiEssentials logging
     mophi::Logger::GetInstance().SetVerbosity(mophi::VERBOSITY_INFO);
 
     // Read mesh data
-    Eigen::MatrixXd nodes;
+    Eigen::MatrixXR nodes;
     Eigen::MatrixXi elements;
 
     int n_nodes = ANCFCPUUtils::FEAT10_read_nodes("data/meshes/T10/cube.1.node", nodes);
@@ -55,7 +56,7 @@ int main() {
     MOPHI_INFO("gpu_t10_data initialized");
 
     // Extract coordinate vectors from nodes matrix
-    Eigen::VectorXd h_x12(n_nodes), h_y12(n_nodes), h_z12(n_nodes);
+    Eigen::VectorXR h_x12(n_nodes), h_y12(n_nodes), h_z12(n_nodes);
     for (int i = 0; i < n_nodes; i++) {
         h_x12(i) = nodes(i, 0);  // X coordinates
         h_y12(i) = nodes(i, 1);  // Y coordinates
@@ -89,17 +90,17 @@ int main() {
     gpu_t10_data.SetNodalFixed(h_fixed_nodes);
 
     // set external force
-    Eigen::VectorXd h_f_ext(gpu_t10_data.get_n_coef() * 3);
+    Eigen::VectorXR h_f_ext(gpu_t10_data.get_n_coef() * 3);
     // set external force applied at the end of the beam to be 0,0,3100
     h_f_ext.setZero();
     h_f_ext(3 * 6 + 0) = 1000.0;
     gpu_t10_data.SetExternalForce(h_f_ext);
 
     // Get quadrature data from quadrature_utils.h
-    const Eigen::VectorXd& tet5pt_x_host = Quadrature::tet5pt_x;
-    const Eigen::VectorXd& tet5pt_y_host = Quadrature::tet5pt_y;
-    const Eigen::VectorXd& tet5pt_z_host = Quadrature::tet5pt_z;
-    const Eigen::VectorXd& tet5pt_weights_host = Quadrature::tet5pt_weights;
+    const Eigen::VectorXR& tet5pt_x_host = Quadrature::tet5pt_x;
+    const Eigen::VectorXR& tet5pt_y_host = Quadrature::tet5pt_y;
+    const Eigen::VectorXR& tet5pt_z_host = Quadrature::tet5pt_z;
+    const Eigen::VectorXR& tet5pt_weights_host = Quadrature::tet5pt_weights;
 
     // Call Setup with all required parameters
     gpu_t10_data.Setup(tet5pt_x_host, tet5pt_y_host, tet5pt_z_host, tet5pt_weights_host, h_x12, h_y12, h_z12, elements);
@@ -116,7 +117,7 @@ int main() {
     MOPHI_INFO("gpu_t10_data dndu pre complete");
 
     // 2. Retrieve results
-    std::vector<std::vector<Eigen::MatrixXd>> ref_grads;
+    std::vector<std::vector<Eigen::MatrixXR>> ref_grads;
     gpu_t10_data.RetrieveDnDuPreToCPU(ref_grads);
 
     std::cout << "ref_grads:" << std::endl;
@@ -127,7 +128,7 @@ int main() {
     }
     std::cout << "done retrieving ref_grads" << std::endl;
 
-    std::vector<std::vector<double>> detJ;
+    std::vector<std::vector<Real>> detJ;
     gpu_t10_data.RetrieveDetJToCPU(detJ);
 
     std::cout << "detJ:" << std::endl;
@@ -154,7 +155,7 @@ int main() {
     MOPHI_INFO("done CalcP");
 
     // retrieve p
-    std::vector<std::vector<Eigen::MatrixXd>> p_from_F;
+    std::vector<std::vector<Eigen::MatrixXR>> p_from_F;
     gpu_t10_data.RetrievePFromFToCPU(p_from_F);
 
     std::cout << "P matrices (First Piola-Kirchhoff stress):" << std::endl;
@@ -172,7 +173,7 @@ int main() {
     MOPHI_INFO("done CalcInternalForce");
 
     // retrieve internal force
-    Eigen::VectorXd f_int;
+    Eigen::VectorXR f_int;
     gpu_t10_data.RetrieveInternalForceToCPU(f_int);
     std::cout << "Internal force vector (size: " << f_int.size() << "):" << std::endl;
     std::cout << f_int.transpose() << std::endl;
@@ -190,7 +191,7 @@ int main() {
     // // Set highest precision for cout
     std::cout << std::fixed << std::setprecision(17);
 
-    Eigen::VectorXd x12, y12, z12;
+    Eigen::VectorXR x12, y12, z12;
     gpu_t10_data.RetrievePositionToCPU(x12, y12, z12);
 
     std::cout << "x12:" << std::endl;

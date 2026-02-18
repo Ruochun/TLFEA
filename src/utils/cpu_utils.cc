@@ -1,4 +1,5 @@
 #include "cpu_utils.h"
+#include "types.h"
 
 #include <algorithm>
 #include <climits>
@@ -117,15 +118,15 @@ std::vector<std::vector<int>> BuildColorToNodes(const Eigen::VectorXi& colors, i
     return color_to_nodes;
 }
 
-void ANCF3243_B12_matrix(double L, double W, double H, Eigen::MatrixXd& B_inv_out, int n_shape) {
+void ANCF3243_B12_matrix(Real L, Real W, Real H, Eigen::MatrixXR& B_inv_out, int n_shape) {
     // Reference coordinates of points P1 and P2
-    double u1 = -L / 2.0;
-    double u2 = L / 2.0;
-    double v = 0.0;
-    double w = 0.0;
+    Real u1 = -L / 2.0;
+    Real u2 = L / 2.0;
+    Real v = 0.0;
+    Real w = 0.0;
 
     // Create an Eigen matrix
-    Eigen::MatrixXd B = Eigen::MatrixXd::Zero(n_shape, n_shape);
+    Eigen::MatrixXR B = Eigen::MatrixXR::Zero(n_shape, n_shape);
 
     // Row 0: Basis function at u1 (b1)
     B(0, 0) = 1.0;
@@ -181,10 +182,10 @@ void ANCF3243_B12_matrix(double L, double W, double H, Eigen::MatrixXd& B_inv_ou
     B_inv_out = B.transpose().inverse();
 }
 
-void ANCF3243_B12_matrix_flat_per_element(const Eigen::VectorXd& L,
-                                          const Eigen::VectorXd& W,
-                                          const Eigen::VectorXd& H,
-                                          Eigen::VectorXd& B_inv_flat_out,
+void ANCF3243_B12_matrix_flat_per_element(const Eigen::VectorXR& L,
+                                          const Eigen::VectorXR& W,
+                                          const Eigen::VectorXR& H,
+                                          Eigen::VectorXR& B_inv_flat_out,
                                           int n_shape) {
     if (L.size() != W.size() || L.size() != H.size()) {
         throw std::runtime_error("ANCF3243_B12_matrix_flat_per_element: L/W/H size mismatch.");
@@ -193,22 +194,22 @@ void ANCF3243_B12_matrix_flat_per_element(const Eigen::VectorXd& L,
     const int per = n_shape * n_shape;
     B_inv_flat_out.resize(n_elem * per);
 
-    Eigen::MatrixXd B_inv;
+    Eigen::MatrixXR B_inv;
     for (int e = 0; e < n_elem; ++e) {
         ANCF3243_B12_matrix(L[e], W[e], H[e], B_inv, n_shape);
-        std::memcpy(B_inv_flat_out.data() + e * per, B_inv.data(), static_cast<size_t>(per) * sizeof(double));
+        std::memcpy(B_inv_flat_out.data() + e * per, B_inv.data(), static_cast<size_t>(per) * sizeof(Real));
     }
 }
 
-void ANCF3443_B12_matrix(double L, double W, double H, Eigen::MatrixXd& B_inv_out, int n_shape) {
+void ANCF3443_B12_matrix(Real L, Real W, Real H, Eigen::MatrixXR& B_inv_out, int n_shape) {
     // Reference coordinates of the 4 corner points
-    double u1 = -L / 2.0, v1 = -W / 2.0, w1 = 0.0;  // Point P1
-    double u2 = L / 2.0, v2 = -W / 2.0, w2 = 0.0;   // Point P2
-    double u3 = L / 2.0, v3 = W / 2.0, w3 = 0.0;    // Point P3
-    double u4 = -L / 2.0, v4 = W / 2.0, w4 = 0.0;   // Point P4
+    Real u1 = -L / 2.0, v1 = -W / 2.0, w1 = 0.0;  // Point P1
+    Real u2 = L / 2.0, v2 = -W / 2.0, w2 = 0.0;   // Point P2
+    Real u3 = L / 2.0, v3 = W / 2.0, w3 = 0.0;    // Point P3
+    Real u4 = -L / 2.0, v4 = W / 2.0, w4 = 0.0;   // Point P4
 
     // Create 16x16 B matrix
-    Eigen::MatrixXd B = Eigen::MatrixXd::Zero(n_shape, n_shape);
+    Eigen::MatrixXR B = Eigen::MatrixXR::Zero(n_shape, n_shape);
 
     // Point P1: Row 0-3 (function value + derivatives)
     // Row 0: b_vec(u1, v1, w1)
@@ -410,10 +411,10 @@ void ANCF3443_B12_matrix(double L, double W, double H, Eigen::MatrixXd& B_inv_ou
     B_inv_out = B.transpose().inverse();
 }
 
-void ANCF3443_B12_matrix_flat_per_element(const Eigen::VectorXd& L,
-                                          const Eigen::VectorXd& W,
-                                          const Eigen::VectorXd& H,
-                                          Eigen::VectorXd& B_inv_flat_out,
+void ANCF3443_B12_matrix_flat_per_element(const Eigen::VectorXR& L,
+                                          const Eigen::VectorXR& W,
+                                          const Eigen::VectorXR& H,
+                                          Eigen::VectorXR& B_inv_flat_out,
                                           int n_shape) {
     if (L.size() != W.size() || L.size() != H.size()) {
         throw std::runtime_error("ANCF3443_B12_matrix_flat_per_element: L/W/H size mismatch.");
@@ -422,18 +423,18 @@ void ANCF3443_B12_matrix_flat_per_element(const Eigen::VectorXd& L,
     const int per = n_shape * n_shape;
     B_inv_flat_out.resize(n_elem * per);
 
-    Eigen::MatrixXd B_inv;
+    Eigen::MatrixXR B_inv;
     for (int e = 0; e < n_elem; ++e) {
         ANCF3443_B12_matrix(L[e], W[e], H[e], B_inv, n_shape);
-        std::memcpy(B_inv_flat_out.data() + e * per, B_inv.data(), static_cast<size_t>(per) * sizeof(double));
+        std::memcpy(B_inv_flat_out.data() + e * per, B_inv.data(), static_cast<size_t>(per) * sizeof(Real));
     }
 }
 
-void ANCF3243_generate_beam_coordinates(int n_beam, Eigen::VectorXd& x12, Eigen::VectorXd& y12, Eigen::VectorXd& z12) {
+void ANCF3243_generate_beam_coordinates(int n_beam, Eigen::VectorXR& x12, Eigen::VectorXR& y12, Eigen::VectorXR& z12) {
     // Initial beam coordinates (first 8 nodes)
-    double x_init[8] = {-1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0};
-    double y_init[8] = {1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0};
-    double z_init[8] = {0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
+    Real x_init[8] = {-1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0};
+    Real y_init[8] = {1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0};
+    Real z_init[8] = {0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
 
     // Copy initial beam (first 8 nodes)
     for (int i = 0; i < 8; i++) {
@@ -444,7 +445,7 @@ void ANCF3243_generate_beam_coordinates(int n_beam, Eigen::VectorXd& x12, Eigen:
 
     // Add additional beams (append new blocks for additional beams)
     for (int beam = 2; beam <= n_beam; beam++) {
-        double x_offset = 2.0;
+        Real x_offset = 2.0;
         int base_idx = 8 + (beam - 2) * 4;  // Starting index for new beam nodes
         int prev_base = base_idx - 4;       // Previous beam's last 4 nodes
 
@@ -461,9 +462,9 @@ void ANCF3243_generate_beam_coordinates(int n_beam, Eigen::VectorXd& x12, Eigen:
 }
 
 void ANCF3443_generate_beam_coordinates(int n_beam,
-                                        Eigen::VectorXd& x12,
-                                        Eigen::VectorXd& y12,
-                                        Eigen::VectorXd& z12,
+                                        Eigen::VectorXR& x12,
+                                        Eigen::VectorXR& y12,
+                                        Eigen::VectorXR& z12,
                                         Eigen::MatrixXi& element_connectivity) {
     int n_nodes = 4 + 2 * (n_beam - 1);
     int N_dof = n_nodes * 4;
@@ -608,7 +609,7 @@ void FEAT10_remap_tetgen_indices(const Eigen::VectorXi& tetgen_elem, Eigen::Vect
     }
 }
 
-int FEAT10_read_nodes(const std::string& filename, Eigen::MatrixXd& nodes) {
+int FEAT10_read_nodes(const std::string& filename, Eigen::MatrixXR& nodes) {
     std::ifstream file(filename);
     if (!file.is_open()) {
         MOPHI_ERROR("Could not open node file %s", filename.c_str());
@@ -635,13 +636,13 @@ int FEAT10_read_nodes(const std::string& filename, Eigen::MatrixXd& nodes) {
 
     // First pass: find minimum node_id
     int min_id = INT_MAX;
-    std::vector<std::tuple<int, double, double, double>> node_data;
+    std::vector<std::tuple<int, Real, Real, Real>> node_data;
     for (int i = 0; i < n_nodes; i++) {
         if (!std::getline(file, line) || line.empty())
             continue;
         std::istringstream iss(line);
         int node_id;
-        double x, y, z;
+        Real x, y, z;
         if (iss >> node_id >> x >> y >> z) {
             min_id = std::min(min_id, node_id);
             node_data.emplace_back(node_id, x, y, z);
@@ -651,7 +652,7 @@ int FEAT10_read_nodes(const std::string& filename, Eigen::MatrixXd& nodes) {
     // Second pass: fill nodes matrix
     for (const auto& tup : node_data) {
         int node_id = std::get<0>(tup);
-        double x = std::get<1>(tup), y = std::get<2>(tup), z = std::get<3>(tup);
+        Real x = std::get<1>(tup), y = std::get<2>(tup), z = std::get<3>(tup);
         int idx = node_id - (min_id == 0 ? 0 : 1);  // adaptive offset
         if (idx >= 0 && idx < n_nodes) {
             nodes(idx, 0) = x;

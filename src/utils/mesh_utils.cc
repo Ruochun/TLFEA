@@ -11,7 +11,7 @@
 namespace ANCFCPUUtils {
 
 // GridMeshGenerator implementation
-GridMeshGenerator::GridMeshGenerator(double X, double Y, double L, bool include_horizontal, bool include_vertical)
+GridMeshGenerator::GridMeshGenerator(Real X, Real Y, Real L, bool include_horizontal, bool include_vertical)
     : X_(X), Y_(Y), L_(L), include_horizontal_(include_horizontal), include_vertical_(include_vertical) {
     if (L_ <= 0) {
         throw std::invalid_argument("L must be > 0");
@@ -44,9 +44,9 @@ void GridMeshGenerator::generate_nodes() {
     int node_id_counter = 0;
 
     for (int j = 0; j <= ny_; j++) {  // row-major by j then i
-        double y = j * L_;
+        Real y = j * L_;
         for (int i = 0; i <= nx_; i++) {
-            double x = i * L_;
+            Real x = i * L_;
             nodes_.push_back({node_id_counter, i, j, x, y, 0.0, 0.0, 0.0, 0.0});
             node_id_counter++;
         }
@@ -94,7 +94,7 @@ std::tuple<int, int, int, int> GridMeshGenerator::global_dof_indices_for_node(in
     return std::make_tuple(base, base + 1, base + 2, base + 3);
 }
 
-void GridMeshGenerator::get_coordinates(Eigen::VectorXd& x, Eigen::VectorXd& y, Eigen::VectorXd& z) {
+void GridMeshGenerator::get_coordinates(Eigen::VectorXR& x, Eigen::VectorXR& y, Eigen::VectorXR& z) {
     int n_nodes = static_cast<int>(nodes_.size());
     int total_dofs = 4 * n_nodes;
 
@@ -103,9 +103,9 @@ void GridMeshGenerator::get_coordinates(Eigen::VectorXd& x, Eigen::VectorXd& y, 
     z.resize(total_dofs);
 
     // Define the pattern for each node (from beam_mesh_generator)
-    std::vector<double> x_pattern = {1.0, 0.0, 0.0};       // [dx/du, dx/dv, dx/dw] for x-coordinate
-    std::vector<double> y_pattern = {1.0, 0.0, 1.0, 0.0};  // [y, dx/du, dx/dv, dx/dw] for y-coordinate
-    std::vector<double> z_pattern = {0.0, 0.0, 0.0, 1.0};  // [z, dx/du, dx/dv, dx/dw] for z-coordinate
+    std::vector<Real> x_pattern = {1.0, 0.0, 0.0};       // [dx/du, dx/dv, dx/dw] for x-coordinate
+    std::vector<Real> y_pattern = {1.0, 0.0, 1.0, 0.0};  // [y, dx/du, dx/dv, dx/dw] for y-coordinate
+    std::vector<Real> z_pattern = {0.0, 0.0, 0.0, 1.0};  // [z, dx/du, dx/dv, dx/dw] for z-coordinate
 
     // Fill the arrays
     for (const auto& node : nodes_) {
@@ -139,8 +139,8 @@ int GridMeshGenerator::get_num_elements() const {
     return static_cast<int>(elements_.size());
 }
 
-std::map<std::string, double> GridMeshGenerator::summary() const {
-    std::map<std::string, double> result;
+std::map<std::string, Real> GridMeshGenerator::summary() const {
+    std::map<std::string, Real> result;
     result["X"] = X_;
     result["Y"] = Y_;
     result["L"] = L_;
@@ -181,14 +181,14 @@ LinearConstraintBuilder::LinearConstraintBuilder(int n_dofs, const LinearConstra
         throw std::invalid_argument("LinearConstraintBuilder: initial nnz mismatch");
     }
     if (!rhs_.empty()) {
-        Eigen::Map<Eigen::VectorXd>(rhs_.data(), initial.rhs.size()) = initial.rhs;
+        Eigen::Map<Eigen::VectorXR>(rhs_.data(), initial.rhs.size()) = initial.rhs;
     }
     if (offsets_.empty() || offsets_.front() != 0 || offsets_.back() != static_cast<int>(columns_.size())) {
         throw std::invalid_argument("LinearConstraintBuilder: initial CSR offsets invalid");
     }
 }
 
-int LinearConstraintBuilder::AddRow(const std::vector<std::pair<int, double>>& entries, double rhs) {
+int LinearConstraintBuilder::AddRow(const std::vector<std::pair<int, Real>>& entries, Real rhs) {
     if (entries.empty()) {
         throw std::invalid_argument("LinearConstraintBuilder::AddRow: empty row");
     }
@@ -208,7 +208,7 @@ int LinearConstraintBuilder::AddRow(const std::vector<std::pair<int, double>>& e
     return static_cast<int>(rhs_.size()) - 1;
 }
 
-int LinearConstraintBuilder::AddFixedDof(int col, double rhs) {
+int LinearConstraintBuilder::AddFixedDof(int col, Real rhs) {
     return AddRow({{col, 1.0}}, rhs);
 }
 
@@ -217,9 +217,9 @@ LinearConstraintCSR LinearConstraintBuilder::ToCSR() const {
     out.offsets = offsets_;
     out.columns = columns_;
     out.values = values_;
-    out.rhs = Eigen::VectorXd::Zero(static_cast<int>(rhs_.size()));
+    out.rhs = Eigen::VectorXR::Zero(static_cast<int>(rhs_.size()));
     if (!rhs_.empty()) {
-        out.rhs = Eigen::Map<const Eigen::VectorXd>(rhs_.data(), static_cast<int>(rhs_.size()));
+        out.rhs = Eigen::Map<const Eigen::VectorXR>(rhs_.data(), static_cast<int>(rhs_.size()));
     }
     return out;
 }
@@ -252,18 +252,18 @@ void AppendANCF3243VectorWeldedConstraint(LinearConstraintBuilder& builder,
                                           int node_a,
                                           int node_b,
                                           int coef_slot,
-                                          const Eigen::Matrix3d& Q) {
+                                          const Eigen::Matrix3R& Q) {
     if (coef_slot < 0 || coef_slot > 3) {
         throw std::out_of_range("AppendANCF3243VectorWeldedConstraint: coef_slot out of range");
     }
 
     for (int row = 0; row < 3; ++row) {
-        std::vector<std::pair<int, double>> entries;
+        std::vector<std::pair<int, Real>> entries;
         entries.reserve(4);
         const int col_b = ANCF3243DofCol(node_b, coef_slot, row);
         entries.push_back({col_b, 1.0});
         for (int k = 0; k < 3; ++k) {
-            const double w = -Q(row, k);
+            const Real w = -Q(row, k);
             if (w == 0.0)
                 continue;
             const int col_a = ANCF3243DofCol(node_a, coef_slot, k);
@@ -275,9 +275,9 @@ void AppendANCF3243VectorWeldedConstraint(LinearConstraintBuilder& builder,
 
 void AppendANCF3243FixedCoefficient(LinearConstraintBuilder& builder,
                                     int coef_index,
-                                    const Eigen::VectorXd& x12_ref,
-                                    const Eigen::VectorXd& y12_ref,
-                                    const Eigen::VectorXd& z12_ref) {
+                                    const Eigen::VectorXR& x12_ref,
+                                    const Eigen::VectorXR& y12_ref,
+                                    const Eigen::VectorXR& z12_ref) {
     if (coef_index < 0 || coef_index >= x12_ref.size() || coef_index >= y12_ref.size() ||
         coef_index >= z12_ref.size()) {
         throw std::out_of_range("AppendANCF3243FixedCoefficient: coef_index out of range");
@@ -316,18 +316,18 @@ void AppendANCF3443VectorWeldedConstraint(LinearConstraintBuilder& builder,
                                           int node_a,
                                           int node_b,
                                           int coef_slot,
-                                          const Eigen::Matrix3d& Q) {
+                                          const Eigen::Matrix3R& Q) {
     if (coef_slot < 0 || coef_slot > 3) {
         throw std::out_of_range("AppendANCF3443VectorWeldedConstraint: coef_slot out of range");
     }
 
     for (int row = 0; row < 3; ++row) {
-        std::vector<std::pair<int, double>> entries;
+        std::vector<std::pair<int, Real>> entries;
         entries.reserve(4);
         const int col_b = ANCF3443DofCol(node_b, coef_slot, row);
         entries.push_back({col_b, 1.0});
         for (int k = 0; k < 3; ++k) {
-            const double w = -Q(row, k);
+            const Real w = -Q(row, k);
             if (w == 0.0)
                 continue;
             const int col_a = ANCF3443DofCol(node_a, coef_slot, k);
@@ -382,10 +382,10 @@ bool ParseIntStrict(const std::string& s, int& out) {
     }
 }
 
-bool ParseDoubleStrict(const std::string& s, double& out) {
+bool ParseDoubleStrict(const std::string& s, Real& out) {
     try {
         size_t idx = 0;
-        double v = std::stod(s, &idx);
+        Real v = std::stod(s, &idx);
         if (idx != s.size())
             return false;
         out = v;
@@ -453,7 +453,7 @@ bool ReadANCF3243MeshFromFile(const std::string& path, ANCF3243Mesh& out, std::s
                 return false;
             }
             int nx = 0, ny = 0;
-            double L = 0.0, ox = 0.0, oy = 0.0, oz = 0.0;
+            Real L = 0.0, ox = 0.0, oy = 0.0, oz = 0.0;
             if (!ParseIntStrict(t[2], nx) || !ParseIntStrict(t[4], ny) || !ParseDoubleStrict(t[6], L) ||
                 !ParseDoubleStrict(t[8], ox) || !ParseDoubleStrict(t[9], oy) || !ParseDoubleStrict(t[10], oz)) {
                 SetError(error, "ReadANCF3243MeshFromFile: failed to parse grid values");
@@ -462,7 +462,7 @@ bool ReadANCF3243MeshFromFile(const std::string& path, ANCF3243Mesh& out, std::s
             out.grid_nx = nx;
             out.grid_ny = ny;
             out.grid_L = L;
-            out.grid_origin = Eigen::Vector3d(ox, oy, oz);
+            out.grid_origin = Eigen::Vector3R(ox, oy, oz);
         } else {
             // Not a grid line; rewind and treat it as the next section header.
             file.clear();
@@ -514,7 +514,7 @@ bool ReadANCF3243MeshFromFile(const std::string& path, ANCF3243Mesh& out, std::s
 
         out.node_family[static_cast<size_t>(node_id)] = t[1];
 
-        double vals[12];
+        Real vals[12];
         for (int k = 0; k < 12; ++k) {
             if (!ParseDoubleStrict(t[2 + k], vals[k])) {
                 SetError(error, "ReadANCF3243MeshFromFile: failed to parse node dofs");
@@ -656,14 +656,14 @@ bool ReadANCF3243MeshFromFile(const std::string& path, ANCF3243Mesh& out, std::s
                 SetError(error, "ReadANCF3243MeshFromFile: welded node id out of range");
                 return false;
             }
-            double q[9];
+            Real q[9];
             for (int k = 0; k < 9; ++k) {
                 if (!ParseDoubleStrict(t[3 + k], q[k])) {
                     SetError(error, "ReadANCF3243MeshFromFile: welded failed to parse Q");
                     return false;
                 }
             }
-            Eigen::Matrix3d Q;
+            Eigen::Matrix3R Q;
             Q << q[0], q[1], q[2], q[3], q[4], q[5], q[6], q[7], q[8];
 
             // Position continuity (no rotation).
@@ -745,9 +745,9 @@ bool ReadANCF3443MeshFromFile(const std::string& path, ANCF3443Mesh& out, std::s
 
     out.n_nodes = n_nodes;
     out.node_family.assign(static_cast<size_t>(n_nodes), "");
-    out.x12 = Eigen::VectorXd::Zero(4 * n_nodes);
-    out.y12 = Eigen::VectorXd::Zero(4 * n_nodes);
-    out.z12 = Eigen::VectorXd::Zero(4 * n_nodes);
+    out.x12 = Eigen::VectorXR::Zero(4 * n_nodes);
+    out.y12 = Eigen::VectorXR::Zero(4 * n_nodes);
+    out.z12 = Eigen::VectorXR::Zero(4 * n_nodes);
 
     std::vector<bool> seen_node(static_cast<size_t>(n_nodes), false);
 
@@ -774,7 +774,7 @@ bool ReadANCF3443MeshFromFile(const std::string& path, ANCF3443Mesh& out, std::s
 
         out.node_family[static_cast<size_t>(node_id)] = t[1];
 
-        double vals[12];
+        Real vals[12];
         for (int k = 0; k < 12; ++k) {
             if (!ParseDoubleStrict(t[2 + k], vals[k])) {
                 SetError(error, "ReadANCF3443MeshFromFile: failed to parse node dofs");
@@ -821,9 +821,9 @@ bool ReadANCF3443MeshFromFile(const std::string& path, ANCF3443Mesh& out, std::s
 
     out.n_elements = n_elements;
     out.element_family.assign(static_cast<size_t>(n_elements), "");
-    out.element_L = Eigen::VectorXd::Zero(n_elements);
-    out.element_W = Eigen::VectorXd::Zero(n_elements);
-    out.element_H = Eigen::VectorXd::Zero(n_elements);
+    out.element_L = Eigen::VectorXR::Zero(n_elements);
+    out.element_W = Eigen::VectorXR::Zero(n_elements);
+    out.element_H = Eigen::VectorXR::Zero(n_elements);
     out.element_connectivity.resize(n_elements, 4);
     std::vector<bool> seen_elem(static_cast<size_t>(n_elements), false);
 
@@ -850,7 +850,7 @@ bool ReadANCF3443MeshFromFile(const std::string& path, ANCF3443Mesh& out, std::s
 
         out.element_family[static_cast<size_t>(elem_id)] = t[1];
 
-        double L = 0.0, W = 0.0, H = 0.0;
+        Real L = 0.0, W = 0.0, H = 0.0;
         if (!ParseDoubleStrict(t[2], L) || !ParseDoubleStrict(t[3], W) || !ParseDoubleStrict(t[4], H) || !(L > 0.0) ||
             !(W > 0.0) || !(H > 0.0)) {
             SetError(error, "ReadANCF3443MeshFromFile: invalid element dimensions (L/W/H)");
@@ -933,14 +933,14 @@ bool ReadANCF3443MeshFromFile(const std::string& path, ANCF3443Mesh& out, std::s
                 SetError(error, "ReadANCF3443MeshFromFile: welded node id out of range");
                 return false;
             }
-            double q[9];
+            Real q[9];
             for (int k = 0; k < 9; ++k) {
                 if (!ParseDoubleStrict(t[3 + k], q[k])) {
                     SetError(error, "ReadANCF3443MeshFromFile: welded failed to parse Q");
                     return false;
                 }
             }
-            Eigen::Matrix3d Q;
+            Eigen::Matrix3R Q;
             Q << q[0], q[1], q[2], q[3], q[4], q[5], q[6], q[7], q[8];
 
             AppendANCF3443VectorEqualityConstraint(builder, a, b, /*coef_slot=*/0);
@@ -958,11 +958,11 @@ bool ReadANCF3443MeshFromFile(const std::string& path, ANCF3443Mesh& out, std::s
 }
 
 bool WriteFEAT10ToVTK(const std::string& filename,
-                      const Eigen::MatrixXd& nodes,
+                      const Eigen::MatrixXR& nodes,
                       const Eigen::MatrixXi& elements,
-                      const Eigen::VectorXd& x,
-                      const Eigen::VectorXd& y,
-                      const Eigen::VectorXd& z) {
+                      const Eigen::VectorXR& x,
+                      const Eigen::VectorXR& y,
+                      const Eigen::VectorXR& z) {
     std::ofstream file(filename);
     if (!file.is_open()) {
         std::cerr << "Error: Failed to open file for writing: " << filename << std::endl;
@@ -1006,9 +1006,9 @@ bool WriteFEAT10ToVTK(const std::string& filename,
     file << "\nPOINT_DATA " << n_nodes << "\n";
     file << "VECTORS displacement double\n";
     for (int i = 0; i < n_nodes; i++) {
-        double dx = x(i) - nodes(i, 0);
-        double dy = y(i) - nodes(i, 1);
-        double dz = z(i) - nodes(i, 2);
+        Real dx = x(i) - nodes(i, 0);
+        Real dy = y(i) - nodes(i, 1);
+        Real dz = z(i) - nodes(i, 2);
         file << dx << " " << dy << " " << dz << "\n";
     }
 

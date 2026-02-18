@@ -24,14 +24,15 @@
 
 #include "elements/FEAT10Data.cuh"
 #include "solvers/SyncedNesterov.cuh"
+#include "types.h"
 #include "utils/cpu_utils.h"
 #include "utils/mesh_utils.h"
 #include "utils/quadrature_utils.h"
 
 // Material properties for aluminum
-const double E = 7e10;     // Young's modulus: 7e10 Pa (70 GPa)
-const double nu = 0.33;    // Poisson's ratio
-const double rho0 = 2700;  // Density (kg/m³)
+const Real E = 7e10;     // Young's modulus: 7e10 Pa (70 GPa)
+const Real nu = 0.33;    // Poisson's ratio
+const Real rho0 = 2700;  // Density (kg/m³)
 
 // Simulation parameters
 const int N_TIMESTEPS = 10000;     // Number of timesteps to simulate
@@ -81,7 +82,7 @@ int main() {
     int n_elems = mesh.NumOwnedTet10s();
 
     // Convert mophi::Mesh geometry to Eigen format
-    Eigen::MatrixXd nodes(n_nodes, 3);
+    Eigen::MatrixXR nodes(n_nodes, 3);
     for (int i = 0; i < n_nodes; i++) {
         const auto& node = mesh.geom.nodes[i];
         nodes(i, 0) = node.x();
@@ -108,7 +109,7 @@ int main() {
     gpu_t10_data.Initialize();
 
     // Extract coordinate vectors from nodes matrix
-    Eigen::VectorXd h_x12(n_nodes), h_y12(n_nodes), h_z12(n_nodes);
+    Eigen::VectorXR h_x12(n_nodes), h_y12(n_nodes), h_z12(n_nodes);
     for (int i = 0; i < n_nodes; i++) {
         h_x12(i) = nodes(i, 0);  // X coordinates
         h_y12(i) = nodes(i, 1);  // Y coordinates
@@ -120,15 +121,15 @@ int main() {
     // ==========================================================================
 
     // Find the x-coordinate range to determine beam ends
-    double x_min = h_x12.minCoeff();
-    double x_max = h_x12.maxCoeff();
-    double x_range = x_max - x_min;
+    Real x_min = h_x12.minCoeff();
+    Real x_max = h_x12.maxCoeff();
+    Real x_range = x_max - x_min;
 
     std::cout << "Beam x-coordinate range: [" << x_min << ", " << x_max << "]" << std::endl;
 
     // Fix nodes at x ≈ 0 (the left end of the beam)
     std::vector<int> fixed_node_indices;
-    double fixed_tolerance = 0.1 * x_range;  // 10% of beam length
+    Real fixed_tolerance = 0.1 * x_range;  // 10% of beam length
     for (int i = 0; i < h_x12.size(); ++i) {
         if (std::abs(h_x12(i) - x_min) < fixed_tolerance) {
             fixed_node_indices.push_back(i);
@@ -147,13 +148,13 @@ int main() {
     // Apply external forces
     // ==========================================================================
 
-    Eigen::VectorXd h_f_ext(gpu_t10_data.get_n_coef() * 3);
+    Eigen::VectorXR h_f_ext(gpu_t10_data.get_n_coef() * 3);
     h_f_ext.setZero();
 
     // Apply a concentrated load at x ≈ x_max (the right end of the beam)
     // This simulates a load applied to the free end of a cantilever beam
     std::vector<int> loaded_node_indices;
-    double load_tolerance = 0.1 * x_range;  // 10% of beam length
+    Real load_tolerance = 0.1 * x_range;  // 10% of beam length
     for (int i = 0; i < h_x12.size(); ++i) {
         if (std::abs(h_x12(i) - x_max) < load_tolerance) {
             loaded_node_indices.push_back(i);
@@ -162,8 +163,8 @@ int main() {
 
     // Apply a downward force in the -z direction
     // Coordinate system: x=axial (beam length), y=width, z=height (positive up)
-    double total_load = -1000.0;  // Total load in Newtons (negative = downward in z)
-    double load_per_node = total_load / loaded_node_indices.size();
+    Real total_load = -1000.0;  // Total load in Newtons (negative = downward in z)
+    Real load_per_node = total_load / loaded_node_indices.size();
 
     for (int i : loaded_node_indices) {
         h_f_ext(3 * i + 2) = load_per_node;  // Apply force in z-direction (index 2)
@@ -178,10 +179,10 @@ int main() {
     // ==========================================================================
 
     // Get quadrature data
-    const Eigen::VectorXd& tet5pt_x_host = Quadrature::tet5pt_x;
-    const Eigen::VectorXd& tet5pt_y_host = Quadrature::tet5pt_y;
-    const Eigen::VectorXd& tet5pt_z_host = Quadrature::tet5pt_z;
-    const Eigen::VectorXd& tet5pt_weights_host = Quadrature::tet5pt_weights;
+    const Eigen::VectorXR& tet5pt_x_host = Quadrature::tet5pt_x;
+    const Eigen::VectorXR& tet5pt_y_host = Quadrature::tet5pt_y;
+    const Eigen::VectorXR& tet5pt_z_host = Quadrature::tet5pt_z;
+    const Eigen::VectorXR& tet5pt_weights_host = Quadrature::tet5pt_weights;
 
     // Setup element data
     gpu_t10_data.Setup(tet5pt_x_host, tet5pt_y_host, tet5pt_z_host, tet5pt_weights_host, h_x12, h_y12, h_z12, elements);
@@ -226,7 +227,7 @@ int main() {
               << std::endl;
 
     // Output initial configuration
-    Eigen::VectorXd x12, y12, z12;
+    Eigen::VectorXR x12, y12, z12;
     gpu_t10_data.RetrievePositionToCPU(x12, y12, z12);
 
     std::stringstream ss;

@@ -7,6 +7,8 @@
 #include <tuple>
 #include <vector>
 
+#include "types.h"
+
 namespace ANCFCPUUtils {
 
 /**
@@ -15,8 +17,8 @@ namespace ANCFCPUUtils {
 struct GridNode {
     int id;
     int i, j;  // grid coordinates
-    double x, y;
-    double dof_x, dof_dx_du, dof_dx_dv, dof_dx_dw;
+    Real x, y;
+    Real dof_x, dof_dx_du, dof_dx_dv, dof_dx_dw;
 };
 
 /**
@@ -26,7 +28,7 @@ struct GridElement {
     int id;
     int n0, n1;               // node IDs
     std::string orientation;  // "H" or "V"
-    double length;
+    Real length;
 };
 
 /**
@@ -42,7 +44,7 @@ class GridMeshGenerator {
      * @param include_horizontal Whether to include horizontal elements
      * @param include_vertical Whether to include vertical elements
      */
-    GridMeshGenerator(double X, double Y, double L, bool include_horizontal = true, bool include_vertical = true);
+    GridMeshGenerator(Real X, Real Y, Real L, bool include_horizontal = true, bool include_vertical = true);
 
     /**
      * Generate the mesh (nodes and elements)
@@ -55,7 +57,7 @@ class GridMeshGenerator {
      * @param y Output y coordinates (4 DOFs per node)
      * @param z Output z coordinates (4 DOFs per node)
      */
-    void get_coordinates(Eigen::VectorXd& x, Eigen::VectorXd& y, Eigen::VectorXd& z);
+    void get_coordinates(Eigen::VectorXR& x, Eigen::VectorXR& y, Eigen::VectorXR& z);
 
     /**
      * Get element connectivity matrix
@@ -79,10 +81,10 @@ class GridMeshGenerator {
      * Get mesh summary
      * @return Summary dictionary
      */
-    std::map<std::string, double> summary() const;
+    std::map<std::string, Real> summary() const;
 
   private:
-    double X_, Y_, L_;
+    Real X_, Y_, L_;
     bool include_horizontal_, include_vertical_;
     int nx_, ny_;  // number of intervals in x and y
     std::vector<GridNode> nodes_;
@@ -106,10 +108,10 @@ struct LinearConstraintCSR {
     //
     // The constraint value is:
     //   c[row] = sum_j values[j] * dof(columns[j]) - rhs[row]
-    std::vector<int> offsets;    // size = n_rows + 1
-    std::vector<int> columns;    // size = nnz
-    std::vector<double> values;  // size = nnz
-    Eigen::VectorXd rhs;         // size = n_rows
+    std::vector<int> offsets;  // size = n_rows + 1
+    std::vector<int> columns;  // size = nnz
+    std::vector<Real> values;  // size = nnz
+    Eigen::VectorXR rhs;       // size = n_rows
 
     int NumRows() const { return static_cast<int>(rhs.size()); }
     int NumNonZeros() const { return static_cast<int>(columns.size()); }
@@ -127,10 +129,10 @@ class LinearConstraintBuilder {
 
     // Adds a constraint row: sum(entries[i].second * dof(entries[i].first)) =
     // rhs. Returns the new row index.
-    int AddRow(const std::vector<std::pair<int, double>>& entries, double rhs);
+    int AddRow(const std::vector<std::pair<int, Real>>& entries, Real rhs);
 
     // Convenience: dof(col) = rhs (a "fixed" scalar DOF constraint).
-    int AddFixedDof(int col, double rhs);
+    int AddFixedDof(int col, Real rhs);
 
     // Serialize the builder to CSR.
     LinearConstraintCSR ToCSR() const;
@@ -139,8 +141,8 @@ class LinearConstraintBuilder {
     int n_dofs_;
     std::vector<int> offsets_;
     std::vector<int> columns_;
-    std::vector<double> values_;
-    std::vector<double> rhs_;
+    std::vector<Real> values_;
+    std::vector<Real> rhs_;
 };
 
 struct ANCF3243Mesh {
@@ -148,14 +150,14 @@ struct ANCF3243Mesh {
     int version = 0;  // file format version
     std::optional<int> grid_nx;
     std::optional<int> grid_ny;
-    std::optional<double> grid_L;
-    std::optional<Eigen::Vector3d> grid_origin;
+    std::optional<Real> grid_L;
+    std::optional<Eigen::Vector3R> grid_origin;
 
     // Geometry + connectivity.
     int n_nodes = 0;
     int n_elements = 0;
     std::vector<std::string> node_family;  // size = n_nodes ("H"/"V"/...)
-    Eigen::VectorXd x12, y12, z12;         // size = 4 * n_nodes each
+    Eigen::VectorXR x12, y12, z12;         // size = 4 * n_nodes each
     Eigen::MatrixXi element_connectivity;  // n_elements x 2 (node IDs)
 
     // Linear constraints encoded in scalar-DOF space (see LinearConstraintCSR).
@@ -178,12 +180,12 @@ struct ANCF3443Mesh {
     int n_nodes = 0;
     int n_elements = 0;
     std::vector<std::string> node_family;  // size = n_nodes ("R"/"S"/...)
-    Eigen::VectorXd x12, y12, z12;         // size = 4 * n_nodes each
+    Eigen::VectorXR x12, y12, z12;         // size = 4 * n_nodes each
 
     std::vector<std::string> element_family;  // size = n_elements
-    Eigen::VectorXd element_L;                // size = n_elements
-    Eigen::VectorXd element_W;                // size = n_elements
-    Eigen::VectorXd element_H;                // size = n_elements
+    Eigen::VectorXR element_L;                // size = n_elements
+    Eigen::VectorXR element_W;                // size = n_elements
+    Eigen::VectorXR element_H;                // size = n_elements
     Eigen::MatrixXi element_connectivity;     // n_elements x 4 (node IDs)
 
     // Linear constraints encoded in scalar-DOF space (see LinearConstraintCSR).
@@ -204,7 +206,7 @@ void AppendANCF3443VectorWeldedConstraint(LinearConstraintBuilder& builder,
                                           int node_a,
                                           int node_b,
                                           int coef_slot,
-                                          const Eigen::Matrix3d& Q);
+                                          const Eigen::Matrix3R& Q);
 
 // Appends a 3D vector equality constraint: r(b,coef_slot) - r(a,coef_slot) = 0,
 // where coef_slot is 0 for position, 1/2/3 for (r_u, r_v, r_w).
@@ -216,15 +218,15 @@ void AppendANCF3243VectorWeldedConstraint(LinearConstraintBuilder& builder,
                                           int node_a,
                                           int node_b,
                                           int coef_slot,
-                                          const Eigen::Matrix3d& Q);
+                                          const Eigen::Matrix3R& Q);
 
 // Appends a "fixed coefficient" constraint for coef_index (ANCF coefficient
 // index): component-wise equality to the provided reference (x12/y12/z12).
 void AppendANCF3243FixedCoefficient(LinearConstraintBuilder& builder,
                                     int coef_index,
-                                    const Eigen::VectorXd& x12_ref,
-                                    const Eigen::VectorXd& y12_ref,
-                                    const Eigen::VectorXd& z12_ref);
+                                    const Eigen::VectorXR& x12_ref,
+                                    const Eigen::VectorXR& y12_ref,
+                                    const Eigen::VectorXR& z12_ref);
 
 /**
  * Write FEAT10 tetrahedral mesh to VTK format for visualization
@@ -237,10 +239,10 @@ void AppendANCF3243FixedCoefficient(LinearConstraintBuilder& builder,
  * @return true if write successful, false otherwise
  */
 bool WriteFEAT10ToVTK(const std::string& filename,
-                      const Eigen::MatrixXd& nodes,
+                      const Eigen::MatrixXR& nodes,
                       const Eigen::MatrixXi& elements,
-                      const Eigen::VectorXd& x,
-                      const Eigen::VectorXd& y,
-                      const Eigen::VectorXd& z);
+                      const Eigen::VectorXR& x,
+                      const Eigen::VectorXR& y,
+                      const Eigen::VectorXR& z);
 
 }  // namespace ANCFCPUUtils
