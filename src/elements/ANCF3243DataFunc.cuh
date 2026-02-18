@@ -19,6 +19,8 @@
 #include "ANCF3243Data.cuh"
 #include "types.h"
 
+namespace tlfea {
+
 // forward-declare solver type (pointer-only used here)
 struct SyncedNewtonSolver;
 
@@ -873,3 +875,5 @@ __device__ __forceinline__ void compute_hessian_assemble_csr<GPU_ANCF3243_Data>(
         }
     }
 }
+
+}  // namespace tlfea
