@@ -13,6 +13,8 @@
 
 #pragma once
 
+namespace tlfea {
+
 class SolverBase {
   public:
     virtual ~SolverBase() = default;
@@ -21,3 +23,5 @@ class SolverBase {
     // Generic parameter setter
     virtual void SetParameters(void* params) = 0;
 };
+
+}  // namespace tlfea

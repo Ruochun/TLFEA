@@ -30,6 +30,8 @@
 // Definition of GPU_ANCF3243 and data access device functions
 #pragma once
 
+namespace tlfea {
+
 //
 // define a SAP data strucutre
 struct GPU_ANCF3243_Data : public ElementBase {
@@ -1028,3 +1030,5 @@ struct GPU_ANCF3243_Data : public ElementBase {
     bool is_reference_precomputed = false;
     int constraint_mode = kConstraintNone;
 };
+
+}  // namespace tlfea

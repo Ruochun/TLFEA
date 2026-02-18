@@ -6,6 +6,8 @@
 #include <vector>
 #include "types.h"
 
+namespace tlfea {
+
 namespace ANCFCPUUtils {
 
 /**
@@ -16,7 +18,7 @@ namespace ANCFCPUUtils {
  * @param n_nodes Total number of nodes
  * @return Adjacency list for each node
  */
-std::vector<std::set<int>> BuildVertexAdjacency(const Eigen::MatrixXi& element_connectivity, int n_nodes);
+std::vector<std::set<int>> BuildVertexAdjacency(const MatrixXi& element_connectivity, int n_nodes);
 
 /**
  * Greedy vertex coloring for parallel VBD updates
@@ -25,7 +27,7 @@ std::vector<std::set<int>> BuildVertexAdjacency(const Eigen::MatrixXi& element_c
  * @param adjacency Adjacency list for each node
  * @return Color assignment for each node
  */
-Eigen::VectorXi GreedyVertexColoring(const std::vector<std::set<int>>& adjacency);
+VectorXi GreedyVertexColoring(const std::vector<std::set<int>>& adjacency);
 
 /**
  * Validate that coloring is valid (no element has two nodes of same color)
@@ -33,7 +35,7 @@ Eigen::VectorXi GreedyVertexColoring(const std::vector<std::set<int>>& adjacency
  * @param colors Color assignment for each node
  * @return true if coloring is valid
  */
-bool ValidateColoring(const Eigen::MatrixXi& element_connectivity, const Eigen::VectorXi& colors);
+bool ValidateColoring(const MatrixXi& element_connectivity, const VectorXi& colors);
 
 /**
  * Build incidence list mapping each node to (element_idx, local_node_idx) pairs
@@ -42,7 +44,7 @@ bool ValidateColoring(const Eigen::MatrixXi& element_connectivity, const Eigen::
  * @param n_nodes Total number of nodes
  * @return For each node, a vector of (element_idx, local_node_idx) pairs
  */
-std::vector<std::vector<std::pair<int, int>>> BuildNodeIncidence(const Eigen::MatrixXi& element_connectivity,
+std::vector<std::vector<std::pair<int, int>>> BuildNodeIncidence(const MatrixXi& element_connectivity,
                                                                  int n_nodes);
 
 /**
@@ -51,7 +53,7 @@ std::vector<std::vector<std::pair<int, int>>> BuildNodeIncidence(const Eigen::Ma
  * @param n_colors Number of colors used
  * @return For each color, a vector of node indices
  */
-std::vector<std::vector<int>> BuildColorToNodes(const Eigen::VectorXi& colors, int n_colors);
+std::vector<std::vector<int>> BuildColorToNodes(const VectorXi& colors, int n_colors);
 
 /**
  * Construct the B matrix for ANCF3243 elements and compute its inverse
@@ -62,7 +64,7 @@ std::vector<std::vector<int>> BuildColorToNodes(const Eigen::VectorXi& colors, i
  * @param B_inv_out Output matrix (inverse transpose of B matrix)
  * @param n_shape Number of shape functions (16 for ANCF3243)
  */
-void ANCF3243_B12_matrix(Real L, Real W, Real H, Eigen::MatrixXR& B_inv_out, int n_shape);
+void ANCF3243_B12_matrix(Real L, Real W, Real H, MatrixXR& B_inv_out, int n_shape);
 
 /**
  * Construct per-element B_inv blocks for ANCF3243 and pack them as a flat
@@ -70,10 +72,10 @@ void ANCF3243_B12_matrix(Real L, Real W, Real H, Eigen::MatrixXR& B_inv_out, int
  * n_shape * n_shape, n_shape * n_shape) using Eigen's default column-major
  * ordering of the n_shape×n_shape matrix.
  */
-void ANCF3243_B12_matrix_flat_per_element(const Eigen::VectorXR& L,
-                                          const Eigen::VectorXR& W,
-                                          const Eigen::VectorXR& H,
-                                          Eigen::VectorXR& B_inv_flat_out,
+void ANCF3243_B12_matrix_flat_per_element(const VectorXR& L,
+                                          const VectorXR& W,
+                                          const VectorXR& H,
+                                          VectorXR& B_inv_flat_out,
                                           int n_shape);
 
 /**
@@ -83,7 +85,7 @@ void ANCF3243_B12_matrix_flat_per_element(const Eigen::VectorXR& L,
  * @param y12 Output y coordinates for all nodes
  * @param z12 Output z coordinates for all nodes
  */
-void ANCF3243_generate_beam_coordinates(int n_beam, Eigen::VectorXR& x12, Eigen::VectorXR& y12, Eigen::VectorXR& z12);
+void ANCF3243_generate_beam_coordinates(int n_beam, VectorXR& x12, VectorXR& y12, VectorXR& z12);
 
 /**
  * Calculate offset indices for ANCF3243 elements
@@ -91,7 +93,7 @@ void ANCF3243_generate_beam_coordinates(int n_beam, Eigen::VectorXR& x12, Eigen:
  * @param offset_start Output start indices for each element's nodes
  * @param offset_end Output end indices for each element's nodes
  */
-void ANCF3243_calculate_offsets(int n_beam, Eigen::VectorXi& offset_start, Eigen::VectorXi& offset_end);
+void ANCF3243_calculate_offsets(int n_beam, VectorXi& offset_start, VectorXi& offset_end);
 
 /**
  * Construct the B matrix for ANCF3443 elements and compute its inverse
@@ -102,16 +104,16 @@ void ANCF3243_calculate_offsets(int n_beam, Eigen::VectorXi& offset_start, Eigen
  * @param B_inv_out Output matrix (inverse transpose of B matrix)
  * @param n_shape Number of shape functions (16 for ANCF3443)
  */
-void ANCF3443_B12_matrix(Real L, Real W, Real H, Eigen::MatrixXR& B_inv_out, int n_shape);
+void ANCF3443_B12_matrix(Real L, Real W, Real H, MatrixXR& B_inv_out, int n_shape);
 
 /**
  * Construct per-element B_inv blocks for ANCF3443 and pack them as a flat
  * array. Layout matches ANCF3243_B12_matrix_flat_per_element.
  */
-void ANCF3443_B12_matrix_flat_per_element(const Eigen::VectorXR& L,
-                                          const Eigen::VectorXR& W,
-                                          const Eigen::VectorXR& H,
-                                          Eigen::VectorXR& B_inv_flat_out,
+void ANCF3443_B12_matrix_flat_per_element(const VectorXR& L,
+                                          const VectorXR& W,
+                                          const VectorXR& H,
+                                          VectorXR& B_inv_flat_out,
                                           int n_shape);
 
 /**
@@ -122,10 +124,10 @@ void ANCF3443_B12_matrix_flat_per_element(const Eigen::VectorXR& L,
  * @param z12 Output z coordinates for all nodes
  */
 void ANCF3443_generate_beam_coordinates(int n_beam,
-                                        Eigen::VectorXR& x12,
-                                        Eigen::VectorXR& y12,
-                                        Eigen::VectorXR& z12,
-                                        Eigen::MatrixXi& element_connectivity);
+                                        VectorXR& x12,
+                                        VectorXR& y12,
+                                        VectorXR& z12,
+                                        MatrixXi& element_connectivity);
 
 /**
  * Calculate offset indices for ANCF3443 shell elements
@@ -133,14 +135,14 @@ void ANCF3443_generate_beam_coordinates(int n_beam,
  * @param offset_start Output start indices for each element's nodes
  * @param offset_end Output end indices for each element's nodes
  */
-void ANCF3443_calculate_offsets(int n_beam, Eigen::VectorXi& offset_start, Eigen::VectorXi& offset_end);
+void ANCF3443_calculate_offsets(int n_beam, VectorXi& offset_start, VectorXi& offset_end);
 
 /**
  * Remap TetGen T10 tetrahedral element indices to standard order
  * @param tetgen_elem Input array with TetGen node ordering (size 10)
  * @param standard_elem Output array with standard node ordering (size 10)
  */
-void FEAT10_remap_tetgen_indices(const Eigen::VectorXi& tetgen_elem, Eigen::VectorXi& standard_elem);
+void FEAT10_remap_tetgen_indices(const VectorXi& tetgen_elem, VectorXi& standard_elem);
 
 /**
  * Read node coordinates from TetGen .node file
@@ -148,7 +150,7 @@ void FEAT10_remap_tetgen_indices(const Eigen::VectorXi& tetgen_elem, Eigen::Vect
  * @param nodes Output matrix with node coordinates (n_nodes × 3)
  * @return Number of nodes read
  */
-int FEAT10_read_nodes(const std::string& filename, Eigen::MatrixXR& nodes);
+int FEAT10_read_nodes(const std::string& filename, MatrixXR& nodes);
 
 /**
  * Read element connectivity from TetGen .ele file
@@ -156,6 +158,8 @@ int FEAT10_read_nodes(const std::string& filename, Eigen::MatrixXR& nodes);
  * @param elements Output matrix with element connectivity (n_elements × 10)
  * @return Number of elements read
  */
-int FEAT10_read_elements(const std::string& filename, Eigen::MatrixXi& elements);
+int FEAT10_read_elements(const std::string& filename, MatrixXi& elements);
 
 }  // namespace ANCFCPUUtils
+
+}  // namespace tlfea

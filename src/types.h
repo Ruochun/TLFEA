@@ -13,13 +13,17 @@
 
 #include <Eigen/Dense>
 
+namespace tlfea {
+
 // Define Real as the primary floating-point type for the project
 typedef double Real;
 
 // Eigen type aliases using Real
-namespace Eigen {
-typedef Matrix<Real, Dynamic, Dynamic> MatrixXR;
-typedef Matrix<Real, Dynamic, 1> VectorXR;
-typedef Matrix<Real, 3, 3> Matrix3R;
-typedef Matrix<Real, 3, 1> Vector3R;
-}  // namespace Eigen
+typedef Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic> MatrixXR;
+typedef Eigen::Matrix<Real, Eigen::Dynamic, 1> VectorXR;
+typedef Eigen::Matrix<Real, 3, 3> Matrix3R;
+typedef Eigen::Matrix<Real, 3, 1> Vector3R;
+typedef Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> MatrixXi;
+typedef Eigen::Matrix<int, Eigen::Dynamic, 1> VectorXi;
+
+}  // namespace tlfea

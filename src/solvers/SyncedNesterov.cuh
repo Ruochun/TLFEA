@@ -22,6 +22,8 @@
 #include <MoPhiEssentials.h>
 #include "../types.h"
 
+namespace tlfea {
+
 // this is a true first order Nesterov method
 // fully synced, and each inner iteration will compute the full gradient
 
@@ -251,3 +253,5 @@ class SyncedNesterovSolver : public SolverBase {
     Real *d_alpha_, *d_inner_tol_, *d_outer_tol_, *d_time_step_, *d_solver_rho_;
     int *d_max_inner_, *d_max_outer_;
 };
+
+}  // namespace tlfea

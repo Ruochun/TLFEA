@@ -18,6 +18,8 @@
 #include <vector>
 #include "types.h"
 
+namespace tlfea {
+
 enum ElementType { TYPE_3243, TYPE_3443, TYPE_T10 };
 
 class ElementBase {
@@ -38,10 +40,12 @@ class ElementBase {
     virtual void CalcInternalForce() = 0;
     virtual void CalcConstraintData() = 0;
     virtual void CalcP() = 0;
-    virtual void RetrieveInternalForceToCPU(Eigen::VectorXR& internal_force) = 0;
-    virtual void RetrieveConstraintDataToCPU(Eigen::VectorXR& constraint) = 0;
-    virtual void RetrieveConstraintJacobianToCPU(Eigen::MatrixXR& constraint_jac) = 0;
-    virtual void RetrievePositionToCPU(Eigen::VectorXR& x12, Eigen::VectorXR& y12, Eigen::VectorXR& z12) = 0;
-    virtual void RetrieveDeformationGradientToCPU(std::vector<std::vector<Eigen::MatrixXR>>& deformation_gradient) = 0;
-    virtual void RetrievePFromFToCPU(std::vector<std::vector<Eigen::MatrixXR>>& p_from_F) = 0;
+    virtual void RetrieveInternalForceToCPU(VectorXR& internal_force) = 0;
+    virtual void RetrieveConstraintDataToCPU(VectorXR& constraint) = 0;
+    virtual void RetrieveConstraintJacobianToCPU(MatrixXR& constraint_jac) = 0;
+    virtual void RetrievePositionToCPU(VectorXR& x12, VectorXR& y12, VectorXR& z12) = 0;
+    virtual void RetrieveDeformationGradientToCPU(std::vector<std::vector<MatrixXR>>& deformation_gradient) = 0;
+    virtual void RetrievePFromFToCPU(std::vector<std::vector<MatrixXR>>& p_from_F) = 0;
 };
+
+}  // namespace tlfea

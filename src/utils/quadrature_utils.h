@@ -3,6 +3,8 @@
 #include <Eigen/Dense>
 #include "types.h"
 
+namespace tlfea {
+
 /**
  * Gauss-Legendre quadrature points and weights for ANCF calculations
  */
@@ -26,7 +28,7 @@ constexpr int N_SHAPE_3243 = 8;
 constexpr int N_SHAPE_3443 = 16;
 
 // 6-point Gauss-Legendre quadrature (symmetric)
-const Eigen::VectorXR gauss_xi_m_6 = (Eigen::VectorXR(N_QP_6) << -0.93246951420315202,
+const VectorXR gauss_xi_m_6 = (VectorXR(N_QP_6) << -0.93246951420315202,
                                       -0.66120938646626451,
                                       -0.23861918608319691,
                                       0.23861918608319691,
@@ -34,7 +36,7 @@ const Eigen::VectorXR gauss_xi_m_6 = (Eigen::VectorXR(N_QP_6) << -0.932469514203
                                       0.93246951420315202)
                                          .finished();
 
-const Eigen::VectorXR weight_xi_m_6 = (Eigen::VectorXR(N_QP_6) << 0.17132449237917034,
+const VectorXR weight_xi_m_6 = (VectorXR(N_QP_6) << 0.17132449237917034,
                                        0.36076157304813861,
                                        0.46791393457269104,
                                        0.46791393457269104,
@@ -42,7 +44,7 @@ const Eigen::VectorXR weight_xi_m_6 = (Eigen::VectorXR(N_QP_6) << 0.171324492379
                                        0.17132449237917034)
                                           .finished();
 
-const Eigen::VectorXR gauss_xi_m_7 = (Eigen::VectorXR(N_QP_7) << -0.949107912342759,
+const VectorXR gauss_xi_m_7 = (VectorXR(N_QP_7) << -0.949107912342759,
                                       -0.741531185599394,
                                       -0.405845151377397,
                                       0.0,
@@ -51,7 +53,7 @@ const Eigen::VectorXR gauss_xi_m_7 = (Eigen::VectorXR(N_QP_7) << -0.949107912342
                                       0.949107912342759)
                                          .finished();
 
-const Eigen::VectorXR weight_xi_m_7 = (Eigen::VectorXR(N_QP_7) << 0.129484966168870,
+const VectorXR weight_xi_m_7 = (VectorXR(N_QP_7) << 0.129484966168870,
                                        0.279705391489277,
                                        0.381830050505119,
                                        0.417959183673469,
@@ -60,7 +62,7 @@ const Eigen::VectorXR weight_xi_m_7 = (Eigen::VectorXR(N_QP_7) << 0.129484966168
                                        0.129484966168870)
                                           .finished();
 
-const Eigen::VectorXR gauss_eta_m_7 = (Eigen::VectorXR(N_QP_7) << -0.949107912342759,
+const VectorXR gauss_eta_m_7 = (VectorXR(N_QP_7) << -0.949107912342759,
                                        -0.741531185599394,
                                        -0.405845151377397,
                                        0.0,
@@ -69,7 +71,7 @@ const Eigen::VectorXR gauss_eta_m_7 = (Eigen::VectorXR(N_QP_7) << -0.94910791234
                                        0.949107912342759)
                                           .finished();
 
-const Eigen::VectorXR weight_eta_m_7 = (Eigen::VectorXR(N_QP_7) << 0.129484966168870,
+const VectorXR weight_eta_m_7 = (VectorXR(N_QP_7) << 0.129484966168870,
                                         0.279705391489277,
                                         0.381830050505119,
                                         0.417959183673469,
@@ -79,47 +81,47 @@ const Eigen::VectorXR weight_eta_m_7 = (Eigen::VectorXR(N_QP_7) << 0.12948496616
                                            .finished();
 
 // 3-point Gauss-Legendre quadrature for zeta (symmetric)
-const Eigen::VectorXR gauss_zeta_m_3 =
-    (Eigen::VectorXR(N_QP_3) << -0.7745966692414834, 0.0, 0.7745966692414834).finished();
+const VectorXR gauss_zeta_m_3 =
+    (VectorXR(N_QP_3) << -0.7745966692414834, 0.0, 0.7745966692414834).finished();
 
-const Eigen::VectorXR weight_zeta_m_3 =
-    (Eigen::VectorXR(N_QP_3) << 0.5555555555555556, 0.8888888888888888, 0.5555555555555556).finished();
+const VectorXR weight_zeta_m_3 =
+    (VectorXR(N_QP_3) << 0.5555555555555556, 0.8888888888888888, 0.5555555555555556).finished();
 
 // ================================================
 
 // 3-point Gauss-Legendre quadrature
-const Eigen::VectorXR gauss_xi_3 =
-    (Eigen::VectorXR(N_QP_3) << -0.77459666924148340, 0.00000000000000000, 0.77459666924148340).finished();
+const VectorXR gauss_xi_3 =
+    (VectorXR(N_QP_3) << -0.77459666924148340, 0.00000000000000000, 0.77459666924148340).finished();
 
-const Eigen::VectorXR weight_xi_3 =
-    (Eigen::VectorXR(N_QP_3) << 0.55555555555555556, 0.88888888888888889, 0.55555555555555556).finished();
+const VectorXR weight_xi_3 =
+    (VectorXR(N_QP_3) << 0.55555555555555556, 0.88888888888888889, 0.55555555555555556).finished();
 
-const Eigen::VectorXR gauss_xi_4 =
-    (Eigen::VectorXR(4) << -0.8611363115940526, -0.3399810435848563, 0.3399810435848563, 0.8611363115940526).finished();
+const VectorXR gauss_xi_4 =
+    (VectorXR(4) << -0.8611363115940526, -0.3399810435848563, 0.3399810435848563, 0.8611363115940526).finished();
 
-const Eigen::VectorXR weight_xi_4 =
-    (Eigen::VectorXR(4) << 0.3478548451374538, 0.6521451548625461, 0.6521451548625461, 0.3478548451374538).finished();
+const VectorXR weight_xi_4 =
+    (VectorXR(4) << 0.3478548451374538, 0.6521451548625461, 0.6521451548625461, 0.3478548451374538).finished();
 
 // 2-point Gauss-Legendre quadrature (for eta and zeta directions)
-const Eigen::VectorXR gauss_eta_2 = (Eigen::VectorXR(N_QP_2) << -0.57735026918962576, 0.57735026918962576).finished();
+const VectorXR gauss_eta_2 = (VectorXR(N_QP_2) << -0.57735026918962576, 0.57735026918962576).finished();
 
-const Eigen::VectorXR weight_eta_2 = (Eigen::VectorXR(N_QP_2) << 1.00000000000000000, 1.00000000000000000).finished();
+const VectorXR weight_eta_2 = (VectorXR(N_QP_2) << 1.00000000000000000, 1.00000000000000000).finished();
 
-const Eigen::VectorXR gauss_eta_4 =
-    (Eigen::VectorXR(4) << -0.8611363115940526, -0.3399810435848563, 0.3399810435848563, 0.8611363115940526).finished();
+const VectorXR gauss_eta_4 =
+    (VectorXR(4) << -0.8611363115940526, -0.3399810435848563, 0.3399810435848563, 0.8611363115940526).finished();
 
-const Eigen::VectorXR weight_eta_4 =
-    (Eigen::VectorXR(4) << 0.3478548451374538, 0.6521451548625461, 0.6521451548625461, 0.3478548451374538).finished();
+const VectorXR weight_eta_4 =
+    (VectorXR(4) << 0.3478548451374538, 0.6521451548625461, 0.6521451548625461, 0.3478548451374538).finished();
 
-const Eigen::VectorXR gauss_zeta_2 = (Eigen::VectorXR(N_QP_2) << -0.57735026918962576, 0.57735026918962576).finished();
+const VectorXR gauss_zeta_2 = (VectorXR(N_QP_2) << -0.57735026918962576, 0.57735026918962576).finished();
 
-const Eigen::VectorXR weight_zeta_2 = (Eigen::VectorXR(N_QP_2) << 1.00000000000000000, 1.00000000000000000).finished();
+const VectorXR weight_zeta_2 = (VectorXR(N_QP_2) << 1.00000000000000000, 1.00000000000000000).finished();
 
-const Eigen::VectorXR gauss_zeta_3 =
-    (Eigen::VectorXR(N_QP_3) << -0.77459666924148340, 0.00000000000000000, 0.77459666924148340).finished();
+const VectorXR gauss_zeta_3 =
+    (VectorXR(N_QP_3) << -0.77459666924148340, 0.00000000000000000, 0.77459666924148340).finished();
 
-const Eigen::VectorXR weight_zeta_3 =
-    (Eigen::VectorXR(N_QP_3) << 0.55555555555555556, 0.88888888888888889, 0.55555555555555556).finished();
+const VectorXR weight_zeta_3 =
+    (VectorXR(N_QP_3) << 0.55555555555555556, 0.88888888888888889, 0.55555555555555556).finished();
 
 // 5-point Keast quadrature for tetrahedral elements
 constexpr int N_QP_T10_5 = 5;      // 5-point quadrature
@@ -150,21 +152,23 @@ const Eigen::Matrix<Real, N_QP_T10_5, 4> tet5pt_bary = (Eigen::Matrix<Real, N_QP
                                                            .finished();
 
 // Weights for 5-point Keast quadrature
-const Eigen::VectorXR tet5pt_weights =
-    (Eigen::VectorXR(N_QP_T10_5) << -4.0 / 5.0, 9.0 / 20.0, 9.0 / 20.0, 9.0 / 20.0, 9.0 / 20.0).finished() *
+const VectorXR tet5pt_weights =
+    (VectorXR(N_QP_T10_5) << -4.0 / 5.0, 9.0 / 20.0, 9.0 / 20.0, 9.0 / 20.0, 9.0 / 20.0).finished() *
     (1.0 / 6.0);
 
 // Cartesian coordinates (extract columns 1:3 from barycentric)
 const Eigen::Matrix<Real, N_QP_T10_5, 3> tet5pt_xyz = tet5pt_bary.block(0, 1, N_QP_T10_5, 3);
-const Eigen::VectorXR tet5pt_x = tet5pt_bary.col(1);
-const Eigen::VectorXR tet5pt_y = tet5pt_bary.col(2);
-const Eigen::VectorXR tet5pt_z = tet5pt_bary.col(3);
+const VectorXR tet5pt_x = tet5pt_bary.col(1);
+const VectorXR tet5pt_y = tet5pt_bary.col(2);
+const VectorXR tet5pt_z = tet5pt_bary.col(3);
 
 // Optionally, you can wrap these in a struct for clarity:
 struct Tet5ptQuadrature {
     static constexpr int n_points = N_QP_T10_5;
     static const Eigen::Matrix<Real, N_QP_T10_5, 4>& barycentric() { return tet5pt_bary; }
     static const Eigen::Matrix<Real, N_QP_T10_5, 3>& xyz() { return tet5pt_xyz; }
-    static const Eigen::VectorXR& weights() { return tet5pt_weights; }
+    static const VectorXR& weights() { return tet5pt_weights; }
 };
 }  // namespace Quadrature
+
+}  // namespace tlfea

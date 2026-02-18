@@ -29,6 +29,8 @@
 #include "utils/mesh_utils.h"
 #include "utils/quadrature_utils.h"
 
+using namespace tlfea;
+
 // Material properties for aluminum
 const Real E = 7e10;     // Young's modulus: 7e10 Pa (70 GPa)
 const Real nu = 0.33;    // Poisson's ratio
@@ -82,7 +84,7 @@ int main() {
     int n_elems = mesh.NumOwnedTet10s();
 
     // Convert mophi::Mesh geometry to Eigen format
-    Eigen::MatrixXR nodes(n_nodes, 3);
+    MatrixXR nodes(n_nodes, 3);
     for (int i = 0; i < n_nodes; i++) {
         const auto& node = mesh.geom.nodes[i];
         nodes(i, 0) = node.x();
@@ -91,7 +93,7 @@ int main() {
     }
 
     // Convert mophi::Mesh connectivity to Eigen format
-    Eigen::MatrixXi elements(n_elems, 10);
+    MatrixXi elements(n_elems, 10);
     for (int i = 0; i < n_elems; i++) {
         const auto& elem = mesh.topo.tet10s[i];
         for (int j = 0; j < 10; j++) {
@@ -109,7 +111,7 @@ int main() {
     gpu_t10_data.Initialize();
 
     // Extract coordinate vectors from nodes matrix
-    Eigen::VectorXR h_x12(n_nodes), h_y12(n_nodes), h_z12(n_nodes);
+    VectorXR h_x12(n_nodes), h_y12(n_nodes), h_z12(n_nodes);
     for (int i = 0; i < n_nodes; i++) {
         h_x12(i) = nodes(i, 0);  // X coordinates
         h_y12(i) = nodes(i, 1);  // Y coordinates
@@ -136,7 +138,7 @@ int main() {
         }
     }
 
-    Eigen::VectorXi h_fixed_nodes(fixed_node_indices.size());
+    VectorXi h_fixed_nodes(fixed_node_indices.size());
     for (size_t i = 0; i < fixed_node_indices.size(); ++i) {
         h_fixed_nodes(i) = fixed_node_indices[i];
     }
@@ -148,7 +150,7 @@ int main() {
     // Apply external forces
     // ==========================================================================
 
-    Eigen::VectorXR h_f_ext(gpu_t10_data.get_n_coef() * 3);
+    VectorXR h_f_ext(gpu_t10_data.get_n_coef() * 3);
     h_f_ext.setZero();
 
     // Apply a concentrated load at x ≈ x_max (the right end of the beam)
@@ -179,10 +181,10 @@ int main() {
     // ==========================================================================
 
     // Get quadrature data
-    const Eigen::VectorXR& tet5pt_x_host = Quadrature::tet5pt_x;
-    const Eigen::VectorXR& tet5pt_y_host = Quadrature::tet5pt_y;
-    const Eigen::VectorXR& tet5pt_z_host = Quadrature::tet5pt_z;
-    const Eigen::VectorXR& tet5pt_weights_host = Quadrature::tet5pt_weights;
+    const VectorXR& tet5pt_x_host = Quadrature::tet5pt_x;
+    const VectorXR& tet5pt_y_host = Quadrature::tet5pt_y;
+    const VectorXR& tet5pt_z_host = Quadrature::tet5pt_z;
+    const VectorXR& tet5pt_weights_host = Quadrature::tet5pt_weights;
 
     // Setup element data
     gpu_t10_data.Setup(tet5pt_x_host, tet5pt_y_host, tet5pt_z_host, tet5pt_weights_host, h_x12, h_y12, h_z12, elements);
@@ -227,7 +229,7 @@ int main() {
               << std::endl;
 
     // Output initial configuration
-    Eigen::VectorXR x12, y12, z12;
+    VectorXR x12, y12, z12;
     gpu_t10_data.RetrievePositionToCPU(x12, y12, z12);
 
     std::stringstream ss;

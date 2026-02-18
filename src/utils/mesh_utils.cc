@@ -8,6 +8,8 @@
 #include <sstream>
 #include <stdexcept>
 
+namespace tlfea {
+
 namespace ANCFCPUUtils {
 
 // GridMeshGenerator implementation
@@ -1017,3 +1019,5 @@ bool WriteFEAT10ToVTK(const std::string& filename,
 }
 
 }  // namespace ANCFCPUUtils
+
+}  // namespace tlfea

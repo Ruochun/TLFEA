@@ -15,6 +15,8 @@
 // Definition of GPU_ANCF3443 and data access device functions
 #pragma once
 
+namespace tlfea {
+
 //
 // define a SAP data strucutre
 struct GPU_FEAT10_Data : public ElementBase {
@@ -756,3 +758,5 @@ struct GPU_FEAT10_Data : public ElementBase {
     bool is_cj_csr_setup = false;
     bool is_j_csr_setup = false;
 };
+
+}  // namespace tlfea

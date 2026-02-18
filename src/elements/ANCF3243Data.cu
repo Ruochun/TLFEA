@@ -25,6 +25,8 @@
 #include "ANCF3243DataFunc.cuh"
 namespace cg = cooperative_groups;
 
+namespace tlfea {
+
 __device__ __forceinline__ int binary_search_column_csr_mass_3243(const int* cols, int n_cols, int target) {
     int left = 0;
     int right = n_cols - 1;
@@ -753,3 +755,5 @@ void GPU_ANCF3243_Data::CalcConstraintData() {
     compute_constraint_data_kernel<<<blocks, threads>>>(d_data);
     cudaDeviceSynchronize();
 }
+
+}  // namespace tlfea
