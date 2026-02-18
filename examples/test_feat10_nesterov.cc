@@ -75,7 +75,7 @@ int main() {
         }
     }
 
-    // Convert to Eigen::VectorXi
+    // Convert to VectorXi
     VectorXi h_fixed_nodes(fixed_node_indices.size());
     for (size_t i = 0; i < fixed_node_indices.size(); ++i) {
         h_fixed_nodes(i) = fixed_node_indices[i];
