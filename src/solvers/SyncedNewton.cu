@@ -931,7 +931,7 @@ void SyncedNewtonSolver::OneStepNewtonCuDSS() {
   } else if (type_ == TYPE_3443) {
     n_qp_per_elem = Quadrature::N_TOTAL_QP_4_4_3;
   } else {
-    std::cerr << "Unsupported element type!" << std::endl;
+    MOPHI_ERROR("Unsupported element type!");
     return;
   }
 
