@@ -22,7 +22,7 @@
 #include <sstream>
 
 #include "elements/FEAT10Data.cuh"
-#include "solvers/SyncedNesterov.cuh"
+#include "solvers/SyncedAdamW.cuh"
 #include "types.h"
 #include "utils/cpu_utils.h"
 #include "utils/mesh_utils.h"
@@ -210,14 +210,16 @@ int main() {
     // Setup solver
     // ==========================================================================
 
-    // alpha, rho, inner_tol, outer_tol, max_outer, max_inner, time_step
-    SyncedNesterovParams params = {1.0e-8, 1e14, 1.0e-6, 1.0e-6, 5, 300, 1.0e-4};
+    // lr, beta1, beta2, eps, weight_decay, lr_decay, inner_tol, outer_tol, rho,
+    // max_outer, max_inner, time_step, convergence_check_interval, inner_rtol
+    SyncedAdamWParams params = {2e-4, 0.9,  0.999, 1e-8, 1e-4, 0.995, 1e-1,
+                                1e-6, 1e14, 5,     300,  1e-4, 10,    0.0};
 
-    SyncedNesterovSolver solver(&gpu_t10_data, gpu_t10_data.get_n_constraint());
+    SyncedAdamWSolver solver(&gpu_t10_data, gpu_t10_data.get_n_constraint());
     solver.Setup();
     solver.SetParameters(&params);
 
-    std::cout << "Solver initialized: SyncedNesterov with h=" << std::scientific << params.time_step
+    std::cout << "Solver initialized: SyncedAdamW with h=" << std::scientific << params.time_step
               << std::defaultfloat << std::endl;
 
     // ==========================================================================
