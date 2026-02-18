@@ -18,12 +18,27 @@ namespace tlfea {
 // Define Real as the primary floating-point type for the project
 typedef double Real;
 
-// Eigen type aliases using Real
-typedef Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic> MatrixXR;
-typedef Eigen::Matrix<Real, Eigen::Dynamic, 1> VectorXR;
-typedef Eigen::Matrix<Real, 3, 3> Matrix3R;
-typedef Eigen::Matrix<Real, 3, 1> Vector3R;
-typedef Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> MatrixXi;
-typedef Eigen::Matrix<int, Eigen::Dynamic, 1> VectorXi;
+// Forward declaration for Dynamic size and storage options
+static constexpr int Dynamic = Eigen::Dynamic;
+static constexpr int RowMajor = Eigen::RowMajor;
+static constexpr int ColMajor = Eigen::ColMajor;
+
+// Wrap Eigen::Matrix under tlfea namespace
+// This allows future flexibility to change the underlying implementation
+template<typename Scalar, int Rows, int Cols, int Options = 0>
+using Matrix = Eigen::Matrix<Scalar, Rows, Cols, Options>;
+
+// Wrap Eigen::Map under tlfea namespace
+// This allows future flexibility to change the underlying implementation
+template<typename PlainObjectType, int MapOptions = Eigen::Unaligned, typename StrideType = Eigen::Stride<0, 0>>
+using Map = Eigen::Map<PlainObjectType, MapOptions, StrideType>;
+
+// Type aliases using Real and our Matrix template
+typedef Matrix<Real, Dynamic, Dynamic> MatrixXR;
+typedef Matrix<Real, Dynamic, 1> VectorXR;
+typedef Matrix<Real, 3, 3> Matrix3R;
+typedef Matrix<Real, 3, 1> Vector3R;
+typedef Matrix<int, Dynamic, Dynamic> MatrixXi;
+typedef Matrix<int, Dynamic, 1> VectorXi;
 
 }  // namespace tlfea

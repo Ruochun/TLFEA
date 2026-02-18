@@ -128,7 +128,7 @@ constexpr int N_NODE_T10_10 = 10;  // 10-node tetrahedral element
 
 // Barycentric coordinates for 5-point Keast quadrature (each row: [L1, L2, L3,
 // L4])
-const Eigen::Matrix<Real, N_QP_T10_5, 4> tet5pt_bary = (Eigen::Matrix<Real, N_QP_T10_5, 4>() << 0.25,
+const Matrix<Real, N_QP_T10_5, 4> tet5pt_bary = (Matrix<Real, N_QP_T10_5, 4>() << 0.25,
                                                         0.25,
                                                         0.25,
                                                         0.25,
@@ -155,7 +155,7 @@ const VectorXR tet5pt_weights =
     (VectorXR(N_QP_T10_5) << -4.0 / 5.0, 9.0 / 20.0, 9.0 / 20.0, 9.0 / 20.0, 9.0 / 20.0).finished() * (1.0 / 6.0);
 
 // Cartesian coordinates (extract columns 1:3 from barycentric)
-const Eigen::Matrix<Real, N_QP_T10_5, 3> tet5pt_xyz = tet5pt_bary.block(0, 1, N_QP_T10_5, 3);
+const Matrix<Real, N_QP_T10_5, 3> tet5pt_xyz = tet5pt_bary.block(0, 1, N_QP_T10_5, 3);
 const VectorXR tet5pt_x = tet5pt_bary.col(1);
 const VectorXR tet5pt_y = tet5pt_bary.col(2);
 const VectorXR tet5pt_z = tet5pt_bary.col(3);
@@ -163,8 +163,8 @@ const VectorXR tet5pt_z = tet5pt_bary.col(3);
 // Optionally, you can wrap these in a struct for clarity:
 struct Tet5ptQuadrature {
     static constexpr int n_points = N_QP_T10_5;
-    static const Eigen::Matrix<Real, N_QP_T10_5, 4>& barycentric() { return tet5pt_bary; }
-    static const Eigen::Matrix<Real, N_QP_T10_5, 3>& xyz() { return tet5pt_xyz; }
+    static const Matrix<Real, N_QP_T10_5, 4>& barycentric() { return tet5pt_bary; }
+    static const Matrix<Real, N_QP_T10_5, 3>& xyz() { return tet5pt_xyz; }
     static const VectorXR& weights() { return tet5pt_weights; }
 };
 }  // namespace Quadrature

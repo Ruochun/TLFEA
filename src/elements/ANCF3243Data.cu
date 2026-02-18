@@ -137,9 +137,9 @@ __global__ void precompute_reference_kernel(GPU_ANCF3243_Data* d_data) {
     d_data->x12_jac_elem(elem_idx, x_local_arr);
     d_data->y12_jac_elem(elem_idx, y_local_arr);
     d_data->z12_jac_elem(elem_idx, z_local_arr);
-    Eigen::Map<VectorXR> x_loc(x_local_arr, Quadrature::N_SHAPE_3243);
-    Eigen::Map<VectorXR> y_loc(y_local_arr, Quadrature::N_SHAPE_3243);
-    Eigen::Map<VectorXR> z_loc(z_local_arr, Quadrature::N_SHAPE_3243);
+    Map<VectorXR> x_loc(x_local_arr, Quadrature::N_SHAPE_3243);
+    Map<VectorXR> y_loc(y_local_arr, Quadrature::N_SHAPE_3243);
+    Map<VectorXR> z_loc(z_local_arr, Quadrature::N_SHAPE_3243);
 
     // Reference Jacobian J = sum_a X_a ⊗ ∂s_a/∂xi.
     Real J[3][3] = {{0.0}};
@@ -228,9 +228,9 @@ __global__ void mass_matrix_qp_kernel(GPU_ANCF3243_Data* d_data) {
     d_data->x12_jac_elem(elem, x_local_arr);
     d_data->y12_jac_elem(elem, y_local_arr);
     d_data->z12_jac_elem(elem, z_local_arr);
-    Eigen::Map<VectorXR> x_loc(x_local_arr, Quadrature::N_SHAPE_3243);
-    Eigen::Map<VectorXR> y_loc(y_local_arr, Quadrature::N_SHAPE_3243);
-    Eigen::Map<VectorXR> z_loc(z_local_arr, Quadrature::N_SHAPE_3243);
+    Map<VectorXR> x_loc(x_local_arr, Quadrature::N_SHAPE_3243);
+    Map<VectorXR> y_loc(y_local_arr, Quadrature::N_SHAPE_3243);
+    Map<VectorXR> z_loc(z_local_arr, Quadrature::N_SHAPE_3243);
 
     for (int qp_local = 0; qp_local < n_qp_per_elem; qp_local++) {
         // Decode qp_local into (ixi, ieta, izeta)
@@ -321,7 +321,7 @@ void GPU_ANCF3243_Data::PrintDsDuPre() {
                       << " ===" << std::endl;
 
             Real* qp_data = h_grad.data() + (e * n_qp + qp) * mat_stride;
-            Eigen::Map<MatrixXR> grad_matrix(qp_data, Quadrature::N_SHAPE_3243, 3);
+            Map<MatrixXR> grad_matrix(qp_data, Quadrature::N_SHAPE_3243, 3);
             std::cout << "        dN/dx       dN/dy       dN/dz" << std::endl;
             for (int i = 0; i < Quadrature::N_SHAPE_3243; ++i) {
                 std::cout << "Shape " << i << ": ";
@@ -572,12 +572,12 @@ void GPU_ANCF3243_Data::ConvertToCSR_ConstraintJac() {
     MOPHI_GPU_CALL(cudaMemcpy(d_data, this, sizeof(GPU_ANCF3243_Data), cudaMemcpyHostToDevice));
 }
 
-void GPU_ANCF3243_Data::RetrieveConnectivityToCPU(Eigen::MatrixXi& connectivity) {
+void GPU_ANCF3243_Data::RetrieveConnectivityToCPU(MatrixXi& connectivity) {
     // `d_element_connectivity` is stored as a flat row-major (n_beam × 2) array
-    // (see Setup(), which accepts a RowMajor matrix). `Eigen::MatrixXi` is
+    // (see Setup(), which accepts a RowMajor matrix). `MatrixXi` is
     // column-major by default, so copying directly into it would scramble the
     // connectivity. Use a row-major staging matrix, then assign.
-    Eigen::Matrix<int, Eigen::Dynamic, 2, Eigen::RowMajor> connectivity_row_major;
+    Matrix<int, Dynamic, 2, RowMajor> connectivity_row_major;
     connectivity_row_major.resize(n_beam, 2);
     MOPHI_GPU_CALL(cudaMemcpy(connectivity_row_major.data(), d_element_connectivity,
                               static_cast<size_t>(n_beam) * 2 * sizeof(int), cudaMemcpyDeviceToHost));

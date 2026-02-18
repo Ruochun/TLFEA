@@ -19,7 +19,7 @@ namespace ANCFCPUUtils {
 // Coloring and VBD helper functions
 // ============================================================
 
-std::vector<std::set<int>> BuildVertexAdjacency(const Eigen::MatrixXi& element_connectivity, int n_nodes) {
+std::vector<std::set<int>> BuildVertexAdjacency(const MatrixXi& element_connectivity, int n_nodes) {
     std::vector<std::set<int>> adj(n_nodes);
     int n_elem = element_connectivity.rows();
     int nodes_per_elem = element_connectivity.cols();
@@ -75,7 +75,7 @@ VectorXi GreedyVertexColoring(const std::vector<std::set<int>>& adjacency) {
     return colors;
 }
 
-bool ValidateColoring(const Eigen::MatrixXi& element_connectivity, const VectorXi& colors) {
+bool ValidateColoring(const MatrixXi& element_connectivity, const VectorXi& colors) {
     int n_elem = element_connectivity.rows();
     int nodes_per_elem = element_connectivity.cols();
 
@@ -94,7 +94,7 @@ bool ValidateColoring(const Eigen::MatrixXi& element_connectivity, const VectorX
     return true;
 }
 
-std::vector<std::vector<std::pair<int, int>>> BuildNodeIncidence(const Eigen::MatrixXi& element_connectivity,
+std::vector<std::vector<std::pair<int, int>>> BuildNodeIncidence(const MatrixXi& element_connectivity,
                                                                  int n_nodes) {
     std::vector<std::vector<std::pair<int, int>>> incidence(n_nodes);
     int n_elem = element_connectivity.rows();
@@ -467,7 +467,7 @@ void ANCF3443_generate_beam_coordinates(int n_beam,
                                         VectorXR& x12,
                                         VectorXR& y12,
                                         VectorXR& z12,
-                                        Eigen::MatrixXi& element_connectivity) {
+                                        MatrixXi& element_connectivity) {
     int n_nodes = 4 + 2 * (n_beam - 1);
     int N_dof = n_nodes * 4;
 
@@ -667,7 +667,7 @@ int FEAT10_read_nodes(const std::string& filename, MatrixXR& nodes) {
     return n_nodes;
 }
 
-int FEAT10_read_elements(const std::string& filename, Eigen::MatrixXi& elements) {
+int FEAT10_read_elements(const std::string& filename, MatrixXi& elements) {
     MOPHI_INFO("Reading elements from file: %s", filename.c_str());
     std::ifstream file(filename);
     if (!file.is_open()) {

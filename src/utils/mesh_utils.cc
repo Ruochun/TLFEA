@@ -123,7 +123,7 @@ void GridMeshGenerator::get_coordinates(VectorXR& x, VectorXR& y, VectorXR& z) {
     }
 }
 
-void GridMeshGenerator::get_element_connectivity(Eigen::MatrixXi& connectivity) {
+void GridMeshGenerator::get_element_connectivity(MatrixXi& connectivity) {
     int n_elements = static_cast<int>(elements_.size());
     connectivity.resize(n_elements, 2);
 
@@ -183,7 +183,7 @@ LinearConstraintBuilder::LinearConstraintBuilder(int n_dofs, const LinearConstra
         throw std::invalid_argument("LinearConstraintBuilder: initial nnz mismatch");
     }
     if (!rhs_.empty()) {
-        Eigen::Map<VectorXR>(rhs_.data(), initial.rhs.size()) = initial.rhs;
+        Map<VectorXR>(rhs_.data(), initial.rhs.size()) = initial.rhs;
     }
     if (offsets_.empty() || offsets_.front() != 0 || offsets_.back() != static_cast<int>(columns_.size())) {
         throw std::invalid_argument("LinearConstraintBuilder: initial CSR offsets invalid");
@@ -221,7 +221,7 @@ LinearConstraintCSR LinearConstraintBuilder::ToCSR() const {
     out.values = values_;
     out.rhs = VectorXR::Zero(static_cast<int>(rhs_.size()));
     if (!rhs_.empty()) {
-        out.rhs = Eigen::Map<const VectorXR>(rhs_.data(), static_cast<int>(rhs_.size()));
+        out.rhs = Map<const VectorXR>(rhs_.data(), static_cast<int>(rhs_.size()));
     }
     return out;
 }
@@ -961,7 +961,7 @@ bool ReadANCF3443MeshFromFile(const std::string& path, ANCF3443Mesh& out, std::s
 
 bool WriteFEAT10ToVTK(const std::string& filename,
                       const MatrixXR& nodes,
-                      const Eigen::MatrixXi& elements,
+                      const MatrixXi& elements,
                       const VectorXR& x,
                       const VectorXR& y,
                       const VectorXR& z) {

@@ -24,7 +24,7 @@ struct GPU_FEAT10_Data : public ElementBase {
 
     // Helper: gather 16 DOFs for an element using connectivity
     __device__ void gather_element_dofs(const Real* global,
-                                        Eigen::Map<Eigen::MatrixXi> connectivity,
+                                        Map<MatrixXi> connectivity,
                                         int elem,
                                         Real* local) const {
         // Each element has 4 nodes, each node has 4 DOFs
@@ -37,16 +37,16 @@ struct GPU_FEAT10_Data : public ElementBase {
         }
     }
 
-    __device__ Eigen::Map<Eigen::MatrixXi> element_connectivity() const {
-        return Eigen::Map<Eigen::MatrixXi>(d_element_connectivity, n_elem, Quadrature::N_NODE_T10_10);
+    __device__ Map<MatrixXi> element_connectivity() const {
+        return Map<MatrixXi>(d_element_connectivity, n_elem, Quadrature::N_NODE_T10_10);
     }
 
-    __device__ Eigen::Map<MatrixXR> grad_N_ref(int elem_idx, int qp_idx) {
-        return Eigen::Map<MatrixXR>(d_grad_N_ref + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 10 * 3, 10, 3);
+    __device__ Map<MatrixXR> grad_N_ref(int elem_idx, int qp_idx) {
+        return Map<MatrixXR>(d_grad_N_ref + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 10 * 3, 10, 3);
     }
 
-    __device__ const Eigen::Map<MatrixXR> grad_N_ref(int elem_idx, int qp_idx) const {
-        return Eigen::Map<MatrixXR>(d_grad_N_ref + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 10 * 3, 10, 3);
+    __device__ const Map<MatrixXR> grad_N_ref(int elem_idx, int qp_idx) const {
+        return Map<MatrixXR>(d_grad_N_ref + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 10 * 3, 10, 3);
     }
 
     __device__ Real& detJ_ref(int elem_idx, int qp_idx) {
@@ -73,118 +73,118 @@ struct GPU_FEAT10_Data : public ElementBase {
         return d_tet5pt_weights[qp_idx];
     }
 
-    __device__ Eigen::Map<VectorXR> x12() {
-        return Eigen::Map<VectorXR>(d_h_x12, n_coef);
+    __device__ Map<VectorXR> x12() {
+        return Map<VectorXR>(d_h_x12, n_coef);
     }
 
-    __device__ Eigen::Map<VectorXR> const x12() const {
-        return Eigen::Map<VectorXR>(d_h_x12, n_coef);
+    __device__ Map<VectorXR> const x12() const {
+        return Map<VectorXR>(d_h_x12, n_coef);
     }
 
-    __device__ Eigen::Map<VectorXR> y12() {
-        return Eigen::Map<VectorXR>(d_h_y12, n_coef);
+    __device__ Map<VectorXR> y12() {
+        return Map<VectorXR>(d_h_y12, n_coef);
     }
 
-    __device__ Eigen::Map<VectorXR> const y12() const {
-        return Eigen::Map<VectorXR>(d_h_y12, n_coef);
+    __device__ Map<VectorXR> const y12() const {
+        return Map<VectorXR>(d_h_y12, n_coef);
     }
 
-    __device__ Eigen::Map<VectorXR> z12() {
-        return Eigen::Map<VectorXR>(d_h_z12, n_coef);
+    __device__ Map<VectorXR> z12() {
+        return Map<VectorXR>(d_h_z12, n_coef);
     }
 
-    __device__ Eigen::Map<VectorXR> const z12() const {
-        return Eigen::Map<VectorXR>(d_h_z12, n_coef);
+    __device__ Map<VectorXR> const z12() const {
+        return Map<VectorXR>(d_h_z12, n_coef);
     }
 
-    __device__ Eigen::Map<VectorXR> const x12_jac() const {
-        return Eigen::Map<VectorXR>(d_h_x12_jac, n_coef);
+    __device__ Map<VectorXR> const x12_jac() const {
+        return Map<VectorXR>(d_h_x12_jac, n_coef);
     }
 
-    __device__ Eigen::Map<VectorXR> const y12_jac() const {
-        return Eigen::Map<VectorXR>(d_h_y12_jac, n_coef);
+    __device__ Map<VectorXR> const y12_jac() const {
+        return Map<VectorXR>(d_h_y12_jac, n_coef);
     }
 
-    __device__ Eigen::Map<VectorXR> const z12_jac() const {
-        return Eigen::Map<VectorXR>(d_h_z12_jac, n_coef);
+    __device__ Map<VectorXR> const z12_jac() const {
+        return Map<VectorXR>(d_h_z12_jac, n_coef);
     }
 
-    __device__ Eigen::Map<MatrixXR> F(int elem_idx, int qp_idx) {
-        return Eigen::Map<MatrixXR>(d_F + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ Map<MatrixXR> F(int elem_idx, int qp_idx) {
+        return Map<MatrixXR>(d_F + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ const Eigen::Map<MatrixXR> F(int elem_idx, int qp_idx) const {
-        return Eigen::Map<MatrixXR>(d_F + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ const Map<MatrixXR> F(int elem_idx, int qp_idx) const {
+        return Map<MatrixXR>(d_F + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ Eigen::Map<MatrixXR> P(int elem_idx, int qp_idx) {
-        return Eigen::Map<MatrixXR>(d_P + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ Map<MatrixXR> P(int elem_idx, int qp_idx) {
+        return Map<MatrixXR>(d_P + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ const Eigen::Map<MatrixXR> P(int elem_idx, int qp_idx) const {
-        return Eigen::Map<MatrixXR>(d_P + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ const Map<MatrixXR> P(int elem_idx, int qp_idx) const {
+        return Map<MatrixXR>(d_P + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
     // Time-derivative of deformation gradient (viscous computation)
-    __device__ Eigen::Map<MatrixXR> Fdot(int elem_idx, int qp_idx) {
-        return Eigen::Map<MatrixXR>(d_Fdot + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ Map<MatrixXR> Fdot(int elem_idx, int qp_idx) {
+        return Map<MatrixXR>(d_Fdot + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ const Eigen::Map<MatrixXR> Fdot(int elem_idx, int qp_idx) const {
-        return Eigen::Map<MatrixXR>(d_Fdot + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ const Map<MatrixXR> Fdot(int elem_idx, int qp_idx) const {
+        return Map<MatrixXR>(d_Fdot + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
     // Viscous Piola stress storage
-    __device__ Eigen::Map<MatrixXR> P_vis(int elem_idx, int qp_idx) {
-        return Eigen::Map<MatrixXR>(d_P_vis + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ Map<MatrixXR> P_vis(int elem_idx, int qp_idx) {
+        return Map<MatrixXR>(d_P_vis + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ const Eigen::Map<MatrixXR> P_vis(int elem_idx, int qp_idx) const {
-        return Eigen::Map<MatrixXR>(d_P_vis + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ const Map<MatrixXR> P_vis(int elem_idx, int qp_idx) const {
+        return Map<MatrixXR>(d_P_vis + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ Eigen::Map<VectorXR> f_int(int global_node_idx) {
-        return Eigen::Map<VectorXR>(d_f_int + global_node_idx * 3, 3);
+    __device__ Map<VectorXR> f_int(int global_node_idx) {
+        return Map<VectorXR>(d_f_int + global_node_idx * 3, 3);
     }
 
-    __device__ const Eigen::Map<VectorXR> f_int(int global_node_idx) const {
-        return Eigen::Map<VectorXR>(d_f_int + global_node_idx * 3, 3);
+    __device__ const Map<VectorXR> f_int(int global_node_idx) const {
+        return Map<VectorXR>(d_f_int + global_node_idx * 3, 3);
     }
 
-    __device__ Eigen::Map<VectorXR> f_int() {
-        return Eigen::Map<VectorXR>(d_f_int, n_coef * 3);
+    __device__ Map<VectorXR> f_int() {
+        return Map<VectorXR>(d_f_int, n_coef * 3);
     }
 
-    __device__ const Eigen::Map<VectorXR> f_int() const {
-        return Eigen::Map<VectorXR>(d_f_int, n_coef * 3);
+    __device__ const Map<VectorXR> f_int() const {
+        return Map<VectorXR>(d_f_int, n_coef * 3);
     }
 
-    __device__ Eigen::Map<VectorXR> f_ext(int global_node_idx) {
-        return Eigen::Map<VectorXR>(d_f_ext + global_node_idx * 3, 3);
+    __device__ Map<VectorXR> f_ext(int global_node_idx) {
+        return Map<VectorXR>(d_f_ext + global_node_idx * 3, 3);
     }
 
-    __device__ const Eigen::Map<VectorXR> f_ext(int global_node_idx) const {
-        return Eigen::Map<VectorXR>(d_f_ext + global_node_idx * 3, 3);
+    __device__ const Map<VectorXR> f_ext(int global_node_idx) const {
+        return Map<VectorXR>(d_f_ext + global_node_idx * 3, 3);
     }
 
-    __device__ Eigen::Map<VectorXR> f_ext() {
-        return Eigen::Map<VectorXR>(d_f_ext, n_coef * 3);
+    __device__ Map<VectorXR> f_ext() {
+        return Map<VectorXR>(d_f_ext, n_coef * 3);
     }
 
-    __device__ const Eigen::Map<VectorXR> f_ext() const {
-        return Eigen::Map<VectorXR>(d_f_ext, n_coef * 3);
+    __device__ const Map<VectorXR> f_ext() const {
+        return Map<VectorXR>(d_f_ext, n_coef * 3);
     }
 
-    __device__ Eigen::Map<VectorXR> constraint() {
-        return Eigen::Map<VectorXR>(d_constraint, n_constraint);
+    __device__ Map<VectorXR> constraint() {
+        return Map<VectorXR>(d_constraint, n_constraint);
     }
 
-    __device__ const Eigen::Map<VectorXR> constraint() const {
-        return Eigen::Map<VectorXR>(d_constraint, n_constraint);
+    __device__ const Map<VectorXR> constraint() const {
+        return Map<VectorXR>(d_constraint, n_constraint);
     }
 
-    __device__ Eigen::Map<VectorXi> fixed_nodes() {
-        return Eigen::Map<VectorXi>(d_fixed_nodes, n_constraint / 3);
+    __device__ Map<VectorXi> fixed_nodes() {
+        return Map<VectorXi>(d_fixed_nodes, n_constraint / 3);
     }
 
     // ================================
@@ -345,7 +345,7 @@ struct GPU_FEAT10_Data : public ElementBase {
 
     void RetrieveDetJToCPU(std::vector<std::vector<Real>>& detJ);
 
-    void RetrieveConnectivityToCPU(Eigen::MatrixXi& connectivity);
+    void RetrieveConnectivityToCPU(MatrixXi& connectivity);
 
     void WriteOutputVTK(const std::string& filename);
 
@@ -403,7 +403,7 @@ struct GPU_FEAT10_Data : public ElementBase {
                const VectorXR& h_x12,
                const VectorXR& h_y12,
                const VectorXR& h_z12,
-               const Eigen::MatrixXi& element_connectivity) {
+               const MatrixXi& element_connectivity) {
         if (is_setup) {
             MOPHI_ERROR(std::string("GPU_FEAT10_Data is already set up."));
             return;

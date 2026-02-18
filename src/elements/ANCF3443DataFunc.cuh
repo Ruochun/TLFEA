@@ -86,7 +86,7 @@ __device__ __forceinline__ void ancf3443_solve_3x3_system(Real A[3][3], Real b[3
     x[0] = (aug[0][3] - aug[0][2] * x[2] - aug[0][1] * x[1]) / aug[0][0];
 }
 
-__device__ __forceinline__ void ancf3443_mat_vec_mul(Eigen::Map<MatrixXR> A, const Real* x, Real* out) {
+__device__ __forceinline__ void ancf3443_mat_vec_mul(Map<MatrixXR> A, const Real* x, Real* out) {
 #pragma unroll
     for (int i = 0; i < Quadrature::N_SHAPE_3443; ++i) {
         out[i] = 0.0;
@@ -219,10 +219,10 @@ __device__ __forceinline__ void ancf3443_db_dzeta(Real xi, Real eta, Real zeta, 
 __device__ __forceinline__ void ancf3443_calc_det_J_xi(Real xi,
                                                        Real eta,
                                                        Real zeta,
-                                                       Eigen::Map<MatrixXR> B_inv,
-                                                       Eigen::Map<VectorXR> x12_jac,
-                                                       Eigen::Map<VectorXR> y12_jac,
-                                                       Eigen::Map<VectorXR> z12_jac,
+                                                       Map<MatrixXR> B_inv,
+                                                       Map<VectorXR> x12_jac,
+                                                       Map<VectorXR> y12_jac,
+                                                       Map<VectorXR> z12_jac,
                                                        Real L,
                                                        Real W,
                                                        Real H,
@@ -280,9 +280,9 @@ __device__ __forceinline__ void compute_p(int elem_idx,
     d_data->x12_elem(elem_idx, x_local_arr);
     d_data->y12_elem(elem_idx, y_local_arr);
     d_data->z12_elem(elem_idx, z_local_arr);
-    Eigen::Map<VectorXR> x_local(x_local_arr, Quadrature::N_SHAPE_3443);
-    Eigen::Map<VectorXR> y_local(y_local_arr, Quadrature::N_SHAPE_3443);
-    Eigen::Map<VectorXR> z_local(z_local_arr, Quadrature::N_SHAPE_3443);
+    Map<VectorXR> x_local(x_local_arr, Quadrature::N_SHAPE_3443);
+    Map<VectorXR> y_local(y_local_arr, Quadrature::N_SHAPE_3443);
+    Map<VectorXR> z_local(z_local_arr, Quadrature::N_SHAPE_3443);
 
     Real e[Quadrature::N_SHAPE_3443][3];
 #pragma unroll

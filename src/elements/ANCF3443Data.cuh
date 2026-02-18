@@ -47,17 +47,17 @@ struct GPU_ANCF3443_Data : public ElementBase {
 #if defined(__CUDACC__)
 
     // Const get functions
-    __device__ const Eigen::Map<MatrixXR> B_inv(int elem_idx) const {
+    __device__ const Map<MatrixXR> B_inv(int elem_idx) const {
         const int row_size = Quadrature::N_SHAPE_3443;
         const int col_size = Quadrature::N_SHAPE_3443;
-        return Eigen::Map<MatrixXR>(d_B_inv + elem_idx * row_size * col_size, row_size, col_size);
+        return Map<MatrixXR>(d_B_inv + elem_idx * row_size * col_size, row_size, col_size);
     }
 
-    __device__ Eigen::Map<MatrixXR> grad_N_ref(int elem_idx, int qp_idx) const {
+    __device__ Map<MatrixXR> grad_N_ref(int elem_idx, int qp_idx) const {
         const int row_size = Quadrature::N_SHAPE_3443;
         const int col_size = 3;
         Real* qp_data = d_grad_N_ref + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * row_size * col_size;
-        return Eigen::Map<MatrixXR>(qp_data, row_size, col_size);
+        return Map<MatrixXR>(qp_data, row_size, col_size);
     }
 
     __device__ Real& detJ_ref(int elem_idx, int qp_idx) {
@@ -70,107 +70,107 @@ struct GPU_ANCF3443_Data : public ElementBase {
 
     // ==============================================================
 
-    __device__ const Eigen::Map<VectorXR> gauss_xi_m() const {
-        return Eigen::Map<VectorXR>(d_gauss_xi_m, Quadrature::N_QP_7);
+    __device__ const Map<VectorXR> gauss_xi_m() const {
+        return Map<VectorXR>(d_gauss_xi_m, Quadrature::N_QP_7);
     }
 
-    __device__ const Eigen::Map<VectorXR> gauss_eta_m() const {
-        return Eigen::Map<VectorXR>(d_gauss_eta_m, Quadrature::N_QP_7);
+    __device__ const Map<VectorXR> gauss_eta_m() const {
+        return Map<VectorXR>(d_gauss_eta_m, Quadrature::N_QP_7);
     }
 
-    __device__ const Eigen::Map<VectorXR> gauss_zeta_m() const {
-        return Eigen::Map<VectorXR>(d_gauss_zeta_m, Quadrature::N_QP_3);
+    __device__ const Map<VectorXR> gauss_zeta_m() const {
+        return Map<VectorXR>(d_gauss_zeta_m, Quadrature::N_QP_3);
     }
 
-    __device__ const Eigen::Map<VectorXR> gauss_xi() const {
-        return Eigen::Map<VectorXR>(d_gauss_xi, Quadrature::N_QP_4);
+    __device__ const Map<VectorXR> gauss_xi() const {
+        return Map<VectorXR>(d_gauss_xi, Quadrature::N_QP_4);
     }
 
-    __device__ const Eigen::Map<VectorXR> gauss_eta() const {
-        return Eigen::Map<VectorXR>(d_gauss_eta, Quadrature::N_QP_4);
+    __device__ const Map<VectorXR> gauss_eta() const {
+        return Map<VectorXR>(d_gauss_eta, Quadrature::N_QP_4);
     }
 
-    __device__ const Eigen::Map<VectorXR> gauss_zeta() const {
-        return Eigen::Map<VectorXR>(d_gauss_zeta, Quadrature::N_QP_3);
+    __device__ const Map<VectorXR> gauss_zeta() const {
+        return Map<VectorXR>(d_gauss_zeta, Quadrature::N_QP_3);
     }
 
-    __device__ const Eigen::Map<VectorXR> weight_xi_m() const {
-        return Eigen::Map<VectorXR>(d_weight_xi_m, Quadrature::N_QP_7);
+    __device__ const Map<VectorXR> weight_xi_m() const {
+        return Map<VectorXR>(d_weight_xi_m, Quadrature::N_QP_7);
     }
 
-    __device__ const Eigen::Map<VectorXR> weight_eta_m() const {
-        return Eigen::Map<VectorXR>(d_weight_eta_m, Quadrature::N_QP_7);
+    __device__ const Map<VectorXR> weight_eta_m() const {
+        return Map<VectorXR>(d_weight_eta_m, Quadrature::N_QP_7);
     }
 
-    __device__ const Eigen::Map<VectorXR> weight_zeta_m() const {
-        return Eigen::Map<VectorXR>(d_weight_zeta_m, Quadrature::N_QP_3);
+    __device__ const Map<VectorXR> weight_zeta_m() const {
+        return Map<VectorXR>(d_weight_zeta_m, Quadrature::N_QP_3);
     }
 
-    __device__ const Eigen::Map<VectorXR> weight_xi() const {
-        return Eigen::Map<VectorXR>(d_weight_xi, Quadrature::N_QP_4);
+    __device__ const Map<VectorXR> weight_xi() const {
+        return Map<VectorXR>(d_weight_xi, Quadrature::N_QP_4);
     }
 
-    __device__ const Eigen::Map<VectorXR> weight_eta() const {
-        return Eigen::Map<VectorXR>(d_weight_eta, Quadrature::N_QP_4);
+    __device__ const Map<VectorXR> weight_eta() const {
+        return Map<VectorXR>(d_weight_eta, Quadrature::N_QP_4);
     }
 
-    __device__ const Eigen::Map<VectorXR> weight_zeta() const {
-        return Eigen::Map<VectorXR>(d_weight_zeta, Quadrature::N_QP_3);
+    __device__ const Map<VectorXR> weight_zeta() const {
+        return Map<VectorXR>(d_weight_zeta, Quadrature::N_QP_3);
     }
 
     // ==============================================================
 
-    __device__ Eigen::Map<VectorXR> x12_jac() {
-        return Eigen::Map<VectorXR>(d_x12_jac, n_coef);
+    __device__ Map<VectorXR> x12_jac() {
+        return Map<VectorXR>(d_x12_jac, n_coef);
     }
 
-    __device__ Eigen::Map<VectorXR> const x12_jac() const {
-        return Eigen::Map<VectorXR>(d_x12_jac, n_coef);
+    __device__ Map<VectorXR> const x12_jac() const {
+        return Map<VectorXR>(d_x12_jac, n_coef);
     }
 
-    __device__ Eigen::Map<VectorXR> y12_jac() {
-        return Eigen::Map<VectorXR>(d_y12_jac, n_coef);
+    __device__ Map<VectorXR> y12_jac() {
+        return Map<VectorXR>(d_y12_jac, n_coef);
     }
 
-    __device__ Eigen::Map<VectorXR> const y12_jac() const {
-        return Eigen::Map<VectorXR>(d_y12_jac, n_coef);
+    __device__ Map<VectorXR> const y12_jac() const {
+        return Map<VectorXR>(d_y12_jac, n_coef);
     }
 
-    __device__ Eigen::Map<VectorXR> z12_jac() {
-        return Eigen::Map<VectorXR>(d_z12_jac, n_coef);
+    __device__ Map<VectorXR> z12_jac() {
+        return Map<VectorXR>(d_z12_jac, n_coef);
     }
 
-    __device__ Eigen::Map<VectorXR> const z12_jac() const {
-        return Eigen::Map<VectorXR>(d_z12_jac, n_coef);
+    __device__ Map<VectorXR> const z12_jac() const {
+        return Map<VectorXR>(d_z12_jac, n_coef);
     }
 
-    __device__ Eigen::Map<VectorXR> x12() {
-        return Eigen::Map<VectorXR>(d_x12, n_coef);
+    __device__ Map<VectorXR> x12() {
+        return Map<VectorXR>(d_x12, n_coef);
     }
 
-    __device__ Eigen::Map<VectorXR> const x12() const {
-        return Eigen::Map<VectorXR>(d_x12, n_coef);
+    __device__ Map<VectorXR> const x12() const {
+        return Map<VectorXR>(d_x12, n_coef);
     }
 
-    __device__ Eigen::Map<VectorXR> y12() {
-        return Eigen::Map<VectorXR>(d_y12, n_coef);
+    __device__ Map<VectorXR> y12() {
+        return Map<VectorXR>(d_y12, n_coef);
     }
 
-    __device__ Eigen::Map<VectorXR> const y12() const {
-        return Eigen::Map<VectorXR>(d_y12, n_coef);
+    __device__ Map<VectorXR> const y12() const {
+        return Map<VectorXR>(d_y12, n_coef);
     }
 
-    __device__ Eigen::Map<VectorXR> z12() {
-        return Eigen::Map<VectorXR>(d_z12, n_coef);
+    __device__ Map<VectorXR> z12() {
+        return Map<VectorXR>(d_z12, n_coef);
     }
 
-    __device__ Eigen::Map<VectorXR> const z12() const {
-        return Eigen::Map<VectorXR>(d_z12, n_coef);
+    __device__ Map<VectorXR> const z12() const {
+        return Map<VectorXR>(d_z12, n_coef);
     }
 
     // Helper: gather 16 DOFs for an element using connectivity
     __device__ void gather_element_dofs(const Real* global,
-                                        Eigen::Map<Eigen::MatrixXi> connectivity,
+                                        Map<MatrixXi> connectivity,
                                         int elem,
                                         Real* local) const {
         // Each element has 4 nodes, each node has 4 DOFs
@@ -210,82 +210,82 @@ struct GPU_ANCF3443_Data : public ElementBase {
         gather_element_dofs(d_z12_jac, this->element_connectivity(), elem, buffer);
     }
 
-    __device__ Eigen::Map<Eigen::MatrixXi> element_connectivity() const {
-        return Eigen::Map<Eigen::MatrixXi>(d_element_connectivity, n_beam, 4);
+    __device__ Map<MatrixXi> element_connectivity() const {
+        return Map<MatrixXi>(d_element_connectivity, n_beam, 4);
     }
 
-    __device__ Eigen::Map<MatrixXR> F(int elem_idx, int qp_idx) {
-        return Eigen::Map<MatrixXR>(d_F + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
+    __device__ Map<MatrixXR> F(int elem_idx, int qp_idx) {
+        return Map<MatrixXR>(d_F + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ const Eigen::Map<MatrixXR> F(int elem_idx, int qp_idx) const {
-        return Eigen::Map<MatrixXR>(d_F + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
+    __device__ const Map<MatrixXR> F(int elem_idx, int qp_idx) const {
+        return Map<MatrixXR>(d_F + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ Eigen::Map<MatrixXR> P(int elem_idx, int qp_idx) {
-        return Eigen::Map<MatrixXR>(d_P + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
+    __device__ Map<MatrixXR> P(int elem_idx, int qp_idx) {
+        return Map<MatrixXR>(d_P + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ const Eigen::Map<MatrixXR> P(int elem_idx, int qp_idx) const {
-        return Eigen::Map<MatrixXR>(d_P + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
+    __device__ const Map<MatrixXR> P(int elem_idx, int qp_idx) const {
+        return Map<MatrixXR>(d_P + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
     }
 
     // Time-derivative of deformation gradient (viscous computation)
-    __device__ Eigen::Map<MatrixXR> Fdot(int elem_idx, int qp_idx) {
-        return Eigen::Map<MatrixXR>(d_Fdot + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
+    __device__ Map<MatrixXR> Fdot(int elem_idx, int qp_idx) {
+        return Map<MatrixXR>(d_Fdot + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ const Eigen::Map<MatrixXR> Fdot(int elem_idx, int qp_idx) const {
-        return Eigen::Map<MatrixXR>(d_Fdot + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
+    __device__ const Map<MatrixXR> Fdot(int elem_idx, int qp_idx) const {
+        return Map<MatrixXR>(d_Fdot + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
     }
 
     // Viscous Piola stress storage
-    __device__ Eigen::Map<MatrixXR> P_vis(int elem_idx, int qp_idx) {
-        return Eigen::Map<MatrixXR>(d_P_vis + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
+    __device__ Map<MatrixXR> P_vis(int elem_idx, int qp_idx) {
+        return Map<MatrixXR>(d_P_vis + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ const Eigen::Map<MatrixXR> P_vis(int elem_idx, int qp_idx) const {
-        return Eigen::Map<MatrixXR>(d_P_vis + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
+    __device__ const Map<MatrixXR> P_vis(int elem_idx, int qp_idx) const {
+        return Map<MatrixXR>(d_P_vis + (elem_idx * Quadrature::N_TOTAL_QP_4_4_3 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ Eigen::Map<VectorXR> f_int(int global_node_idx) {
-        return Eigen::Map<VectorXR>(d_f_int + global_node_idx * 3, 3);
+    __device__ Map<VectorXR> f_int(int global_node_idx) {
+        return Map<VectorXR>(d_f_int + global_node_idx * 3, 3);
     }
 
-    __device__ const Eigen::Map<VectorXR> f_int(int global_node_idx) const {
-        return Eigen::Map<VectorXR>(d_f_int + global_node_idx * 3, 3);
+    __device__ const Map<VectorXR> f_int(int global_node_idx) const {
+        return Map<VectorXR>(d_f_int + global_node_idx * 3, 3);
     }
 
-    __device__ Eigen::Map<VectorXR> f_int() {
-        return Eigen::Map<VectorXR>(d_f_int, n_coef * 3);
+    __device__ Map<VectorXR> f_int() {
+        return Map<VectorXR>(d_f_int, n_coef * 3);
     }
 
-    __device__ const Eigen::Map<VectorXR> f_int() const {
-        return Eigen::Map<VectorXR>(d_f_int, n_coef * 3);
+    __device__ const Map<VectorXR> f_int() const {
+        return Map<VectorXR>(d_f_int, n_coef * 3);
     }
 
-    __device__ Eigen::Map<VectorXR> f_ext(int global_node_idx) {
-        return Eigen::Map<VectorXR>(d_f_ext + global_node_idx * 3, 3);
+    __device__ Map<VectorXR> f_ext(int global_node_idx) {
+        return Map<VectorXR>(d_f_ext + global_node_idx * 3, 3);
     }
 
-    __device__ const Eigen::Map<VectorXR> f_ext(int global_node_idx) const {
-        return Eigen::Map<VectorXR>(d_f_ext + global_node_idx * 3, 3);
+    __device__ const Map<VectorXR> f_ext(int global_node_idx) const {
+        return Map<VectorXR>(d_f_ext + global_node_idx * 3, 3);
     }
 
-    __device__ Eigen::Map<VectorXR> f_ext() {
-        return Eigen::Map<VectorXR>(d_f_ext, n_coef * 3);
+    __device__ Map<VectorXR> f_ext() {
+        return Map<VectorXR>(d_f_ext, n_coef * 3);
     }
 
-    __device__ const Eigen::Map<VectorXR> f_ext() const {
-        return Eigen::Map<VectorXR>(d_f_ext, n_coef * 3);
+    __device__ const Map<VectorXR> f_ext() const {
+        return Map<VectorXR>(d_f_ext, n_coef * 3);
     }
 
-    __device__ Eigen::Map<VectorXR> constraint() {
-        return Eigen::Map<VectorXR>(d_constraint, n_constraint);
+    __device__ Map<VectorXR> constraint() {
+        return Map<VectorXR>(d_constraint, n_constraint);
     }
 
-    __device__ const Eigen::Map<VectorXR> constraint() const {
-        return Eigen::Map<VectorXR>(d_constraint, n_constraint);
+    __device__ const Map<VectorXR> constraint() const {
+        return Map<VectorXR>(d_constraint, n_constraint);
     }
 
     __device__ const Real* constraint_rhs() const {
@@ -296,8 +296,8 @@ struct GPU_ANCF3443_Data : public ElementBase {
         return constraint_mode;
     }
 
-    __device__ Eigen::Map<VectorXi> fixed_nodes() {
-        return Eigen::Map<VectorXi>(d_fixed_nodes, n_constraint / 3);
+    __device__ Map<VectorXi> fixed_nodes() {
+        return Map<VectorXi>(d_fixed_nodes, n_constraint / 3);
     }
 
     // ================================
@@ -519,7 +519,7 @@ struct GPU_ANCF3443_Data : public ElementBase {
                const VectorXR& h_x12,
                const VectorXR& h_y12,
                const VectorXR& h_z12,
-               const Eigen::MatrixXi& element_connectivity) {
+               const MatrixXi& element_connectivity) {
         if (is_setup) {
             MOPHI_ERROR("GPU_ANCF3443_Data is already set up.");
             return;
@@ -639,7 +639,7 @@ struct GPU_ANCF3443_Data : public ElementBase {
                const VectorXR& h_x12,
                const VectorXR& h_y12,
                const VectorXR& h_z12,
-               const Eigen::MatrixXi& element_connectivity) {
+               const MatrixXi& element_connectivity) {
         VectorXR lengths = VectorXR::Constant(n_beam, length);
         VectorXR widths = VectorXR::Constant(n_beam, width);
         VectorXR heights = VectorXR::Constant(n_beam, height);
@@ -1007,7 +1007,7 @@ struct GPU_ANCF3443_Data : public ElementBase {
 
     void PrintDsDuPre();
 
-    void RetrieveConnectivityToCPU(Eigen::MatrixXi& connectivity);
+    void RetrieveConnectivityToCPU(MatrixXi& connectivity);
 
     void RetrieveDetJToCPU(std::vector<std::vector<Real>>& detJ);
 

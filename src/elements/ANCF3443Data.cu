@@ -130,9 +130,9 @@ __global__ void precompute_reference_kernel(GPU_ANCF3443_Data* d_data) {
     d_data->x12_jac_elem(elem_idx, x_local_arr);
     d_data->y12_jac_elem(elem_idx, y_local_arr);
     d_data->z12_jac_elem(elem_idx, z_local_arr);
-    Eigen::Map<VectorXR> x_loc(x_local_arr, Quadrature::N_SHAPE_3443);
-    Eigen::Map<VectorXR> y_loc(y_local_arr, Quadrature::N_SHAPE_3443);
-    Eigen::Map<VectorXR> z_loc(z_local_arr, Quadrature::N_SHAPE_3443);
+    Map<VectorXR> x_loc(x_local_arr, Quadrature::N_SHAPE_3443);
+    Map<VectorXR> y_loc(y_local_arr, Quadrature::N_SHAPE_3443);
+    Map<VectorXR> z_loc(z_local_arr, Quadrature::N_SHAPE_3443);
 
     Real J[3][3] = {{0.0}};
 #pragma unroll
@@ -200,9 +200,9 @@ __global__ void mass_matrix_qp_kernel(GPU_ANCF3443_Data* d_data) {
         d_data->x12_jac_elem(elem, x_local_arr);
         d_data->y12_jac_elem(elem, y_local_arr);
         d_data->z12_jac_elem(elem, z_local_arr);
-        Eigen::Map<VectorXR> x_loc(x_local_arr, Quadrature::N_SHAPE_3443);
-        Eigen::Map<VectorXR> y_loc(y_local_arr, Quadrature::N_SHAPE_3443);
-        Eigen::Map<VectorXR> z_loc(z_local_arr, Quadrature::N_SHAPE_3443);
+        Map<VectorXR> x_loc(x_local_arr, Quadrature::N_SHAPE_3443);
+        Map<VectorXR> y_loc(y_local_arr, Quadrature::N_SHAPE_3443);
+        Map<VectorXR> z_loc(z_local_arr, Quadrature::N_SHAPE_3443);
 
         // Compute shape function at this QP
         Real b[Quadrature::N_SHAPE_3443];
@@ -291,7 +291,7 @@ void GPU_ANCF3443_Data::PrintDsDuPre() {
                       << " ===" << std::endl;
 
             Real* qp_data = h_grad.data() + (e * n_qp + qp) * mat_stride;
-            Eigen::Map<MatrixXR> grad_matrix(qp_data, Quadrature::N_SHAPE_3443, 3);
+            Map<MatrixXR> grad_matrix(qp_data, Quadrature::N_SHAPE_3443, 3);
             std::cout << "        dN/dx       dN/dy       dN/dz" << std::endl;
             for (int i = 0; i < Quadrature::N_SHAPE_3443; ++i) {
                 std::cout << "Shape " << i << ": ";
@@ -542,7 +542,7 @@ void GPU_ANCF3443_Data::ConvertToCSR_ConstraintJac() {
     MOPHI_GPU_CALL(cudaMemcpy(d_data, this, sizeof(GPU_ANCF3443_Data), cudaMemcpyHostToDevice));
 }
 
-void GPU_ANCF3443_Data::RetrieveConnectivityToCPU(Eigen::MatrixXi& connectivity) {
+void GPU_ANCF3443_Data::RetrieveConnectivityToCPU(MatrixXi& connectivity) {
     connectivity.resize(n_beam, 4);
     MOPHI_GPU_CALL(cudaMemcpy(connectivity.data(), d_element_connectivity,
                               static_cast<size_t>(n_beam) * 4 * sizeof(int), cudaMemcpyDeviceToHost));

@@ -770,7 +770,7 @@ void GPU_FEAT10_Data::UpdateNodalFixed(const VectorXi& fixed_nodes) {
     MOPHI_GPU_CALL(cudaMemcpy(d_data, this, sizeof(GPU_FEAT10_Data), cudaMemcpyHostToDevice));
 }
 
-void GPU_FEAT10_Data::RetrieveConnectivityToCPU(Eigen::MatrixXi& connectivity) {
+void GPU_FEAT10_Data::RetrieveConnectivityToCPU(MatrixXi& connectivity) {
     connectivity.resize(n_elem, Quadrature::N_NODE_T10_10);
     MOPHI_GPU_CALL(cudaMemcpy(connectivity.data(), d_element_connectivity,
                               n_elem * Quadrature::N_NODE_T10_10 * sizeof(int), cudaMemcpyDeviceToHost));
@@ -781,7 +781,7 @@ void GPU_FEAT10_Data::WriteOutputVTK(const std::string& filename) {
     this->RetrievePositionToCPU(x12, y12, z12);
 
     // Retrieve connectivity
-    Eigen::MatrixXi connectivity;
+    MatrixXi connectivity;
     this->RetrieveConnectivityToCPU(connectivity);
 
     std::ofstream out(filename);
