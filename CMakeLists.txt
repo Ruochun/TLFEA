@@ -44,6 +44,7 @@ target_link_libraries(tlfea_lib
     Eigen3::Eigen
     CUDA::cudart
     CUDA::cusparse
+    CUDA::cublas
     mophi_essentials
 )
 
