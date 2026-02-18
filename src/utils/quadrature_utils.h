@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Eigen/Dense>
 #include "types.h"
 
 namespace tlfea {
@@ -129,26 +128,26 @@ constexpr int N_NODE_T10_10 = 10;  // 10-node tetrahedral element
 // Barycentric coordinates for 5-point Keast quadrature (each row: [L1, L2, L3,
 // L4])
 const Matrix<Real, N_QP_T10_5, 4> tet5pt_bary = (Matrix<Real, N_QP_T10_5, 4>() << 0.25,
-                                                        0.25,
-                                                        0.25,
-                                                        0.25,
-                                                        0.5,
-                                                        1.0 / 6.0,
-                                                        1.0 / 6.0,
-                                                        1.0 / 6.0,
-                                                        1.0 / 6.0,
-                                                        0.5,
-                                                        1.0 / 6.0,
-                                                        1.0 / 6.0,
-                                                        1.0 / 6.0,
-                                                        1.0 / 6.0,
-                                                        0.5,
-                                                        1.0 / 6.0,
-                                                        1.0 / 6.0,
-                                                        1.0 / 6.0,
-                                                        1.0 / 6.0,
-                                                        0.5)
-                                                           .finished();
+                                                 0.25,
+                                                 0.25,
+                                                 0.25,
+                                                 0.5,
+                                                 1.0 / 6.0,
+                                                 1.0 / 6.0,
+                                                 1.0 / 6.0,
+                                                 1.0 / 6.0,
+                                                 0.5,
+                                                 1.0 / 6.0,
+                                                 1.0 / 6.0,
+                                                 1.0 / 6.0,
+                                                 1.0 / 6.0,
+                                                 0.5,
+                                                 1.0 / 6.0,
+                                                 1.0 / 6.0,
+                                                 1.0 / 6.0,
+                                                 1.0 / 6.0,
+                                                 0.5)
+                                                    .finished();
 
 // Weights for 5-point Keast quadrature
 const VectorXR tet5pt_weights =

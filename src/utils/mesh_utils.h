@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Eigen/Dense>
 #include <map>
 #include <optional>
 #include <string>

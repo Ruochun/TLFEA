@@ -1,7 +1,6 @@
 #include <cuda_runtime.h>
 #include <cusparse.h>
 
-#include <Eigen/Dense>
 #include <cstring>
 #include <iostream>
 #include <vector>
@@ -169,10 +168,7 @@ struct GPU_ANCF3443_Data : public ElementBase {
     }
 
     // Helper: gather 16 DOFs for an element using connectivity
-    __device__ void gather_element_dofs(const Real* global,
-                                        Map<MatrixXi> connectivity,
-                                        int elem,
-                                        Real* local) const {
+    __device__ void gather_element_dofs(const Real* global, Map<MatrixXi> connectivity, int elem, Real* local) const {
         // Each element has 4 nodes, each node has 4 DOFs
         for (int n = 0; n < 4; ++n) {
             int node = connectivity(elem, n);

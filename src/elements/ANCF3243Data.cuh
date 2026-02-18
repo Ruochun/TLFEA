@@ -1,7 +1,6 @@
 #include <cuda_runtime.h>
 #include <cusparse.h>
 
-#include <Eigen/Dense>
 #include <cstring>
 #include <iostream>
 #include <vector>
@@ -481,7 +480,7 @@ struct GPU_ANCF3243_Data : public ElementBase {
                const VectorXR& h_x12,
                const VectorXR& h_y12,
                const VectorXR& h_z12,
-               const Matrix<int, Dynamic, 2, RowMajor>& h_element_connectivity) {
+               const Matrix<int, DynamicMatrix, 2, RowMajorMatrix>& h_element_connectivity) {
         if (is_setup) {
             MOPHI_ERROR(std::string("GPU_ANCF3243_Data is already set up."));
             return;
@@ -589,7 +588,7 @@ struct GPU_ANCF3243_Data : public ElementBase {
                const VectorXR& h_x12,
                const VectorXR& h_y12,
                const VectorXR& h_z12,
-               const Matrix<int, Dynamic, 2, RowMajor>& h_element_connectivity) {
+               const Matrix<int, DynamicMatrix, 2, RowMajorMatrix>& h_element_connectivity) {
         VectorXR lengths = VectorXR::Constant(n_beam, length);
         VectorXR widths = VectorXR::Constant(n_beam, width);
         VectorXR heights = VectorXR::Constant(n_beam, height);

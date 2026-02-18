@@ -574,10 +574,10 @@ void GPU_ANCF3243_Data::ConvertToCSR_ConstraintJac() {
 
 void GPU_ANCF3243_Data::RetrieveConnectivityToCPU(MatrixXi& connectivity) {
     // `d_element_connectivity` is stored as a flat row-major (n_beam × 2) array
-    // (see Setup(), which accepts a RowMajor matrix). `MatrixXi` is
+    // (see Setup(), which accepts a RowMajorMatrix matrix). `MatrixXi` is
     // column-major by default, so copying directly into it would scramble the
     // connectivity. Use a row-major staging matrix, then assign.
-    Matrix<int, Dynamic, 2, RowMajor> connectivity_row_major;
+    Matrix<int, DynamicMatrix, 2, RowMajorMatrix> connectivity_row_major;
     connectivity_row_major.resize(n_beam, 2);
     MOPHI_GPU_CALL(cudaMemcpy(connectivity_row_major.data(), d_element_connectivity,
                               static_cast<size_t>(n_beam) * 2 * sizeof(int), cudaMemcpyDeviceToHost));

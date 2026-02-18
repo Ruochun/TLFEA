@@ -94,8 +94,7 @@ bool ValidateColoring(const MatrixXi& element_connectivity, const VectorXi& colo
     return true;
 }
 
-std::vector<std::vector<std::pair<int, int>>> BuildNodeIncidence(const MatrixXi& element_connectivity,
-                                                                 int n_nodes) {
+std::vector<std::vector<std::pair<int, int>>> BuildNodeIncidence(const MatrixXi& element_connectivity, int n_nodes) {
     std::vector<std::vector<std::pair<int, int>>> incidence(n_nodes);
     int n_elem = element_connectivity.rows();
     int nodes_per_elem = element_connectivity.cols();

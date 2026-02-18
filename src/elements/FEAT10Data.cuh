@@ -2,7 +2,6 @@
 #include <cuda_runtime_api.h>
 #include <cusparse.h>
 
-#include <Eigen/Dense>
 #include <iostream>
 #include <vector>
 
@@ -10,6 +9,7 @@
 #include "../utils/quadrature_utils.h"
 #include "../materials/MaterialModel.cuh"
 #include "ElementBase.h"
+#include "types.h"
 #include <MoPhiEssentials.h>
 
 // Definition of GPU_ANCF3443 and data access device functions
@@ -23,10 +23,7 @@ struct GPU_FEAT10_Data : public ElementBase {
 #if defined(__CUDACC__)
 
     // Helper: gather 16 DOFs for an element using connectivity
-    __device__ void gather_element_dofs(const Real* global,
-                                        Map<MatrixXi> connectivity,
-                                        int elem,
-                                        Real* local) const {
+    __device__ void gather_element_dofs(const Real* global, Map<MatrixXi> connectivity, int elem, Real* local) const {
         // Each element has 4 nodes, each node has 4 DOFs
         for (int n = 0; n < 4; ++n) {
             int node = connectivity(elem, n);

@@ -16,7 +16,6 @@
 
 #include <cuda_runtime.h>
 
-#include <Eigen/Dense>
 #include <MoPhiEssentials.h>
 #include <iomanip>
 #include <iostream>
