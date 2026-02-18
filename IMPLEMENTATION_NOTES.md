@@ -215,3 +215,143 @@ The original implementation uses Bazel; this version has been adapted to use CMa
 ## License
 
 Same as the source repository. See LICENSE file for details.
+
+---
+
+# SyncedNewton Solver Integration
+
+## Overview
+
+This section documents the integration of the SyncedNewton solver from the [uwsbel/Total-Lagrangian-FEA](https://github.com/uwsbel/Total-Lagrangian-FEA) repository.
+
+## Implementation Details
+
+### Source Files Ported
+
+1. **src/solvers/SyncedNewton.cuh** (437 lines)
+   - Header file declaring the SyncedNewtonSolver class
+   - Manages GPU buffers for Newton iteration
+   - Declares device accessor methods
+
+2. **src/solvers/SyncedNewton.cu** (1,417 lines)
+   - Implementation of the Newton solver
+   - Contains CUDA kernels for Hessian assembly
+   - Integrates with cuDSS for sparse linear solve
+
+### Key Adaptations
+
+#### Type System Changes
+
+| Source Type | TLFEA Type |
+|-------------|------------|
+| `double` | `Real` |
+| `Eigen::VectorXd` | `VectorXR` |
+| `Eigen::Vector3d` | `Vector3R` |
+| `Eigen::Matrix3d` | `Matrix3R` |
+
+#### Error Handling
+
+| Source | TLFEA |
+|--------|-------|
+| `std::cerr << ...` | `MOPHI_ERROR(...)` |
+| `HANDLE_ERROR(cudaCall)` | `MOPHI_GPU_CALL(cudaCall)` |
+
+#### Include Paths
+
+| Source Path | TLFEA Path |
+|-------------|------------|
+| `../../lib_utils/cuda_utils.h` | `../utils/cuda_utils.h` |
+| `../../lib_utils/quadrature_utils.h` | `../utils/quadrature_utils.h` |
+
+### cuDSS Dependency
+
+The SyncedNewton solver requires NVIDIA cuDSS (CUDA Direct Sparse Solver):
+
+- **Availability**: CUDA Toolkit 12.4+
+- **Purpose**: Efficient sparse linear system solving
+- **Build Behavior**:
+  - With cuDSS: All examples build normally
+  - Without cuDSS: Build fails with missing symbol errors
+
+CMake configuration searches for cuDSS and issues a warning if not found.
+
+### New Demo Applications
+
+#### test_feat10_newton.cc
+
+Simple cube test demonstrating Newton solver:
+
+```cpp
+SyncedNewtonParams params = {
+    1.0e-6, 1.0e-6, 1.0e-6,  // tolerances
+    1e14, 5, 30,              // rho, max_outer, max_inner
+    1.0e-3                    // time_step
+};
+```
+
+#### beam_simulation_newton.cc
+
+Comprehensive beam deflection simulation:
+- Loads mesh from VTU file
+- Applies boundary conditions
+- Runs dynamic simulation
+- Outputs VTK files for visualization
+
+### Algorithm Overview
+
+The SyncedNewton solver implements a fully synchronized Newton method:
+
+1. **Outer Loop**: Constraint iterations
+2. **Inner Loop**: Newton iterations
+   - Compute gradient (forces + constraints)
+   - Assemble sparse Hessian
+   - Solve using cuDSS
+   - Update velocity
+3. **Position Update**: Apply converged velocity
+
+### Comparison with SyncedNesterov
+
+| Feature | SyncedNesterov | SyncedNewton |
+|---------|---------------|--------------|
+| Method | First-order | Second-order |
+| Convergence | Linear | Quadratic |
+| Per-iteration cost | Lower | Higher |
+| External deps | None | cuDSS |
+| Best for | Smooth problems | Stiff problems |
+
+### Files Added/Modified
+
+**New Files:**
+- `src/solvers/SyncedNewton.cuh`
+- `src/solvers/SyncedNewton.cu`
+- `examples/test_feat10_newton.cc`
+- `examples/beam_simulation_newton.cc`
+- `examples/README_NEWTON.md`
+
+**Modified Files:**
+- `src/utils/cuda_utils.h`: Enabled cuDSS include
+- `CMakeLists.txt`: Added cuDSS search and linking
+- `examples/CMakeLists.txt`: Added new demo targets
+
+**Total**: ~2,600 lines of new code and documentation
+
+### Testing Status
+
+- ✅ Code review completed
+- ✅ Security scan completed (no issues)
+- ✅ Syntax verification completed
+- ⚠️ Build testing: Not possible (requires cuDSS)
+- ⚠️ Runtime testing: Not possible (requires GPU)
+
+### Future Enhancements for Newton Solver
+
+1. **Conditional Compilation**: Make Newton solver optional if cuDSS unavailable
+2. **Alternative Solver**: Provide fallback using cuSolverSp
+3. **Performance Tuning**: Add timing comparisons with Nesterov
+4. **Documentation**: Add ParaView visualization tutorial
+
+### References
+
+- Source: https://github.com/uwsbel/Total-Lagrangian-FEA
+- cuDSS docs: https://docs.nvidia.com/cuda/cudss/
+- Original authors: Json Zhou, Ganesh Arivoli
