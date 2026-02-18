@@ -96,7 +96,7 @@ std::tuple<int, int, int, int> GridMeshGenerator::global_dof_indices_for_node(in
     return std::make_tuple(base, base + 1, base + 2, base + 3);
 }
 
-void GridMeshGenerator::get_coordinates(Eigen::VectorXR& x, Eigen::VectorXR& y, Eigen::VectorXR& z) {
+void GridMeshGenerator::get_coordinates(VectorXR& x, VectorXR& y, VectorXR& z) {
     int n_nodes = static_cast<int>(nodes_.size());
     int total_dofs = 4 * n_nodes;
 
@@ -183,7 +183,7 @@ LinearConstraintBuilder::LinearConstraintBuilder(int n_dofs, const LinearConstra
         throw std::invalid_argument("LinearConstraintBuilder: initial nnz mismatch");
     }
     if (!rhs_.empty()) {
-        Eigen::Map<Eigen::VectorXR>(rhs_.data(), initial.rhs.size()) = initial.rhs;
+        Eigen::Map<VectorXR>(rhs_.data(), initial.rhs.size()) = initial.rhs;
     }
     if (offsets_.empty() || offsets_.front() != 0 || offsets_.back() != static_cast<int>(columns_.size())) {
         throw std::invalid_argument("LinearConstraintBuilder: initial CSR offsets invalid");
@@ -219,9 +219,9 @@ LinearConstraintCSR LinearConstraintBuilder::ToCSR() const {
     out.offsets = offsets_;
     out.columns = columns_;
     out.values = values_;
-    out.rhs = Eigen::VectorXR::Zero(static_cast<int>(rhs_.size()));
+    out.rhs = VectorXR::Zero(static_cast<int>(rhs_.size()));
     if (!rhs_.empty()) {
-        out.rhs = Eigen::Map<const Eigen::VectorXR>(rhs_.data(), static_cast<int>(rhs_.size()));
+        out.rhs = Eigen::Map<const VectorXR>(rhs_.data(), static_cast<int>(rhs_.size()));
     }
     return out;
 }
@@ -254,7 +254,7 @@ void AppendANCF3243VectorWeldedConstraint(LinearConstraintBuilder& builder,
                                           int node_a,
                                           int node_b,
                                           int coef_slot,
-                                          const Eigen::Matrix3R& Q) {
+                                          const Matrix3R& Q) {
     if (coef_slot < 0 || coef_slot > 3) {
         throw std::out_of_range("AppendANCF3243VectorWeldedConstraint: coef_slot out of range");
     }
@@ -277,9 +277,9 @@ void AppendANCF3243VectorWeldedConstraint(LinearConstraintBuilder& builder,
 
 void AppendANCF3243FixedCoefficient(LinearConstraintBuilder& builder,
                                     int coef_index,
-                                    const Eigen::VectorXR& x12_ref,
-                                    const Eigen::VectorXR& y12_ref,
-                                    const Eigen::VectorXR& z12_ref) {
+                                    const VectorXR& x12_ref,
+                                    const VectorXR& y12_ref,
+                                    const VectorXR& z12_ref) {
     if (coef_index < 0 || coef_index >= x12_ref.size() || coef_index >= y12_ref.size() ||
         coef_index >= z12_ref.size()) {
         throw std::out_of_range("AppendANCF3243FixedCoefficient: coef_index out of range");
@@ -318,7 +318,7 @@ void AppendANCF3443VectorWeldedConstraint(LinearConstraintBuilder& builder,
                                           int node_a,
                                           int node_b,
                                           int coef_slot,
-                                          const Eigen::Matrix3R& Q) {
+                                          const Matrix3R& Q) {
     if (coef_slot < 0 || coef_slot > 3) {
         throw std::out_of_range("AppendANCF3443VectorWeldedConstraint: coef_slot out of range");
     }
@@ -464,7 +464,7 @@ bool ReadANCF3243MeshFromFile(const std::string& path, ANCF3243Mesh& out, std::s
             out.grid_nx = nx;
             out.grid_ny = ny;
             out.grid_L = L;
-            out.grid_origin = Eigen::Vector3R(ox, oy, oz);
+            out.grid_origin = Vector3R(ox, oy, oz);
         } else {
             // Not a grid line; rewind and treat it as the next section header.
             file.clear();
@@ -665,7 +665,7 @@ bool ReadANCF3243MeshFromFile(const std::string& path, ANCF3243Mesh& out, std::s
                     return false;
                 }
             }
-            Eigen::Matrix3R Q;
+            Matrix3R Q;
             Q << q[0], q[1], q[2], q[3], q[4], q[5], q[6], q[7], q[8];
 
             // Position continuity (no rotation).
@@ -747,9 +747,9 @@ bool ReadANCF3443MeshFromFile(const std::string& path, ANCF3443Mesh& out, std::s
 
     out.n_nodes = n_nodes;
     out.node_family.assign(static_cast<size_t>(n_nodes), "");
-    out.x12 = Eigen::VectorXR::Zero(4 * n_nodes);
-    out.y12 = Eigen::VectorXR::Zero(4 * n_nodes);
-    out.z12 = Eigen::VectorXR::Zero(4 * n_nodes);
+    out.x12 = VectorXR::Zero(4 * n_nodes);
+    out.y12 = VectorXR::Zero(4 * n_nodes);
+    out.z12 = VectorXR::Zero(4 * n_nodes);
 
     std::vector<bool> seen_node(static_cast<size_t>(n_nodes), false);
 
@@ -823,9 +823,9 @@ bool ReadANCF3443MeshFromFile(const std::string& path, ANCF3443Mesh& out, std::s
 
     out.n_elements = n_elements;
     out.element_family.assign(static_cast<size_t>(n_elements), "");
-    out.element_L = Eigen::VectorXR::Zero(n_elements);
-    out.element_W = Eigen::VectorXR::Zero(n_elements);
-    out.element_H = Eigen::VectorXR::Zero(n_elements);
+    out.element_L = VectorXR::Zero(n_elements);
+    out.element_W = VectorXR::Zero(n_elements);
+    out.element_H = VectorXR::Zero(n_elements);
     out.element_connectivity.resize(n_elements, 4);
     std::vector<bool> seen_elem(static_cast<size_t>(n_elements), false);
 
@@ -942,7 +942,7 @@ bool ReadANCF3443MeshFromFile(const std::string& path, ANCF3443Mesh& out, std::s
                     return false;
                 }
             }
-            Eigen::Matrix3R Q;
+            Matrix3R Q;
             Q << q[0], q[1], q[2], q[3], q[4], q[5], q[6], q[7], q[8];
 
             AppendANCF3443VectorEqualityConstraint(builder, a, b, /*coef_slot=*/0);
@@ -960,11 +960,11 @@ bool ReadANCF3443MeshFromFile(const std::string& path, ANCF3443Mesh& out, std::s
 }
 
 bool WriteFEAT10ToVTK(const std::string& filename,
-                      const Eigen::MatrixXR& nodes,
+                      const MatrixXR& nodes,
                       const Eigen::MatrixXi& elements,
-                      const Eigen::VectorXR& x,
-                      const Eigen::VectorXR& y,
-                      const Eigen::VectorXR& z) {
+                      const VectorXR& x,
+                      const VectorXR& y,
+                      const VectorXR& z) {
     std::ofstream file(filename);
     if (!file.is_open()) {
         std::cerr << "Error: Failed to open file for writing: " << filename << std::endl;

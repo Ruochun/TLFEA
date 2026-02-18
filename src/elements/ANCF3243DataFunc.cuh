@@ -87,7 +87,7 @@ __device__ __forceinline__ void ancf3243_solve_3x3_system(Real A[3][3], Real b[3
 }
 
 // Device function: matrix-vector multiply (8x8 * 8x1)
-__device__ __forceinline__ void ancf3243_mat_vec_mul8(Eigen::Map<Eigen::MatrixXR> A, const Real* x, Real* out) {
+__device__ __forceinline__ void ancf3243_mat_vec_mul8(Eigen::Map<MatrixXR> A, const Real* x, Real* out) {
 #pragma unroll
     for (int i = 0; i < Quadrature::N_SHAPE_3243; ++i) {
         out[i] = 0.0;
@@ -125,10 +125,10 @@ __device__ __forceinline__ void ancf3243_b_vec_xi(Real xi, Real eta, Real zeta, 
 __device__ __forceinline__ void ancf3243_calc_det_J_xi(Real xi,
                                                        Real eta,
                                                        Real zeta,
-                                                       Eigen::Map<Eigen::MatrixXR> B_inv,
-                                                       Eigen::Map<Eigen::VectorXR> x12_jac,
-                                                       Eigen::Map<Eigen::VectorXR> y12_jac,
-                                                       Eigen::Map<Eigen::VectorXR> z12_jac,
+                                                       Eigen::Map<MatrixXR> B_inv,
+                                                       Eigen::Map<VectorXR> x12_jac,
+                                                       Eigen::Map<VectorXR> y12_jac,
+                                                       Eigen::Map<VectorXR> z12_jac,
                                                        Real L,
                                                        Real W,
                                                        Real H,

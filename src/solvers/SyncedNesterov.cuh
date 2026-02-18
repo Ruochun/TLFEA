@@ -150,23 +150,23 @@ class SyncedNesterovSolver : public SolverBase {
 
 #if defined(__CUDACC__)
     // Device accessors (define as __device__ in .cuh or .cu as needed)
-    __device__ Eigen::Map<Eigen::VectorXR> v_guess() {
-        return Eigen::Map<Eigen::VectorXR>(d_v_guess_, n_coef_ * 3);
+    __device__ Eigen::Map<VectorXR> v_guess() {
+        return Eigen::Map<VectorXR>(d_v_guess_, n_coef_ * 3);
     }
-    __device__ Eigen::Map<Eigen::VectorXR> v_prev() {
-        return Eigen::Map<Eigen::VectorXR>(d_v_prev_, n_coef_ * 3);
+    __device__ Eigen::Map<VectorXR> v_prev() {
+        return Eigen::Map<VectorXR>(d_v_prev_, n_coef_ * 3);
     }
-    __device__ Eigen::Map<Eigen::VectorXR> v_k() {
-        return Eigen::Map<Eigen::VectorXR>(d_v_k_, n_coef_ * 3);
+    __device__ Eigen::Map<VectorXR> v_k() {
+        return Eigen::Map<VectorXR>(d_v_k_, n_coef_ * 3);
     }
-    __device__ Eigen::Map<Eigen::VectorXR> v_next() {
-        return Eigen::Map<Eigen::VectorXR>(d_v_next_, n_coef_ * 3);
+    __device__ Eigen::Map<VectorXR> v_next() {
+        return Eigen::Map<VectorXR>(d_v_next_, n_coef_ * 3);
     }
-    __device__ Eigen::Map<Eigen::VectorXR> lambda_guess() {
-        return Eigen::Map<Eigen::VectorXR>(d_lambda_guess_, n_constraints_);
+    __device__ Eigen::Map<VectorXR> lambda_guess() {
+        return Eigen::Map<VectorXR>(d_lambda_guess_, n_constraints_);
     }
-    __device__ Eigen::Map<Eigen::VectorXR> g() {
-        return Eigen::Map<Eigen::VectorXR>(d_g_, 3 * n_coef_);
+    __device__ Eigen::Map<VectorXR> g() {
+        return Eigen::Map<VectorXR>(d_g_, 3 * n_coef_);
     }
 
     __device__ int gpu_n_constraints() {
@@ -213,14 +213,14 @@ class SyncedNesterovSolver : public SolverBase {
         return *d_time_step_;
     }
 
-    __device__ Eigen::Map<Eigen::VectorXR> x12_prev() {
-        return Eigen::Map<Eigen::VectorXR>(d_x12_prev, n_coef_);
+    __device__ Eigen::Map<VectorXR> x12_prev() {
+        return Eigen::Map<VectorXR>(d_x12_prev, n_coef_);
     }
-    __device__ Eigen::Map<Eigen::VectorXR> y12_prev() {
-        return Eigen::Map<Eigen::VectorXR>(d_y12_prev, n_coef_);
+    __device__ Eigen::Map<VectorXR> y12_prev() {
+        return Eigen::Map<VectorXR>(d_y12_prev, n_coef_);
     }
-    __device__ Eigen::Map<Eigen::VectorXR> z12_prev() {
-        return Eigen::Map<Eigen::VectorXR>(d_z12_prev, n_coef_);
+    __device__ Eigen::Map<VectorXR> z12_prev() {
+        return Eigen::Map<VectorXR>(d_z12_prev, n_coef_);
     }
 #endif
 

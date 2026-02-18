@@ -44,8 +44,7 @@ bool ValidateColoring(const MatrixXi& element_connectivity, const VectorXi& colo
  * @param n_nodes Total number of nodes
  * @return For each node, a vector of (element_idx, local_node_idx) pairs
  */
-std::vector<std::vector<std::pair<int, int>>> BuildNodeIncidence(const MatrixXi& element_connectivity,
-                                                                 int n_nodes);
+std::vector<std::vector<std::pair<int, int>>> BuildNodeIncidence(const MatrixXi& element_connectivity, int n_nodes);
 
 /**
  * Organize nodes by color for VBD parallel processing
