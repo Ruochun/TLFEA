@@ -44,8 +44,19 @@ target_link_libraries(tlfea_lib
     Eigen3::Eigen
     CUDA::cudart
     CUDA::cusparse
+    CUDA::cublas
     mophi_essentials
 )
+
+# Try to link cuDSS if available (required for SyncedNewton solver)
+# cuDSS is available in CUDA Toolkit 12.4+
+find_library(CUDSS_LIBRARY NAMES cudss HINTS /usr/local/cuda/lib64 /usr/lib/x86_64-linux-gnu)
+if(CUDSS_LIBRARY)
+    message(STATUS "Found cuDSS library: ${CUDSS_LIBRARY}")
+    target_link_libraries(tlfea_lib ${CUDSS_LIBRARY})
+else()
+    message(WARNING "cuDSS library not found. SyncedNewton solver will not be available. Please install CUDA Toolkit 12.4+ for cuDSS support.")
+endif()
 
 target_include_directories(tlfea_lib PUBLIC
     ${CMAKE_SOURCE_DIR}/src
