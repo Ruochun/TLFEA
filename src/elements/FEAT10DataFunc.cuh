@@ -20,6 +20,8 @@
 #include "../materials/SVK.cuh"
 #include "FEAT10Data.cuh"
 
+namespace tlfea {
+
 // Forward declaration for device helper templates.
 struct SyncedNewtonSolver;
 
@@ -764,3 +766,5 @@ __device__ __forceinline__ void compute_hessian_assemble_csr<GPU_FEAT10_Data>(GP
         }
     }
 }
+
+}  // namespace tlfea

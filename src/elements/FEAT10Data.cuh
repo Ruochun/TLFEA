@@ -2,7 +2,6 @@
 #include <cuda_runtime_api.h>
 #include <cusparse.h>
 
-#include <Eigen/Dense>
 #include <iostream>
 #include <vector>
 
@@ -10,10 +9,13 @@
 #include "../utils/quadrature_utils.h"
 #include "../materials/MaterialModel.cuh"
 #include "ElementBase.h"
+#include "types.h"
 #include <MoPhiEssentials.h>
 
 // Definition of GPU_ANCF3443 and data access device functions
 #pragma once
+
+namespace tlfea {
 
 //
 // define a SAP data strucutre
@@ -21,10 +23,7 @@ struct GPU_FEAT10_Data : public ElementBase {
 #if defined(__CUDACC__)
 
     // Helper: gather 16 DOFs for an element using connectivity
-    __device__ void gather_element_dofs(const Real* global,
-                                        Eigen::Map<Eigen::MatrixXi> connectivity,
-                                        int elem,
-                                        Real* local) const {
+    __device__ void gather_element_dofs(const Real* global, Map<MatrixXi> connectivity, int elem, Real* local) const {
         // Each element has 4 nodes, each node has 4 DOFs
         for (int n = 0; n < 4; ++n) {
             int node = connectivity(elem, n);
@@ -35,16 +34,16 @@ struct GPU_FEAT10_Data : public ElementBase {
         }
     }
 
-    __device__ Eigen::Map<Eigen::MatrixXi> element_connectivity() const {
-        return Eigen::Map<Eigen::MatrixXi>(d_element_connectivity, n_elem, Quadrature::N_NODE_T10_10);
+    __device__ Map<MatrixXi> element_connectivity() const {
+        return Map<MatrixXi>(d_element_connectivity, n_elem, Quadrature::N_NODE_T10_10);
     }
 
-    __device__ Eigen::Map<Eigen::MatrixXR> grad_N_ref(int elem_idx, int qp_idx) {
-        return Eigen::Map<Eigen::MatrixXR>(d_grad_N_ref + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 10 * 3, 10, 3);
+    __device__ Map<MatrixXR> grad_N_ref(int elem_idx, int qp_idx) {
+        return Map<MatrixXR>(d_grad_N_ref + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 10 * 3, 10, 3);
     }
 
-    __device__ const Eigen::Map<Eigen::MatrixXR> grad_N_ref(int elem_idx, int qp_idx) const {
-        return Eigen::Map<Eigen::MatrixXR>(d_grad_N_ref + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 10 * 3, 10, 3);
+    __device__ const Map<MatrixXR> grad_N_ref(int elem_idx, int qp_idx) const {
+        return Map<MatrixXR>(d_grad_N_ref + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 10 * 3, 10, 3);
     }
 
     __device__ Real& detJ_ref(int elem_idx, int qp_idx) {
@@ -71,118 +70,118 @@ struct GPU_FEAT10_Data : public ElementBase {
         return d_tet5pt_weights[qp_idx];
     }
 
-    __device__ Eigen::Map<Eigen::VectorXR> x12() {
-        return Eigen::Map<Eigen::VectorXR>(d_h_x12, n_coef);
+    __device__ Map<VectorXR> x12() {
+        return Map<VectorXR>(d_h_x12, n_coef);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXR> const x12() const {
-        return Eigen::Map<Eigen::VectorXR>(d_h_x12, n_coef);
+    __device__ Map<VectorXR> const x12() const {
+        return Map<VectorXR>(d_h_x12, n_coef);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXR> y12() {
-        return Eigen::Map<Eigen::VectorXR>(d_h_y12, n_coef);
+    __device__ Map<VectorXR> y12() {
+        return Map<VectorXR>(d_h_y12, n_coef);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXR> const y12() const {
-        return Eigen::Map<Eigen::VectorXR>(d_h_y12, n_coef);
+    __device__ Map<VectorXR> const y12() const {
+        return Map<VectorXR>(d_h_y12, n_coef);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXR> z12() {
-        return Eigen::Map<Eigen::VectorXR>(d_h_z12, n_coef);
+    __device__ Map<VectorXR> z12() {
+        return Map<VectorXR>(d_h_z12, n_coef);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXR> const z12() const {
-        return Eigen::Map<Eigen::VectorXR>(d_h_z12, n_coef);
+    __device__ Map<VectorXR> const z12() const {
+        return Map<VectorXR>(d_h_z12, n_coef);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXR> const x12_jac() const {
-        return Eigen::Map<Eigen::VectorXR>(d_h_x12_jac, n_coef);
+    __device__ Map<VectorXR> const x12_jac() const {
+        return Map<VectorXR>(d_h_x12_jac, n_coef);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXR> const y12_jac() const {
-        return Eigen::Map<Eigen::VectorXR>(d_h_y12_jac, n_coef);
+    __device__ Map<VectorXR> const y12_jac() const {
+        return Map<VectorXR>(d_h_y12_jac, n_coef);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXR> const z12_jac() const {
-        return Eigen::Map<Eigen::VectorXR>(d_h_z12_jac, n_coef);
+    __device__ Map<VectorXR> const z12_jac() const {
+        return Map<VectorXR>(d_h_z12_jac, n_coef);
     }
 
-    __device__ Eigen::Map<Eigen::MatrixXR> F(int elem_idx, int qp_idx) {
-        return Eigen::Map<Eigen::MatrixXR>(d_F + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ Map<MatrixXR> F(int elem_idx, int qp_idx) {
+        return Map<MatrixXR>(d_F + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ const Eigen::Map<Eigen::MatrixXR> F(int elem_idx, int qp_idx) const {
-        return Eigen::Map<Eigen::MatrixXR>(d_F + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ const Map<MatrixXR> F(int elem_idx, int qp_idx) const {
+        return Map<MatrixXR>(d_F + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ Eigen::Map<Eigen::MatrixXR> P(int elem_idx, int qp_idx) {
-        return Eigen::Map<Eigen::MatrixXR>(d_P + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ Map<MatrixXR> P(int elem_idx, int qp_idx) {
+        return Map<MatrixXR>(d_P + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ const Eigen::Map<Eigen::MatrixXR> P(int elem_idx, int qp_idx) const {
-        return Eigen::Map<Eigen::MatrixXR>(d_P + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ const Map<MatrixXR> P(int elem_idx, int qp_idx) const {
+        return Map<MatrixXR>(d_P + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
     // Time-derivative of deformation gradient (viscous computation)
-    __device__ Eigen::Map<Eigen::MatrixXR> Fdot(int elem_idx, int qp_idx) {
-        return Eigen::Map<Eigen::MatrixXR>(d_Fdot + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ Map<MatrixXR> Fdot(int elem_idx, int qp_idx) {
+        return Map<MatrixXR>(d_Fdot + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ const Eigen::Map<Eigen::MatrixXR> Fdot(int elem_idx, int qp_idx) const {
-        return Eigen::Map<Eigen::MatrixXR>(d_Fdot + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ const Map<MatrixXR> Fdot(int elem_idx, int qp_idx) const {
+        return Map<MatrixXR>(d_Fdot + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
     // Viscous Piola stress storage
-    __device__ Eigen::Map<Eigen::MatrixXR> P_vis(int elem_idx, int qp_idx) {
-        return Eigen::Map<Eigen::MatrixXR>(d_P_vis + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ Map<MatrixXR> P_vis(int elem_idx, int qp_idx) {
+        return Map<MatrixXR>(d_P_vis + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ const Eigen::Map<Eigen::MatrixXR> P_vis(int elem_idx, int qp_idx) const {
-        return Eigen::Map<Eigen::MatrixXR>(d_P_vis + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+    __device__ const Map<MatrixXR> P_vis(int elem_idx, int qp_idx) const {
+        return Map<MatrixXR>(d_P_vis + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXR> f_int(int global_node_idx) {
-        return Eigen::Map<Eigen::VectorXR>(d_f_int + global_node_idx * 3, 3);
+    __device__ Map<VectorXR> f_int(int global_node_idx) {
+        return Map<VectorXR>(d_f_int + global_node_idx * 3, 3);
     }
 
-    __device__ const Eigen::Map<Eigen::VectorXR> f_int(int global_node_idx) const {
-        return Eigen::Map<Eigen::VectorXR>(d_f_int + global_node_idx * 3, 3);
+    __device__ const Map<VectorXR> f_int(int global_node_idx) const {
+        return Map<VectorXR>(d_f_int + global_node_idx * 3, 3);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXR> f_int() {
-        return Eigen::Map<Eigen::VectorXR>(d_f_int, n_coef * 3);
+    __device__ Map<VectorXR> f_int() {
+        return Map<VectorXR>(d_f_int, n_coef * 3);
     }
 
-    __device__ const Eigen::Map<Eigen::VectorXR> f_int() const {
-        return Eigen::Map<Eigen::VectorXR>(d_f_int, n_coef * 3);
+    __device__ const Map<VectorXR> f_int() const {
+        return Map<VectorXR>(d_f_int, n_coef * 3);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXR> f_ext(int global_node_idx) {
-        return Eigen::Map<Eigen::VectorXR>(d_f_ext + global_node_idx * 3, 3);
+    __device__ Map<VectorXR> f_ext(int global_node_idx) {
+        return Map<VectorXR>(d_f_ext + global_node_idx * 3, 3);
     }
 
-    __device__ const Eigen::Map<Eigen::VectorXR> f_ext(int global_node_idx) const {
-        return Eigen::Map<Eigen::VectorXR>(d_f_ext + global_node_idx * 3, 3);
+    __device__ const Map<VectorXR> f_ext(int global_node_idx) const {
+        return Map<VectorXR>(d_f_ext + global_node_idx * 3, 3);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXR> f_ext() {
-        return Eigen::Map<Eigen::VectorXR>(d_f_ext, n_coef * 3);
+    __device__ Map<VectorXR> f_ext() {
+        return Map<VectorXR>(d_f_ext, n_coef * 3);
     }
 
-    __device__ const Eigen::Map<Eigen::VectorXR> f_ext() const {
-        return Eigen::Map<Eigen::VectorXR>(d_f_ext, n_coef * 3);
+    __device__ const Map<VectorXR> f_ext() const {
+        return Map<VectorXR>(d_f_ext, n_coef * 3);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXR> constraint() {
-        return Eigen::Map<Eigen::VectorXR>(d_constraint, n_constraint);
+    __device__ Map<VectorXR> constraint() {
+        return Map<VectorXR>(d_constraint, n_constraint);
     }
 
-    __device__ const Eigen::Map<Eigen::VectorXR> constraint() const {
-        return Eigen::Map<Eigen::VectorXR>(d_constraint, n_constraint);
+    __device__ const Map<VectorXR> constraint() const {
+        return Map<VectorXR>(d_constraint, n_constraint);
     }
 
-    __device__ Eigen::Map<Eigen::VectorXi> fixed_nodes() {
-        return Eigen::Map<Eigen::VectorXi>(d_fixed_nodes, n_constraint / 3);
+    __device__ Map<VectorXi> fixed_nodes() {
+        return Map<VectorXi>(d_fixed_nodes, n_constraint / 3);
     }
 
     // ================================
@@ -325,25 +324,25 @@ struct GPU_FEAT10_Data : public ElementBase {
 
     void RetrieveMassCSRToCPU(std::vector<int>& offsets, std::vector<int>& columns, std::vector<Real>& values);
 
-    void RetrieveInternalForceToCPU(Eigen::VectorXR& internal_force) override;
+    void RetrieveInternalForceToCPU(VectorXR& internal_force) override;
 
-    void RetrieveExternalForceToCPU(Eigen::VectorXR& external_force);
+    void RetrieveExternalForceToCPU(VectorXR& external_force);
 
-    void RetrieveConstraintDataToCPU(Eigen::VectorXR& constraint) override {}
+    void RetrieveConstraintDataToCPU(VectorXR& constraint) override {}
 
-    void RetrieveConstraintJacobianToCPU(Eigen::MatrixXR& constraint_jac) override {}
+    void RetrieveConstraintJacobianToCPU(MatrixXR& constraint_jac) override {}
 
-    void RetrievePositionToCPU(Eigen::VectorXR& x12, Eigen::VectorXR& y12, Eigen::VectorXR& z12) override;
+    void RetrievePositionToCPU(VectorXR& x12, VectorXR& y12, VectorXR& z12) override;
 
-    void RetrieveDeformationGradientToCPU(std::vector<std::vector<Eigen::MatrixXR>>& deformation_gradient) override {}
+    void RetrieveDeformationGradientToCPU(std::vector<std::vector<MatrixXR>>& deformation_gradient) override {}
 
-    void RetrievePFromFToCPU(std::vector<std::vector<Eigen::MatrixXR>>& p_from_F) override;
+    void RetrievePFromFToCPU(std::vector<std::vector<MatrixXR>>& p_from_F) override;
 
-    void RetrieveDnDuPreToCPU(std::vector<std::vector<Eigen::MatrixXR>>& dn_du_pre);
+    void RetrieveDnDuPreToCPU(std::vector<std::vector<MatrixXR>>& dn_du_pre);
 
     void RetrieveDetJToCPU(std::vector<std::vector<Real>>& detJ);
 
-    void RetrieveConnectivityToCPU(Eigen::MatrixXi& connectivity);
+    void RetrieveConnectivityToCPU(MatrixXi& connectivity);
 
     void WriteOutputVTK(const std::string& filename);
 
@@ -394,14 +393,14 @@ struct GPU_FEAT10_Data : public ElementBase {
         MOPHI_GPU_CALL(cudaMalloc(&d_data, sizeof(GPU_FEAT10_Data)));
     }
 
-    void Setup(const Eigen::VectorXR& tet5pt_x_host,
-               const Eigen::VectorXR& tet5pt_y_host,
-               const Eigen::VectorXR& tet5pt_z_host,
-               const Eigen::VectorXR& tet5pt_weights_host,
-               const Eigen::VectorXR& h_x12,
-               const Eigen::VectorXR& h_y12,
-               const Eigen::VectorXR& h_z12,
-               const Eigen::MatrixXi& element_connectivity) {
+    void Setup(const VectorXR& tet5pt_x_host,
+               const VectorXR& tet5pt_y_host,
+               const VectorXR& tet5pt_z_host,
+               const VectorXR& tet5pt_weights_host,
+               const VectorXR& h_x12,
+               const VectorXR& h_y12,
+               const VectorXR& h_z12,
+               const MatrixXi& element_connectivity) {
         if (is_setup) {
             MOPHI_ERROR(std::string("GPU_FEAT10_Data is already set up."));
             return;
@@ -551,7 +550,7 @@ struct GPU_FEAT10_Data : public ElementBase {
         MOPHI_GPU_CALL(cudaMemcpy(d_kappa, &kappa, sizeof(Real), cudaMemcpyHostToDevice));
     }
 
-    void SetExternalForce(const Eigen::VectorXR& h_f_ext) {
+    void SetExternalForce(const VectorXR& h_f_ext) {
         if (h_f_ext.size() != n_coef * 3) {
             MOPHI_ERROR("External force vector size mismatch.");
             return;
@@ -584,7 +583,7 @@ struct GPU_FEAT10_Data : public ElementBase {
     /**
      * Update node positions on GPU (for prescribed motion of fixed nodes).
      */
-    void UpdatePositions(const Eigen::VectorXR& h_x12, const Eigen::VectorXR& h_y12, const Eigen::VectorXR& h_z12) {
+    void UpdatePositions(const VectorXR& h_x12, const VectorXR& h_y12, const VectorXR& h_z12) {
         if (h_x12.size() != n_coef || h_y12.size() != n_coef || h_z12.size() != n_coef) {
             MOPHI_ERROR("Position vector size mismatch.");
             return;
@@ -594,9 +593,7 @@ struct GPU_FEAT10_Data : public ElementBase {
         MOPHI_GPU_CALL(cudaMemcpy(d_h_z12, h_z12.data(), n_coef * sizeof(Real), cudaMemcpyHostToDevice));
     }
 
-    void UpdateConstraintTargets(const Eigen::VectorXR& h_x12,
-                                 const Eigen::VectorXR& h_y12,
-                                 const Eigen::VectorXR& h_z12) {
+    void UpdateConstraintTargets(const VectorXR& h_x12, const VectorXR& h_y12, const VectorXR& h_z12) {
         if (h_x12.size() != n_coef || h_y12.size() != n_coef || h_z12.size() != n_coef) {
             MOPHI_ERROR("Position vector size mismatch.");
             return;
@@ -606,7 +603,7 @@ struct GPU_FEAT10_Data : public ElementBase {
         MOPHI_GPU_CALL(cudaMemcpy(d_h_z12_jac, h_z12.data(), n_coef * sizeof(Real), cudaMemcpyHostToDevice));
     }
 
-    void SetNodalFixed(const Eigen::VectorXi& fixed_nodes);
+    void SetNodalFixed(const VectorXi& fixed_nodes);
 
     /**
      * Update fixed nodes for dynamic constraint changes (e.g., moving grippers).
@@ -614,7 +611,7 @@ struct GPU_FEAT10_Data : public ElementBase {
      * matches, otherwise reallocates. After calling this, you must call
      * CalcConstraintData() and rebuild constraint Jacobians (CSR) if needed.
      */
-    void UpdateNodalFixed(const Eigen::VectorXi& fixed_nodes);
+    void UpdateNodalFixed(const VectorXi& fixed_nodes);
 
     // Free memory
     void Destroy() {
@@ -756,3 +753,5 @@ struct GPU_FEAT10_Data : public ElementBase {
     bool is_cj_csr_setup = false;
     bool is_j_csr_setup = false;
 };
+
+}  // namespace tlfea

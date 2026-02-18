@@ -25,6 +25,8 @@
 #include "ANCF3243DataFunc.cuh"
 namespace cg = cooperative_groups;
 
+namespace tlfea {
+
 __device__ __forceinline__ int binary_search_column_csr_mass_3243(const int* cols, int n_cols, int target) {
     int left = 0;
     int right = n_cols - 1;
@@ -135,9 +137,9 @@ __global__ void precompute_reference_kernel(GPU_ANCF3243_Data* d_data) {
     d_data->x12_jac_elem(elem_idx, x_local_arr);
     d_data->y12_jac_elem(elem_idx, y_local_arr);
     d_data->z12_jac_elem(elem_idx, z_local_arr);
-    Eigen::Map<Eigen::VectorXR> x_loc(x_local_arr, Quadrature::N_SHAPE_3243);
-    Eigen::Map<Eigen::VectorXR> y_loc(y_local_arr, Quadrature::N_SHAPE_3243);
-    Eigen::Map<Eigen::VectorXR> z_loc(z_local_arr, Quadrature::N_SHAPE_3243);
+    Map<VectorXR> x_loc(x_local_arr, Quadrature::N_SHAPE_3243);
+    Map<VectorXR> y_loc(y_local_arr, Quadrature::N_SHAPE_3243);
+    Map<VectorXR> z_loc(z_local_arr, Quadrature::N_SHAPE_3243);
 
     // Reference Jacobian J = sum_a X_a ⊗ ∂s_a/∂xi.
     Real J[3][3] = {{0.0}};
@@ -226,9 +228,9 @@ __global__ void mass_matrix_qp_kernel(GPU_ANCF3243_Data* d_data) {
     d_data->x12_jac_elem(elem, x_local_arr);
     d_data->y12_jac_elem(elem, y_local_arr);
     d_data->z12_jac_elem(elem, z_local_arr);
-    Eigen::Map<Eigen::VectorXR> x_loc(x_local_arr, Quadrature::N_SHAPE_3243);
-    Eigen::Map<Eigen::VectorXR> y_loc(y_local_arr, Quadrature::N_SHAPE_3243);
-    Eigen::Map<Eigen::VectorXR> z_loc(z_local_arr, Quadrature::N_SHAPE_3243);
+    Map<VectorXR> x_loc(x_local_arr, Quadrature::N_SHAPE_3243);
+    Map<VectorXR> y_loc(y_local_arr, Quadrature::N_SHAPE_3243);
+    Map<VectorXR> z_loc(z_local_arr, Quadrature::N_SHAPE_3243);
 
     for (int qp_local = 0; qp_local < n_qp_per_elem; qp_local++) {
         // Decode qp_local into (ixi, ieta, izeta)
@@ -319,7 +321,7 @@ void GPU_ANCF3243_Data::PrintDsDuPre() {
                       << " ===" << std::endl;
 
             Real* qp_data = h_grad.data() + (e * n_qp + qp) * mat_stride;
-            Eigen::Map<Eigen::MatrixXR> grad_matrix(qp_data, Quadrature::N_SHAPE_3243, 3);
+            Map<MatrixXR> grad_matrix(qp_data, Quadrature::N_SHAPE_3243, 3);
             std::cout << "        dN/dx       dN/dy       dN/dz" << std::endl;
             for (int i = 0; i < Quadrature::N_SHAPE_3243; ++i) {
                 std::cout << "Shape " << i << ": ";
@@ -570,12 +572,12 @@ void GPU_ANCF3243_Data::ConvertToCSR_ConstraintJac() {
     MOPHI_GPU_CALL(cudaMemcpy(d_data, this, sizeof(GPU_ANCF3243_Data), cudaMemcpyHostToDevice));
 }
 
-void GPU_ANCF3243_Data::RetrieveConnectivityToCPU(Eigen::MatrixXi& connectivity) {
+void GPU_ANCF3243_Data::RetrieveConnectivityToCPU(MatrixXi& connectivity) {
     // `d_element_connectivity` is stored as a flat row-major (n_beam × 2) array
-    // (see Setup(), which accepts a RowMajor matrix). `Eigen::MatrixXi` is
+    // (see Setup(), which accepts a RowMajorMatrix matrix). `MatrixXi` is
     // column-major by default, so copying directly into it would scramble the
     // connectivity. Use a row-major staging matrix, then assign.
-    Eigen::Matrix<int, Eigen::Dynamic, 2, Eigen::RowMajor> connectivity_row_major;
+    Matrix<int, DynamicMatrix, 2, RowMajorMatrix> connectivity_row_major;
     connectivity_row_major.resize(n_beam, 2);
     MOPHI_GPU_CALL(cudaMemcpy(connectivity_row_major.data(), d_element_connectivity,
                               static_cast<size_t>(n_beam) * 2 * sizeof(int), cudaMemcpyDeviceToHost));
@@ -607,7 +609,7 @@ void GPU_ANCF3243_Data::RetrieveMassCSRToCPU(std::vector<int>& offsets,
         cudaMemcpy(values.data(), d_csr_values, static_cast<size_t>(h_nnz) * sizeof(Real), cudaMemcpyDeviceToHost));
 }
 
-void GPU_ANCF3243_Data::RetrieveInternalForceToCPU(Eigen::VectorXR& internal_force) {
+void GPU_ANCF3243_Data::RetrieveInternalForceToCPU(VectorXR& internal_force) {
     int expected_size = n_coef * 3;
     internal_force.resize(expected_size);
 
@@ -647,8 +649,7 @@ void GPU_ANCF3243_Data::RetrieveConstraintJacobianCSRToCPU(std::vector<int>& off
     }
 }
 
-void GPU_ANCF3243_Data::RetrieveDeformationGradientToCPU(
-    std::vector<std::vector<Eigen::MatrixXR>>& deformation_gradient) {
+void GPU_ANCF3243_Data::RetrieveDeformationGradientToCPU(std::vector<std::vector<MatrixXR>>& deformation_gradient) {
     deformation_gradient.resize(n_beam);
     for (int i = 0; i < n_beam; i++) {
         deformation_gradient[i].resize(Quadrature::N_TOTAL_QP_3_2_2);
@@ -661,7 +662,7 @@ void GPU_ANCF3243_Data::RetrieveDeformationGradientToCPU(
     }
 }
 
-void GPU_ANCF3243_Data::RetrievePFromFToCPU(std::vector<std::vector<Eigen::MatrixXR>>& p_from_F) {
+void GPU_ANCF3243_Data::RetrievePFromFToCPU(std::vector<std::vector<MatrixXR>>& p_from_F) {
     p_from_F.resize(n_beam);
     for (int i = 0; i < n_beam; i++) {
         p_from_F[i].resize(Quadrature::N_TOTAL_QP_3_2_2);
@@ -673,13 +674,13 @@ void GPU_ANCF3243_Data::RetrievePFromFToCPU(std::vector<std::vector<Eigen::Matri
     }
 }
 
-void GPU_ANCF3243_Data::RetrieveConstraintDataToCPU(Eigen::VectorXR& constraint) {
+void GPU_ANCF3243_Data::RetrieveConstraintDataToCPU(VectorXR& constraint) {
     int expected_size = n_constraint;
     constraint.resize(expected_size);
     MOPHI_GPU_CALL(cudaMemcpy(constraint.data(), d_constraint, expected_size * sizeof(Real), cudaMemcpyDeviceToHost));
 }
 
-void GPU_ANCF3243_Data::RetrieveConstraintJacobianToCPU(Eigen::MatrixXR& constraint_jac) {
+void GPU_ANCF3243_Data::RetrieveConstraintJacobianToCPU(MatrixXR& constraint_jac) {
     constraint_jac.resize(n_constraint, n_coef * 3);
     constraint_jac.setZero();
 
@@ -699,7 +700,7 @@ void GPU_ANCF3243_Data::RetrieveConstraintJacobianToCPU(Eigen::MatrixXR& constra
     }
 }
 
-void GPU_ANCF3243_Data::RetrievePositionToCPU(Eigen::VectorXR& x12, Eigen::VectorXR& y12, Eigen::VectorXR& z12) {
+void GPU_ANCF3243_Data::RetrievePositionToCPU(VectorXR& x12, VectorXR& y12, VectorXR& z12) {
     int expected_size = n_coef;
     x12.resize(expected_size);
     y12.resize(expected_size);
@@ -753,3 +754,5 @@ void GPU_ANCF3243_Data::CalcConstraintData() {
     compute_constraint_data_kernel<<<blocks, threads>>>(d_data);
     cudaDeviceSynchronize();
 }
+
+}  // namespace tlfea

@@ -11,13 +11,15 @@
 #include <stdexcept>
 #include <MoPhiEssentials.h>
 
+namespace tlfea {
+
 namespace ANCFCPUUtils {
 
 // ============================================================
 // Coloring and VBD helper functions
 // ============================================================
 
-std::vector<std::set<int>> BuildVertexAdjacency(const Eigen::MatrixXi& element_connectivity, int n_nodes) {
+std::vector<std::set<int>> BuildVertexAdjacency(const MatrixXi& element_connectivity, int n_nodes) {
     std::vector<std::set<int>> adj(n_nodes);
     int n_elem = element_connectivity.rows();
     int nodes_per_elem = element_connectivity.cols();
@@ -36,7 +38,7 @@ std::vector<std::set<int>> BuildVertexAdjacency(const Eigen::MatrixXi& element_c
     return adj;
 }
 
-Eigen::VectorXi GreedyVertexColoring(const std::vector<std::set<int>>& adjacency) {
+VectorXi GreedyVertexColoring(const std::vector<std::set<int>>& adjacency) {
     int n = static_cast<int>(adjacency.size());
 
     // Compute degrees and sort by decreasing degree
@@ -49,7 +51,7 @@ Eigen::VectorXi GreedyVertexColoring(const std::vector<std::set<int>>& adjacency
     std::iota(order.begin(), order.end(), 0);
     std::sort(order.begin(), order.end(), [&degrees](int a, int b) { return degrees[a] > degrees[b]; });
 
-    Eigen::VectorXi colors = Eigen::VectorXi::Constant(n, -1);
+    VectorXi colors = VectorXi::Constant(n, -1);
     std::vector<bool> used(n, false);
 
     for (int v : order) {
@@ -73,7 +75,7 @@ Eigen::VectorXi GreedyVertexColoring(const std::vector<std::set<int>>& adjacency
     return colors;
 }
 
-bool ValidateColoring(const Eigen::MatrixXi& element_connectivity, const Eigen::VectorXi& colors) {
+bool ValidateColoring(const MatrixXi& element_connectivity, const VectorXi& colors) {
     int n_elem = element_connectivity.rows();
     int nodes_per_elem = element_connectivity.cols();
 
@@ -92,8 +94,7 @@ bool ValidateColoring(const Eigen::MatrixXi& element_connectivity, const Eigen::
     return true;
 }
 
-std::vector<std::vector<std::pair<int, int>>> BuildNodeIncidence(const Eigen::MatrixXi& element_connectivity,
-                                                                 int n_nodes) {
+std::vector<std::vector<std::pair<int, int>>> BuildNodeIncidence(const MatrixXi& element_connectivity, int n_nodes) {
     std::vector<std::vector<std::pair<int, int>>> incidence(n_nodes);
     int n_elem = element_connectivity.rows();
     int nodes_per_elem = element_connectivity.cols();
@@ -107,7 +108,7 @@ std::vector<std::vector<std::pair<int, int>>> BuildNodeIncidence(const Eigen::Ma
     return incidence;
 }
 
-std::vector<std::vector<int>> BuildColorToNodes(const Eigen::VectorXi& colors, int n_colors) {
+std::vector<std::vector<int>> BuildColorToNodes(const VectorXi& colors, int n_colors) {
     std::vector<std::vector<int>> color_to_nodes(n_colors);
     for (int i = 0; i < colors.size(); ++i) {
         int c = colors[i];
@@ -118,7 +119,7 @@ std::vector<std::vector<int>> BuildColorToNodes(const Eigen::VectorXi& colors, i
     return color_to_nodes;
 }
 
-void ANCF3243_B12_matrix(Real L, Real W, Real H, Eigen::MatrixXR& B_inv_out, int n_shape) {
+void ANCF3243_B12_matrix(Real L, Real W, Real H, MatrixXR& B_inv_out, int n_shape) {
     // Reference coordinates of points P1 and P2
     Real u1 = -L / 2.0;
     Real u2 = L / 2.0;
@@ -126,7 +127,7 @@ void ANCF3243_B12_matrix(Real L, Real W, Real H, Eigen::MatrixXR& B_inv_out, int
     Real w = 0.0;
 
     // Create an Eigen matrix
-    Eigen::MatrixXR B = Eigen::MatrixXR::Zero(n_shape, n_shape);
+    MatrixXR B = MatrixXR::Zero(n_shape, n_shape);
 
     // Row 0: Basis function at u1 (b1)
     B(0, 0) = 1.0;
@@ -182,10 +183,10 @@ void ANCF3243_B12_matrix(Real L, Real W, Real H, Eigen::MatrixXR& B_inv_out, int
     B_inv_out = B.transpose().inverse();
 }
 
-void ANCF3243_B12_matrix_flat_per_element(const Eigen::VectorXR& L,
-                                          const Eigen::VectorXR& W,
-                                          const Eigen::VectorXR& H,
-                                          Eigen::VectorXR& B_inv_flat_out,
+void ANCF3243_B12_matrix_flat_per_element(const VectorXR& L,
+                                          const VectorXR& W,
+                                          const VectorXR& H,
+                                          VectorXR& B_inv_flat_out,
                                           int n_shape) {
     if (L.size() != W.size() || L.size() != H.size()) {
         throw std::runtime_error("ANCF3243_B12_matrix_flat_per_element: L/W/H size mismatch.");
@@ -194,14 +195,14 @@ void ANCF3243_B12_matrix_flat_per_element(const Eigen::VectorXR& L,
     const int per = n_shape * n_shape;
     B_inv_flat_out.resize(n_elem * per);
 
-    Eigen::MatrixXR B_inv;
+    MatrixXR B_inv;
     for (int e = 0; e < n_elem; ++e) {
         ANCF3243_B12_matrix(L[e], W[e], H[e], B_inv, n_shape);
         std::memcpy(B_inv_flat_out.data() + e * per, B_inv.data(), static_cast<size_t>(per) * sizeof(Real));
     }
 }
 
-void ANCF3443_B12_matrix(Real L, Real W, Real H, Eigen::MatrixXR& B_inv_out, int n_shape) {
+void ANCF3443_B12_matrix(Real L, Real W, Real H, MatrixXR& B_inv_out, int n_shape) {
     // Reference coordinates of the 4 corner points
     Real u1 = -L / 2.0, v1 = -W / 2.0, w1 = 0.0;  // Point P1
     Real u2 = L / 2.0, v2 = -W / 2.0, w2 = 0.0;   // Point P2
@@ -209,7 +210,7 @@ void ANCF3443_B12_matrix(Real L, Real W, Real H, Eigen::MatrixXR& B_inv_out, int
     Real u4 = -L / 2.0, v4 = W / 2.0, w4 = 0.0;   // Point P4
 
     // Create 16x16 B matrix
-    Eigen::MatrixXR B = Eigen::MatrixXR::Zero(n_shape, n_shape);
+    MatrixXR B = MatrixXR::Zero(n_shape, n_shape);
 
     // Point P1: Row 0-3 (function value + derivatives)
     // Row 0: b_vec(u1, v1, w1)
@@ -411,10 +412,10 @@ void ANCF3443_B12_matrix(Real L, Real W, Real H, Eigen::MatrixXR& B_inv_out, int
     B_inv_out = B.transpose().inverse();
 }
 
-void ANCF3443_B12_matrix_flat_per_element(const Eigen::VectorXR& L,
-                                          const Eigen::VectorXR& W,
-                                          const Eigen::VectorXR& H,
-                                          Eigen::VectorXR& B_inv_flat_out,
+void ANCF3443_B12_matrix_flat_per_element(const VectorXR& L,
+                                          const VectorXR& W,
+                                          const VectorXR& H,
+                                          VectorXR& B_inv_flat_out,
                                           int n_shape) {
     if (L.size() != W.size() || L.size() != H.size()) {
         throw std::runtime_error("ANCF3443_B12_matrix_flat_per_element: L/W/H size mismatch.");
@@ -423,14 +424,14 @@ void ANCF3443_B12_matrix_flat_per_element(const Eigen::VectorXR& L,
     const int per = n_shape * n_shape;
     B_inv_flat_out.resize(n_elem * per);
 
-    Eigen::MatrixXR B_inv;
+    MatrixXR B_inv;
     for (int e = 0; e < n_elem; ++e) {
         ANCF3443_B12_matrix(L[e], W[e], H[e], B_inv, n_shape);
         std::memcpy(B_inv_flat_out.data() + e * per, B_inv.data(), static_cast<size_t>(per) * sizeof(Real));
     }
 }
 
-void ANCF3243_generate_beam_coordinates(int n_beam, Eigen::VectorXR& x12, Eigen::VectorXR& y12, Eigen::VectorXR& z12) {
+void ANCF3243_generate_beam_coordinates(int n_beam, VectorXR& x12, VectorXR& y12, VectorXR& z12) {
     // Initial beam coordinates (first 8 nodes)
     Real x_init[8] = {-1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0};
     Real y_init[8] = {1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0};
@@ -462,10 +463,10 @@ void ANCF3243_generate_beam_coordinates(int n_beam, Eigen::VectorXR& x12, Eigen:
 }
 
 void ANCF3443_generate_beam_coordinates(int n_beam,
-                                        Eigen::VectorXR& x12,
-                                        Eigen::VectorXR& y12,
-                                        Eigen::VectorXR& z12,
-                                        Eigen::MatrixXi& element_connectivity) {
+                                        VectorXR& x12,
+                                        VectorXR& y12,
+                                        VectorXR& z12,
+                                        MatrixXi& element_connectivity) {
     int n_nodes = 4 + 2 * (n_beam - 1);
     int N_dof = n_nodes * 4;
 
@@ -583,7 +584,7 @@ void ANCF3443_generate_beam_coordinates(int n_beam,
     }
 }
 
-void ANCF3243_calculate_offsets(int n_beam, Eigen::VectorXi& offset_start, Eigen::VectorXi& offset_end) {
+void ANCF3243_calculate_offsets(int n_beam, VectorXi& offset_start, VectorXi& offset_end) {
     offset_start.resize(n_beam);
     offset_end.resize(n_beam);
     for (int i = 0; i < n_beam; i++) {
@@ -592,7 +593,7 @@ void ANCF3243_calculate_offsets(int n_beam, Eigen::VectorXi& offset_start, Eigen
     }
 }
 
-void FEAT10_remap_tetgen_indices(const Eigen::VectorXi& tetgen_elem, Eigen::VectorXi& standard_elem) {
+void FEAT10_remap_tetgen_indices(const VectorXi& tetgen_elem, VectorXi& standard_elem) {
     // TetGen order: [v0, v1, v2, v3, (3-4), (1-4), (1-2), (2-3), (2-4), (1-3)]
     // Standard order: [v0, v1, v2, v3, (0-1), (1-2), (0-2), (0-3), (1-3), (2-3)]
     // Mapping indices: [0, 1, 2, 3, 6, 7, 9, 5, 8, 4]
@@ -609,7 +610,7 @@ void FEAT10_remap_tetgen_indices(const Eigen::VectorXi& tetgen_elem, Eigen::Vect
     }
 }
 
-int FEAT10_read_nodes(const std::string& filename, Eigen::MatrixXR& nodes) {
+int FEAT10_read_nodes(const std::string& filename, MatrixXR& nodes) {
     std::ifstream file(filename);
     if (!file.is_open()) {
         MOPHI_ERROR("Could not open node file %s", filename.c_str());
@@ -665,7 +666,7 @@ int FEAT10_read_nodes(const std::string& filename, Eigen::MatrixXR& nodes) {
     return n_nodes;
 }
 
-int FEAT10_read_elements(const std::string& filename, Eigen::MatrixXi& elements) {
+int FEAT10_read_elements(const std::string& filename, MatrixXi& elements) {
     MOPHI_INFO("Reading elements from file: %s", filename.c_str());
     std::ifstream file(filename);
     if (!file.is_open()) {
@@ -718,7 +719,7 @@ int FEAT10_read_elements(const std::string& filename, Eigen::MatrixXi& elements)
 
     // Second pass: fill elements matrix
     for (const auto& ed : elem_data) {
-        Eigen::VectorXi tetgen_elem(10), standard_elem(10);
+        VectorXi tetgen_elem(10), standard_elem(10);
         for (int j = 0; j < 10; j++)
             tetgen_elem(j) = ed.node_ids[j] - (min_node_id == 0 ? 0 : 1);  // adaptive offset
         FEAT10_remap_tetgen_indices(tetgen_elem, standard_elem);
@@ -734,3 +735,5 @@ int FEAT10_read_elements(const std::string& filename, Eigen::MatrixXi& elements)
 }
 
 }  // namespace ANCFCPUUtils
+
+}  // namespace tlfea

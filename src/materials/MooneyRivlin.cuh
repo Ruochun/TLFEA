@@ -14,6 +14,8 @@
 #if defined(__CUDACC__)
     #include <cmath>
 
+namespace tlfea {
+
 __device__ __forceinline__ Real mr_det3x3(const Real A[3][3]) {
     return A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]) - A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0]) +
            A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
@@ -219,4 +221,7 @@ __device__ __forceinline__ void mr_compute_tangent_tensor(const Real F[3][3],
         }
     }
 }
+
+}  // namespace tlfea
+
 #endif

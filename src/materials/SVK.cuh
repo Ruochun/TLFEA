@@ -11,6 +11,9 @@
 
 #pragma once
 #if defined(__CUDACC__)
+
+namespace tlfea {
+
 __device__ __forceinline__ void svk_compute_P_from_trFtF_and_FFtF(const Real F[3][3],
                                                                   Real trFtF,
                                                                   const Real FFtF[3][3],
@@ -112,4 +115,7 @@ __device__ __forceinline__ void svk_compute_P(const Real F[3][3], Real lambda, R
 
     svk_compute_P_from_trFtF_and_FFtF(F, trFtF, FFtF, lambda, mu, P_out);
 }
+
+}  // namespace tlfea
+
 #endif
