@@ -157,8 +157,8 @@ __global__ void precompute_reference_kernel(GPU_ANCF3243_Data* d_data) {
     }
 
     const Real detJ = J[0][0] * (J[1][1] * J[2][2] - J[1][2] * J[2][1]) -
-                        J[0][1] * (J[1][0] * J[2][2] - J[1][2] * J[2][0]) +
-                        J[0][2] * (J[1][0] * J[2][1] - J[1][1] * J[2][0]);
+                      J[0][1] * (J[1][0] * J[2][2] - J[1][2] * J[2][0]) +
+                      J[0][2] * (J[1][0] * J[2][1] - J[1][1] * J[2][0]);
     d_data->detJ_ref(elem_idx, qp_idx) = detJ;
 
     // Solve J^T * grad_s = [ds_dxi, ds_deta, ds_dzeta] for each shape function.
@@ -336,8 +336,8 @@ void GPU_ANCF3243_Data::RetrieveDetJToCPU(std::vector<std::vector<Real>>& detJ) 
     const int n_qp = Quadrature::N_TOTAL_QP_3_2_2;
     detJ.assign(static_cast<size_t>(n_beam), std::vector<Real>(n_qp));
     std::vector<Real> flat(static_cast<size_t>(n_beam * n_qp));
-    MOPHI_GPU_CALL(cudaMemcpy(flat.data(), d_detJ_ref, static_cast<size_t>(n_beam * n_qp) * sizeof(Real),
-                              cudaMemcpyDeviceToHost));
+    MOPHI_GPU_CALL(
+        cudaMemcpy(flat.data(), d_detJ_ref, static_cast<size_t>(n_beam * n_qp) * sizeof(Real), cudaMemcpyDeviceToHost));
     for (int e = 0; e < n_beam; ++e) {
         for (int qp = 0; qp < n_qp; ++qp) {
             detJ[e][qp] = flat[e * n_qp + qp];
@@ -655,8 +655,8 @@ void GPU_ANCF3243_Data::RetrieveDeformationGradientToCPU(
         for (int j = 0; j < Quadrature::N_TOTAL_QP_3_2_2; j++) {
             deformation_gradient[i][j].resize(3, 3);
             MOPHI_GPU_CALL(cudaMemcpy(deformation_gradient[i][j].data(),
-                                      d_F + i * Quadrature::N_TOTAL_QP_3_2_2 * 3 * 3 + j * 3 * 3,
-                                      3 * 3 * sizeof(Real), cudaMemcpyDeviceToHost));
+                                      d_F + i * Quadrature::N_TOTAL_QP_3_2_2 * 3 * 3 + j * 3 * 3, 3 * 3 * sizeof(Real),
+                                      cudaMemcpyDeviceToHost));
         }
     }
 }

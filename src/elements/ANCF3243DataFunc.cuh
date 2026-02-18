@@ -112,8 +112,7 @@ __device__ __forceinline__ void ancf3243_b_vec(Real u, Real v, Real w, Real* out
     out[7] = u * u * u;
 }
 
-__device__ __forceinline__ void
-ancf3243_b_vec_xi(Real xi, Real eta, Real zeta, Real L, Real W, Real H, Real* out) {
+__device__ __forceinline__ void ancf3243_b_vec_xi(Real xi, Real eta, Real zeta, Real L, Real W, Real H, Real* out) {
     Real u = L * xi / 2.0;
     Real v = W * eta / 2.0;
     Real w = H * zeta / 2.0;
@@ -393,8 +392,8 @@ __device__ __forceinline__ void compute_internal_force(int elem_idx, int node_id
         grad_s[2] = d_data->grad_N_ref(elem_idx, qp_idx)(node_idx, 2);
 
         Real scale = d_data->weight_xi()(qp_idx / (Quadrature::N_QP_2 * Quadrature::N_QP_2)) *
-                       d_data->weight_eta()((qp_idx / Quadrature::N_QP_2) % Quadrature::N_QP_2) *
-                       d_data->weight_zeta()(qp_idx % Quadrature::N_QP_2);
+                     d_data->weight_eta()((qp_idx / Quadrature::N_QP_2) % Quadrature::N_QP_2) *
+                     d_data->weight_zeta()(qp_idx % Quadrature::N_QP_2);
         const Real dV = d_data->detJ_ref(elem_idx, qp_idx) * scale;
 #pragma unroll
         for (int r = 0; r < 3; ++r) {
@@ -477,8 +476,8 @@ __device__ __forceinline__ void vbd_accumulate_residual_and_hessian_diag(int ele
     const Real ha1 = d_data->grad_N_ref(elem_idx, qp_idx)(local_node, 1);
     const Real ha2 = d_data->grad_N_ref(elem_idx, qp_idx)(local_node, 2);
     const Real scale = d_data->weight_xi()(qp_idx / (Quadrature::N_QP_2 * Quadrature::N_QP_2)) *
-                         d_data->weight_eta()((qp_idx / Quadrature::N_QP_2) % Quadrature::N_QP_2) *
-                         d_data->weight_zeta()(qp_idx % Quadrature::N_QP_2);
+                       d_data->weight_eta()((qp_idx / Quadrature::N_QP_2) % Quadrature::N_QP_2) *
+                       d_data->weight_zeta()(qp_idx % Quadrature::N_QP_2);
     const Real dV = d_data->detJ_ref(elem_idx, qp_idx) * scale;
 
     const Real P00 = d_data->P(elem_idx, qp_idx)(0, 0);
@@ -692,8 +691,8 @@ __device__ __forceinline__ void compute_hessian_assemble_csr<GPU_ANCF3243_Data>(
     Real lambda = d_data->lambda();
     Real mu = d_data->mu();
     Real scale = d_data->weight_xi()(qp_idx / (Quadrature::N_QP_2 * Quadrature::N_QP_2)) *
-                   d_data->weight_eta()((qp_idx / Quadrature::N_QP_2) % Quadrature::N_QP_2) *
-                   d_data->weight_zeta()(qp_idx % Quadrature::N_QP_2);
+                 d_data->weight_eta()((qp_idx / Quadrature::N_QP_2) % Quadrature::N_QP_2) *
+                 d_data->weight_zeta()(qp_idx % Quadrature::N_QP_2);
     Real dV = d_data->detJ_ref(elem_idx, qp_idx) * scale;
 
     const bool use_mr = (d_data->material_model() == MATERIAL_MODEL_MOONEY_RIVLIN);

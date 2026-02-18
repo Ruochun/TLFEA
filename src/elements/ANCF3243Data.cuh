@@ -412,8 +412,8 @@ struct GPU_ANCF3243_Data : public ElementBase {
     void Initialize() {
         MOPHI_GPU_CALL(
             cudaMalloc(&d_B_inv, n_beam * Quadrature::N_SHAPE_3243 * Quadrature::N_SHAPE_3243 * sizeof(Real)));
-        MOPHI_GPU_CALL(cudaMalloc(
-            &d_grad_N_ref, n_beam * Quadrature::N_TOTAL_QP_3_2_2 * Quadrature::N_SHAPE_3243 * 3 * sizeof(Real)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_grad_N_ref,
+                                  n_beam * Quadrature::N_TOTAL_QP_3_2_2 * Quadrature::N_SHAPE_3243 * 3 * sizeof(Real)));
         MOPHI_GPU_CALL(cudaMalloc(&d_detJ_ref, n_beam * Quadrature::N_TOTAL_QP_3_2_2 * sizeof(Real)));
 
         MOPHI_GPU_CALL(cudaMalloc(&d_gauss_xi_m, Quadrature::N_QP_6 * sizeof(Real)));

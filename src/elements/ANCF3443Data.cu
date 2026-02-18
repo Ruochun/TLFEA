@@ -149,8 +149,8 @@ __global__ void precompute_reference_kernel(GPU_ANCF3443_Data* d_data) {
     }
 
     const Real detJ = J[0][0] * (J[1][1] * J[2][2] - J[1][2] * J[2][1]) -
-                        J[0][1] * (J[1][0] * J[2][2] - J[1][2] * J[2][0]) +
-                        J[0][2] * (J[1][0] * J[2][1] - J[1][1] * J[2][0]);
+                      J[0][1] * (J[1][0] * J[2][2] - J[1][2] * J[2][0]) +
+                      J[0][2] * (J[1][0] * J[2][1] - J[1][1] * J[2][0]);
     d_data->detJ_ref(elem_idx, qp_idx) = detJ;
 
     Real JT[3][3];
@@ -278,9 +278,9 @@ void GPU_ANCF3443_Data::PrintDsDuPre() {
     std::vector<Real> h_grad(static_cast<size_t>(total_size));
     std::vector<Real> h_detJ(static_cast<size_t>(n_beam * n_qp));
 
-    MOPHI_GPU_CALL(cudaMemcpy(h_grad.data(), d_grad_N_ref, static_cast<size_t>(total_size) * sizeof(double),
+    MOPHI_GPU_CALL(cudaMemcpy(h_grad.data(), d_grad_N_ref, static_cast<size_t>(total_size) * sizeof(Real),
                               cudaMemcpyDeviceToHost));
-    MOPHI_GPU_CALL(cudaMemcpy(h_detJ.data(), d_detJ_ref, static_cast<size_t>(n_beam * n_qp) * sizeof(double),
+    MOPHI_GPU_CALL(cudaMemcpy(h_detJ.data(), d_detJ_ref, static_cast<size_t>(n_beam * n_qp) * sizeof(Real),
                               cudaMemcpyDeviceToHost));
 
     for (int e = 0; e < n_beam; ++e) {
@@ -306,8 +306,8 @@ void GPU_ANCF3443_Data::RetrieveDetJToCPU(std::vector<std::vector<Real>>& detJ) 
     const int n_qp = Quadrature::N_TOTAL_QP_4_4_3;
     detJ.assign(static_cast<size_t>(n_beam), std::vector<Real>(n_qp));
     std::vector<Real> flat(static_cast<size_t>(n_beam * n_qp));
-    MOPHI_GPU_CALL(cudaMemcpy(flat.data(), d_detJ_ref, static_cast<size_t>(n_beam * n_qp) * sizeof(double),
-                              cudaMemcpyDeviceToHost));
+    MOPHI_GPU_CALL(
+        cudaMemcpy(flat.data(), d_detJ_ref, static_cast<size_t>(n_beam * n_qp) * sizeof(Real), cudaMemcpyDeviceToHost));
     for (int e = 0; e < n_beam; ++e) {
         for (int qp = 0; qp < n_qp; ++qp) {
             detJ[e][qp] = flat[e * n_qp + qp];
@@ -323,7 +323,7 @@ void GPU_ANCF3443_Data::CalcMassMatrix() {
     int h_nnz = 0;
     MOPHI_GPU_CALL(cudaMemcpy(&h_nnz, d_nnz, sizeof(int), cudaMemcpyDeviceToHost));
     if (h_nnz > 0) {
-        MOPHI_GPU_CALL(cudaMemset(d_csr_values, 0, static_cast<size_t>(h_nnz) * sizeof(double)));
+        MOPHI_GPU_CALL(cudaMemset(d_csr_values, 0, static_cast<size_t>(h_nnz) * sizeof(Real)));
     }
 
     // Mass terms computation
@@ -362,7 +362,7 @@ void GPU_ANCF3443_Data::BuildMassCSRPattern() {
 
     MOPHI_GPU_CALL(cudaMalloc((void**)&d_csr_offsets, static_cast<size_t>(n_coef + 1) * sizeof(int)));
     MOPHI_GPU_CALL(cudaMalloc((void**)&d_csr_columns, static_cast<size_t>(nnz) * sizeof(int)));
-    MOPHI_GPU_CALL(cudaMalloc((void**)&d_csr_values, static_cast<size_t>(nnz) * sizeof(double)));
+    MOPHI_GPU_CALL(cudaMalloc((void**)&d_csr_values, static_cast<size_t>(nnz) * sizeof(Real)));
     MOPHI_GPU_CALL(cudaMalloc((void**)&d_nnz, sizeof(int)));
 
     int* d_row_counts = nullptr;
@@ -386,7 +386,7 @@ void GPU_ANCF3443_Data::BuildMassCSRPattern() {
     }
 
     MOPHI_GPU_CALL(cudaMemcpy(d_nnz, &nnz, sizeof(int), cudaMemcpyHostToDevice));
-    MOPHI_GPU_CALL(cudaMemset(d_csr_values, 0, static_cast<size_t>(nnz) * sizeof(double)));
+    MOPHI_GPU_CALL(cudaMemset(d_csr_values, 0, static_cast<size_t>(nnz) * sizeof(Real)));
 
     MOPHI_GPU_CALL(cudaFree(d_row_counts));
     MOPHI_GPU_CALL(cudaFree(d_keys));
@@ -467,7 +467,7 @@ void GPU_ANCF3443_Data::ConvertToCSR_ConstraintJacT() {
 
     MOPHI_GPU_CALL(cudaMalloc((void**)&d_cj_csr_offsets, static_cast<size_t>(num_rows + 1) * sizeof(int)));
     MOPHI_GPU_CALL(cudaMalloc((void**)&d_cj_csr_columns, static_cast<size_t>(nnz) * sizeof(int)));
-    MOPHI_GPU_CALL(cudaMalloc((void**)&d_cj_csr_values, static_cast<size_t>(nnz) * sizeof(double)));
+    MOPHI_GPU_CALL(cudaMalloc((void**)&d_cj_csr_values, static_cast<size_t>(nnz) * sizeof(Real)));
     MOPHI_GPU_CALL(cudaMalloc((void**)&d_cj_nnz, sizeof(int)));
 
     int* d_row_counts = nullptr;
@@ -522,7 +522,7 @@ void GPU_ANCF3443_Data::ConvertToCSR_ConstraintJac() {
 
     MOPHI_GPU_CALL(cudaMalloc((void**)&d_j_csr_offsets, static_cast<size_t>(n_constraint + 1) * sizeof(int)));
     MOPHI_GPU_CALL(cudaMalloc((void**)&d_j_csr_columns, static_cast<size_t>(nnz) * sizeof(int)));
-    MOPHI_GPU_CALL(cudaMalloc((void**)&d_j_csr_values, static_cast<size_t>(nnz) * sizeof(double)));
+    MOPHI_GPU_CALL(cudaMalloc((void**)&d_j_csr_values, static_cast<size_t>(nnz) * sizeof(Real)));
     MOPHI_GPU_CALL(cudaMalloc((void**)&d_j_nnz, sizeof(int)));
 
     {
@@ -568,14 +568,14 @@ void GPU_ANCF3443_Data::RetrieveMassCSRToCPU(std::vector<int>& offsets,
     MOPHI_GPU_CALL(
         cudaMemcpy(columns.data(), d_csr_columns, static_cast<size_t>(h_nnz) * sizeof(int), cudaMemcpyDeviceToHost));
     MOPHI_GPU_CALL(
-        cudaMemcpy(values.data(), d_csr_values, static_cast<size_t>(h_nnz) * sizeof(double), cudaMemcpyDeviceToHost));
+        cudaMemcpy(values.data(), d_csr_values, static_cast<size_t>(h_nnz) * sizeof(Real), cudaMemcpyDeviceToHost));
 }
 
 void GPU_ANCF3443_Data::RetrieveInternalForceToCPU(Eigen::VectorXR& internal_force) {
     int expected_size = n_coef * 3;
     internal_force.resize(expected_size);
 
-    MOPHI_GPU_CALL(cudaMemcpy(internal_force.data(), d_f_int, expected_size * sizeof(double), cudaMemcpyDeviceToHost));
+    MOPHI_GPU_CALL(cudaMemcpy(internal_force.data(), d_f_int, expected_size * sizeof(Real), cudaMemcpyDeviceToHost));
 }
 
 void GPU_ANCF3443_Data::RetrieveConstraintJacobianCSRToCPU(std::vector<int>& offsets,
@@ -606,7 +606,7 @@ void GPU_ANCF3443_Data::RetrieveConstraintJacobianCSRToCPU(std::vector<int>& off
     if (h_nnz > 0) {
         MOPHI_GPU_CALL(cudaMemcpy(columns.data(), d_j_csr_columns, static_cast<size_t>(h_nnz) * sizeof(int),
                                   cudaMemcpyDeviceToHost));
-        MOPHI_GPU_CALL(cudaMemcpy(values.data(), d_j_csr_values, static_cast<size_t>(h_nnz) * sizeof(double),
+        MOPHI_GPU_CALL(cudaMemcpy(values.data(), d_j_csr_values, static_cast<size_t>(h_nnz) * sizeof(Real),
                                   cudaMemcpyDeviceToHost));
     }
 }
@@ -619,8 +619,8 @@ void GPU_ANCF3443_Data::RetrieveDeformationGradientToCPU(
         for (int j = 0; j < Quadrature::N_TOTAL_QP_4_4_3; j++) {
             deformation_gradient[i][j].resize(3, 3);
             MOPHI_GPU_CALL(cudaMemcpy(deformation_gradient[i][j].data(),
-                                      d_F + i * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 + j * 3 * 3,
-                                      3 * 3 * sizeof(double), cudaMemcpyDeviceToHost));
+                                      d_F + i * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 + j * 3 * 3, 3 * 3 * sizeof(Real),
+                                      cudaMemcpyDeviceToHost));
         }
     }
 }
@@ -632,7 +632,7 @@ void GPU_ANCF3443_Data::RetrievePFromFToCPU(std::vector<std::vector<Eigen::Matri
         for (int j = 0; j < Quadrature::N_TOTAL_QP_4_4_3; j++) {
             p_from_F[i][j].resize(3, 3);
             MOPHI_GPU_CALL(cudaMemcpy(p_from_F[i][j].data(), d_P + i * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 + j * 3 * 3,
-                                      3 * 3 * sizeof(double), cudaMemcpyDeviceToHost));
+                                      3 * 3 * sizeof(Real), cudaMemcpyDeviceToHost));
         }
     }
 }
@@ -640,7 +640,7 @@ void GPU_ANCF3443_Data::RetrievePFromFToCPU(std::vector<std::vector<Eigen::Matri
 void GPU_ANCF3443_Data::RetrieveConstraintDataToCPU(Eigen::VectorXR& constraint) {
     int expected_size = n_constraint;
     constraint.resize(expected_size);
-    MOPHI_GPU_CALL(cudaMemcpy(constraint.data(), d_constraint, expected_size * sizeof(double), cudaMemcpyDeviceToHost));
+    MOPHI_GPU_CALL(cudaMemcpy(constraint.data(), d_constraint, expected_size * sizeof(Real), cudaMemcpyDeviceToHost));
 }
 
 void GPU_ANCF3443_Data::RetrieveConstraintJacobianToCPU(Eigen::MatrixXR& constraint_jac) {
@@ -692,9 +692,9 @@ void GPU_ANCF3443_Data::RetrievePositionToCPU(Eigen::VectorXR& x12, Eigen::Vecto
     x12.resize(expected_size);
     y12.resize(expected_size);
     z12.resize(expected_size);
-    MOPHI_GPU_CALL(cudaMemcpy(x12.data(), d_x12, expected_size * sizeof(double), cudaMemcpyDeviceToHost));
-    MOPHI_GPU_CALL(cudaMemcpy(y12.data(), d_y12, expected_size * sizeof(double), cudaMemcpyDeviceToHost));
-    MOPHI_GPU_CALL(cudaMemcpy(z12.data(), d_z12, expected_size * sizeof(double), cudaMemcpyDeviceToHost));
+    MOPHI_GPU_CALL(cudaMemcpy(x12.data(), d_x12, expected_size * sizeof(Real), cudaMemcpyDeviceToHost));
+    MOPHI_GPU_CALL(cudaMemcpy(y12.data(), d_y12, expected_size * sizeof(Real), cudaMemcpyDeviceToHost));
+    MOPHI_GPU_CALL(cudaMemcpy(z12.data(), d_z12, expected_size * sizeof(Real), cudaMemcpyDeviceToHost));
 }
 
 __global__ void compute_internal_force_kernel(GPU_ANCF3443_Data* d_data) {

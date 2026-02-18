@@ -23,9 +23,9 @@
 #include "utils/cpu_utils.h"
 #include "utils/quadrature_utils.h"
 
-const double E = 7e8;      // Young's modulus
-const double nu = 0.33;    // Poisson's ratio
-const double rho0 = 2700;  // Density
+const Real E = 7e8;      // Young's modulus
+const Real nu = 0.33;    // Poisson's ratio
+const Real rho0 = 2700;  // Density
 
 int main() {
     // Initialize MoPhiEssentials logging
@@ -128,7 +128,7 @@ int main() {
     }
     std::cout << "done retrieving ref_grads" << std::endl;
 
-    std::vector<std::vector<double>> detJ;
+    std::vector<std::vector<Real>> detJ;
     gpu_t10_data.RetrieveDetJToCPU(detJ);
 
     std::cout << "detJ:" << std::endl;

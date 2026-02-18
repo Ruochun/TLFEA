@@ -30,9 +30,9 @@
 #include "utils/quadrature_utils.h"
 
 // Material properties for aluminum
-const double E = 7e10;     // Young's modulus: 7e10 Pa (70 GPa)
-const double nu = 0.33;    // Poisson's ratio
-const double rho0 = 2700;  // Density (kg/m³)
+const Real E = 7e10;     // Young's modulus: 7e10 Pa (70 GPa)
+const Real nu = 0.33;    // Poisson's ratio
+const Real rho0 = 2700;  // Density (kg/m³)
 
 // Simulation parameters
 const int N_TIMESTEPS = 10000;     // Number of timesteps to simulate
@@ -121,15 +121,15 @@ int main() {
     // ==========================================================================
 
     // Find the x-coordinate range to determine beam ends
-    double x_min = h_x12.minCoeff();
-    double x_max = h_x12.maxCoeff();
-    double x_range = x_max - x_min;
+    Real x_min = h_x12.minCoeff();
+    Real x_max = h_x12.maxCoeff();
+    Real x_range = x_max - x_min;
 
     std::cout << "Beam x-coordinate range: [" << x_min << ", " << x_max << "]" << std::endl;
 
     // Fix nodes at x ≈ 0 (the left end of the beam)
     std::vector<int> fixed_node_indices;
-    double fixed_tolerance = 0.1 * x_range;  // 10% of beam length
+    Real fixed_tolerance = 0.1 * x_range;  // 10% of beam length
     for (int i = 0; i < h_x12.size(); ++i) {
         if (std::abs(h_x12(i) - x_min) < fixed_tolerance) {
             fixed_node_indices.push_back(i);
@@ -154,7 +154,7 @@ int main() {
     // Apply a concentrated load at x ≈ x_max (the right end of the beam)
     // This simulates a load applied to the free end of a cantilever beam
     std::vector<int> loaded_node_indices;
-    double load_tolerance = 0.1 * x_range;  // 10% of beam length
+    Real load_tolerance = 0.1 * x_range;  // 10% of beam length
     for (int i = 0; i < h_x12.size(); ++i) {
         if (std::abs(h_x12(i) - x_max) < load_tolerance) {
             loaded_node_indices.push_back(i);
@@ -163,8 +163,8 @@ int main() {
 
     // Apply a downward force in the -z direction
     // Coordinate system: x=axial (beam length), y=width, z=height (positive up)
-    double total_load = -1000.0;  // Total load in Newtons (negative = downward in z)
-    double load_per_node = total_load / loaded_node_indices.size();
+    Real total_load = -1000.0;  // Total load in Newtons (negative = downward in z)
+    Real load_per_node = total_load / loaded_node_indices.size();
 
     for (int i : loaded_node_indices) {
         h_f_ext(3 * i + 2) = load_per_node;  // Apply force in z-direction (index 2)

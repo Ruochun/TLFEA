@@ -108,10 +108,10 @@ struct LinearConstraintCSR {
     //
     // The constraint value is:
     //   c[row] = sum_j values[j] * dof(columns[j]) - rhs[row]
-    std::vector<int> offsets;    // size = n_rows + 1
-    std::vector<int> columns;    // size = nnz
+    std::vector<int> offsets;  // size = n_rows + 1
+    std::vector<int> columns;  // size = nnz
     std::vector<Real> values;  // size = nnz
-    Eigen::VectorXR rhs;         // size = n_rows
+    Eigen::VectorXR rhs;       // size = n_rows
 
     int NumRows() const { return static_cast<int>(rhs.size()); }
     int NumNonZeros() const { return static_cast<int>(columns.size()); }

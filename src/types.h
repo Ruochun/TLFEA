@@ -18,8 +18,8 @@ typedef double Real;
 
 // Eigen type aliases using Real
 namespace Eigen {
-    typedef Matrix<Real, Dynamic, Dynamic> MatrixXR;
-    typedef Matrix<Real, Dynamic, 1> VectorXR;
-    typedef Matrix<Real, 3, 3> Matrix3R;
-    typedef Matrix<Real, 3, 1> Vector3R;
-}
+typedef Matrix<Real, Dynamic, Dynamic> MatrixXR;
+typedef Matrix<Real, Dynamic, 1> VectorXR;
+typedef Matrix<Real, 3, 3> Matrix3R;
+typedef Matrix<Real, 3, 1> Vector3R;
+}  // namespace Eigen
