@@ -22,7 +22,7 @@
 #include <sstream>
 
 #include "elements/FEAT10Data.cuh"
-#include "solvers/SyncedNesterov.cuh"
+#include "solvers/SyncedAdamW.cuh"
 #include "types.h"
 #include "utils/cpu_utils.h"
 #include "utils/mesh_utils.h"
@@ -36,8 +36,12 @@ const Real nu = 0.33;    // Poisson's ratio
 const Real rho0 = 2700;  // Density (kg/m³)
 
 // Simulation parameters
-const int N_TIMESTEPS = 10000;     // Number of timesteps to simulate
-const int OUTPUT_FREQUENCY = 100;  // Output every N timesteps
+const Real TOTAL_TIME = 1.;                                // Total simulation time
+const Real STEP_SIZE = 1e-3;                               // Time step size
+const int N_TIMESTEPS = (int)(TOTAL_TIME / STEP_SIZE);     // Number of timesteps to simulate
+const int FPS = 100;                                       // Output frame per sec
+const int OUTPUT_FREQUENCY = (int)(1. / STEP_SIZE) / 100;  // Output every N timesteps
+const int TOTAL_FRAME = (int)(TOTAL_TIME * FPS);           // Total number of frames output
 
 int main() {
     std::cout << "=======================================================" << std::endl;
@@ -210,15 +214,16 @@ int main() {
     // Setup solver
     // ==========================================================================
 
-    // alpha, rho, inner_tol, outer_tol, max_outer, max_inner, time_step
-    SyncedNesterovParams params = {1.0e-8, 1e14, 1.0e-6, 1.0e-6, 5, 300, 1.0e-4};
+    // lr, beta1, beta2, eps, weight_decay, lr_decay, inner_tol, outer_tol, rho,
+    // max_outer, max_inner, time_step, convergence_check_interval, inner_rtol
+    SyncedAdamWParams params = {2e-4, 0.9, 0.999, 1e-8, 1e-4, 0.995, 1e-1, 1e-6, 1e14, 5, 300, STEP_SIZE, 10, 0.0};
 
-    SyncedNesterovSolver solver(&gpu_t10_data, gpu_t10_data.get_n_constraint());
+    SyncedAdamWSolver solver(&gpu_t10_data, gpu_t10_data.get_n_constraint());
     solver.Setup();
     solver.SetParameters(&params);
 
-    std::cout << "Solver initialized: SyncedNesterov with h=" << std::scientific << params.time_step
-              << std::defaultfloat << std::endl;
+    std::cout << "Solver initialized: SyncedAdamW with h=" << std::scientific << params.time_step << std::defaultfloat
+              << std::endl;
 
     // ==========================================================================
     // Run simulation and output results
@@ -226,6 +231,7 @@ int main() {
 
     std::cout << "Starting simulation: " << N_TIMESTEPS << " timesteps, output every " << OUTPUT_FREQUENCY << " steps"
               << std::endl;
+    int curr_frame = 0;
 
     // Output initial configuration
     VectorXR x12, y12, z12;
@@ -250,14 +256,16 @@ int main() {
             gpu_t10_data.RetrievePositionToCPU(x12, y12, z12);
 
             // Create filename with timestep
+            curr_frame++;
             std::stringstream filename;
-            filename << "output_beam_" << std::setfill('0') << std::setw(5) << step << ".vtk";
+            filename << "output_beam_" << std::setfill('0') << std::setw(5) << curr_frame << ".vtk";
 
             bool write_success = ANCFCPUUtils::WriteFEAT10ToVTK(filename.str(), nodes, elements, x12, y12, z12);
             if (write_success) {
-                std::cout << "Step " << step << "/" << N_TIMESTEPS << ": Saved to " << filename.str() << std::endl;
+                std::cout << "Frame " << curr_frame << "/" << TOTAL_FRAME << ": Saved to " << filename.str()
+                          << std::endl;
             } else {
-                std::cerr << "Step " << step << "/" << N_TIMESTEPS << ": Failed to write VTK file" << std::endl;
+                std::cerr << "Frame " << curr_frame << "/" << TOTAL_FRAME << ": Failed to write VTK file" << std::endl;
             }
         }
     }
