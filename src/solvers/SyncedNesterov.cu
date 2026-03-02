@@ -125,6 +125,7 @@ __global__ void one_step_nesterov_kernel(ElementType* data, SyncedNesterovSolver
             if (tid == 0) {
                 *d_nesterov_solver->prev_norm_g() = 0.0;
                 *d_nesterov_solver->norm_g() = 0.0;
+                *d_nesterov_solver->inner_flag() = 0;
             }
 
             grid.sync();

@@ -132,6 +132,7 @@ __global__ void one_step_adamw_kernel_impl(ElementType* d_data, SyncedAdamWSolve
 
             if (tid == 0) {
                 *d_adamw_solver->norm_g() = 0.0;
+                *d_adamw_solver->inner_flag() = 0;
             }
 
             grid.sync();
