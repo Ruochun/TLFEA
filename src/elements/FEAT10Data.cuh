@@ -572,6 +572,14 @@ struct GPU_FEAT10_Data : public ElementBase {
         return d_h_z12;
     }
 
+    Real* GetInternalForceDevicePtr() {
+        return d_f_int;
+    }
+
+    const Real* GetInternalForceDevicePtr() const {
+        return d_f_int;
+    }
+
     Real* GetExternalForceDevicePtr() {
         return d_f_ext;
     }

@@ -62,3 +62,24 @@ target_include_directories(beam_simulation PRIVATE
 set_target_properties(beam_simulation PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
+
+# Add the Newton solver beam demo
+add_executable(beam_newton_demo
+    beam_newton_demo.cc
+)
+
+target_link_libraries(beam_newton_demo
+    tlfea_lib
+    Eigen3::Eigen
+    CUDA::cudart
+    mophi_essentials
+)
+
+target_include_directories(beam_newton_demo PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/external/MoPhiEssentials/src
+)
+
+set_target_properties(beam_newton_demo PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+)
