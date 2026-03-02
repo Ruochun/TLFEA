@@ -287,13 +287,6 @@ __global__ void one_step_nesterov_kernel(ElementType* data, SyncedNesterovSolver
                 }
             }
 
-            // Update v_prev for next outer iteration
-            if (tid < d_nesterov_solver->get_n_coef() * 3) {
-                d_nesterov_solver->v_prev()[tid] = d_nesterov_solver->v_guess()[tid];
-            }
-
-            grid.sync();
-
             // Update positions
             if (tid < d_nesterov_solver->get_n_coef()) {
                 data->x12()(tid) = d_nesterov_solver->x12_prev()(tid) +
@@ -342,6 +335,13 @@ __global__ void one_step_nesterov_kernel(ElementType* data, SyncedNesterovSolver
         }
         grid.sync();
     }
+
+    // Update v_prev for the next timestep using the converged velocity
+    if (tid < d_nesterov_solver->get_n_coef() * 3) {
+        d_nesterov_solver->v_prev()[tid] = d_nesterov_solver->v_guess()[tid];
+    }
+
+    grid.sync();
 
     // Final position update
     if (tid < d_nesterov_solver->get_n_coef()) {

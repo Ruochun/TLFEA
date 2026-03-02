@@ -272,13 +272,6 @@ __global__ void one_step_adamw_kernel_impl(ElementType* d_data, SyncedAdamWSolve
                 }
             }
 
-            // Update v_prev
-            if (tid < d_adamw_solver->get_n_coef() * 3) {
-                d_adamw_solver->v_prev()[tid] = d_adamw_solver->v_guess()[tid];
-            }
-
-            grid.sync();
-
             // Update positions
             if (tid < d_adamw_solver->get_n_coef()) {
                 d_data->x12()(tid) = d_adamw_solver->x12_prev()(tid) +
@@ -326,6 +319,13 @@ __global__ void one_step_adamw_kernel_impl(ElementType* d_data, SyncedAdamWSolve
             grid.sync();
         }
     }
+
+    // Update v_prev for the next timestep using the converged velocity
+    if (tid < d_adamw_solver->get_n_coef() * 3) {
+        d_adamw_solver->v_prev()[tid] = d_adamw_solver->v_guess()[tid];
+    }
+
+    grid.sync();
 
     // Final position update
     if (tid < d_adamw_solver->get_n_coef()) {

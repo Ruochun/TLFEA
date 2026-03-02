@@ -396,8 +396,6 @@ void SyncedAdamWNocoopSolver::OneStepAdamWNocoop() {
             //   }
             // }
 
-            adamw_update_v_prev_kernel<<<blocks_dof, threadsPerBlock>>>(d_adamw_solver_);
-
             adamw_update_positions_from_prev_kernel<<<blocks_coef, threadsPerBlock>>>(typed_data, d_adamw_solver_);
 
             if (n_constraints_ > 0) {
@@ -429,6 +427,8 @@ void SyncedAdamWNocoopSolver::OneStepAdamWNocoop() {
                 }
             }
         }
+
+        adamw_update_v_prev_kernel<<<blocks_dof, threadsPerBlock>>>(d_adamw_solver_);
 
         adamw_update_positions_from_prev_kernel<<<blocks_coef, threadsPerBlock>>>(typed_data, d_adamw_solver_);
     };
