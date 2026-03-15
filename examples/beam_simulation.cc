@@ -233,40 +233,96 @@ int main() {
               << std::endl;
     int curr_frame = 0;
 
-    // Output initial configuration
-    VectorXR x12, y12, z12;
-    gpu_t10_data.RetrievePositionToCPU(x12, y12, z12);
+    // Retrieve mass CSR once — it is constant throughout the simulation
+    std::vector<int>  moff, mcols;
+    std::vector<Real> mvals;
+    gpu_t10_data.RetrieveMassCSRToCPU(moff, mcols, mvals);
 
-    std::stringstream ss;
-    ss << "output_beam_" << std::setfill('0') << std::setw(5) << 0 << ".vtk";
-    bool success = ANCFCPUUtils::WriteFEAT10ToVTK(ss.str(), nodes, elements, x12, y12, z12);
-    if (success) {
-        std::cout << "Saved initial state to " << ss.str() << std::endl;
-    } else {
-        std::cerr << "Failed to write initial VTK file" << std::endl;
-        // Continue simulation even if output fails - computation is still valuable
+    // Print energy table header
+    std::cout << "\n"
+              << std::setw(10) << "Time [s]"
+              << std::setw(18) << "KE [J]"
+              << std::setw(18) << "SE [J]"
+              << std::setw(18) << "Total E [J]"
+              << "\n"
+              << std::string(64, '-') << "\n";
+
+    // Output initial configuration
+    {
+        VectorXR x12, y12, z12;
+        gpu_t10_data.RetrievePositionToCPU(x12, y12, z12);
+        std::stringstream ss;
+        ss << "output_beam_" << std::setfill('0') << std::setw(5) << 0 << ".vtk";
+        ANCFCPUUtils::WriteFEAT10ToVTK(ss.str(), nodes, elements, x12, y12, z12);
+        std::cout << std::setw(10) << std::fixed << std::setprecision(4) << 0.0
+                  << std::setw(18) << std::scientific << std::setprecision(6) << 0.0
+                  << std::setw(18) << 0.0
+                  << std::setw(18) << 0.0
+                  << "  [frame 0 → " << ss.str() << "]\n";
     }
+
+    // Buffers reused across output frames
+    VectorXR x_before, y_before, z_before;
 
     // Run simulation loop
     for (int step = 1; step <= N_TIMESTEPS; step++) {
+        bool output_this_step = (step % OUTPUT_FREQUENCY == 0);
+
+        // Save positions just before solving so we can estimate velocity at output frames
+        if (output_this_step) {
+            gpu_t10_data.RetrievePositionToCPU(x_before, y_before, z_before);
+        }
+
         solver.Solve();
 
         // Output at specified frequency
-        if (step % OUTPUT_FREQUENCY == 0) {
+        if (output_this_step) {
+            curr_frame++;
+            Real t = step * STEP_SIZE;
+
+            VectorXR x12, y12, z12;
             gpu_t10_data.RetrievePositionToCPU(x12, y12, z12);
 
-            // Create filename with timestep
-            curr_frame++;
+            // Write VTK
             std::stringstream filename;
             filename << "output_beam_" << std::setfill('0') << std::setw(5) << curr_frame << ".vtk";
+            ANCFCPUUtils::WriteFEAT10ToVTK(filename.str(), nodes, elements, x12, y12, z12);
 
-            bool write_success = ANCFCPUUtils::WriteFEAT10ToVTK(filename.str(), nodes, elements, x12, y12, z12);
-            if (write_success) {
-                std::cout << "Frame " << curr_frame << "/" << TOTAL_FRAME << ": Saved to " << filename.str()
-                          << std::endl;
-            } else {
-                std::cerr << "Frame " << curr_frame << "/" << TOTAL_FRAME << ": Failed to write VTK file" << std::endl;
+            // Estimate velocity: v ≈ (x_{n+1} − x_n) / h
+            int n_dof = n_nodes * 3;
+            VectorXR v_cpu(n_dof);
+            for (int i = 0; i < n_nodes; ++i) {
+                v_cpu(3 * i + 0) = (x12(i) - x_before(i)) / STEP_SIZE;
+                v_cpu(3 * i + 1) = (y12(i) - y_before(i)) / STEP_SIZE;
+                v_cpu(3 * i + 2) = (z12(i) - z_before(i)) / STEP_SIZE;
             }
+
+            // KE = (1/2) v^T M v  (exact, using mass CSR)
+            Real KE = 0.0;
+            for (int ni = 0; ni < n_nodes; ++ni) {
+                for (int idx = moff[ni]; idx < moff[ni + 1]; ++idx) {
+                    int  nj    = mcols[idx];
+                    Real M_ij  = mvals[idx];
+                    for (int d = 0; d < 3; ++d)
+                        KE += 0.5 * M_ij * v_cpu(3 * ni + d) * v_cpu(3 * nj + d);
+                }
+            }
+
+            // SE = (1/2) f_int · (h·v) = (1/2) f_int · Δx  (linearized work estimate)
+            VectorXR f_int_cpu;
+            gpu_t10_data.RetrieveInternalForceToCPU(f_int_cpu);
+            Real SE = 0.0;
+            for (int i = 0; i < n_dof; ++i)
+                SE += 0.5 * f_int_cpu(i) * STEP_SIZE * v_cpu(i);
+
+            Real TE = KE + SE;
+
+            std::cout << std::setw(10) << std::fixed << std::setprecision(4) << t
+                      << std::setw(18) << std::scientific << std::setprecision(6) << KE
+                      << std::setw(18) << SE
+                      << std::setw(18) << TE
+                      << "  [frame " << curr_frame << "/" << TOTAL_FRAME
+                      << " → " << filename.str() << "]\n";
         }
     }
 
@@ -276,11 +332,10 @@ int main() {
 
     gpu_t10_data.Destroy();
 
-    std::cout << "=======================================================" << std::endl;
-    std::cout << "  Simulation Complete!" << std::endl;
-    std::cout << "  Output files: output_beam_*.vtk" << std::endl;
-    std::cout << "  Visualize with: paraview output_beam_*.vtk" << std::endl;
-    std::cout << "=======================================================" << std::endl;
+    std::cout << "\n=======================================================\n"
+              << "  Simulation Complete!\n"
+              << "  ParaView output: output_beam_*.vtk\n"
+              << "=======================================================\n";
 
     return 0;
 }
