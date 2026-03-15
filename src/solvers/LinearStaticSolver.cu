@@ -39,13 +39,13 @@
 
 // cuBLAS error checking (analogous to CHECK_CUSPARSE in cuda_utils.h)
 #ifndef CHECK_CUBLAS
-#define CHECK_CUBLAS(func)                                                                           \
-    {                                                                                                \
-        cublasStatus_t status = (func);                                                              \
-        if (status != CUBLAS_STATUS_SUCCESS) {                                                       \
-            MOPHI_ERROR("cuBLAS API failed with error code %d at %s:%d", status, __FILE__, __LINE__); \
-        }                                                                                            \
-    }
+    #define CHECK_CUBLAS(func)                                                                            \
+        {                                                                                                 \
+            cublasStatus_t status = (func);                                                               \
+            if (status != CUBLAS_STATUS_SUCCESS) {                                                        \
+                MOPHI_ERROR("cuBLAS API failed with error code %d at %s:%d", status, __FILE__, __LINE__); \
+            }                                                                                             \
+        }
 #endif
 
 namespace tlfea {
@@ -78,17 +78,18 @@ __global__ void build_stiffness_keys_kernel(GPU_FEAT10_Data* d_data, unsigned lo
     const int total = d_data->gpu_n_elem() * STIFFNESS_KEYS_PER_ELEM;
 
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
-    if (tid >= total) return;
+    if (tid >= total)
+        return;
 
-    const int elem      = tid / STIFFNESS_KEYS_PER_ELEM;
-    const int rem       = tid % STIFFNESS_KEYS_PER_ELEM;
+    const int elem = tid / STIFFNESS_KEYS_PER_ELEM;
+    const int rem = tid % STIFFNESS_KEYS_PER_ELEM;
     const int node_pair = rem / 9;  // 0..99 (10 × 10 node combinations)
-    const int dof_pair  = rem % 9;  // 0..8  (3 × 3 DOF combinations)
+    const int dof_pair = rem % 9;   // 0..8  (3 × 3 DOF combinations)
 
     const int i_local = node_pair / 10;  // 0..9
     const int j_local = node_pair % 10;  // 0..9
-    const int dof_d   = dof_pair / 3;    // 0..2
-    const int dof_e   = dof_pair % 3;    // 0..2
+    const int dof_d = dof_pair / 3;      // 0..2
+    const int dof_e = dof_pair % 3;      // 0..2
 
     const int global_i = d_data->element_connectivity()(elem, i_local);
     const int global_j = d_data->element_connectivity()(elem, j_local);
@@ -104,15 +105,16 @@ __global__ void build_stiffness_keys_kernel(GPU_FEAT10_Data* d_data, unsigned lo
 // Pattern building – step 2: decode unique keys into CSR columns + row counts.
 // ---------------------------------------------------------------------------
 __global__ void decode_stiffness_keys_kernel(const unsigned long long* d_keys,
-                                             int                       nnz,
-                                             int*                      d_K_columns,
-                                             int*                      d_row_counts) {
+                                             int nnz,
+                                             int* d_K_columns,
+                                             int* d_row_counts) {
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
-    if (tid >= nnz) return;
+    if (tid >= nnz)
+        return;
 
     const unsigned long long key = d_keys[tid];
-    const int                row = static_cast<int>(key >> 32);
-    const int                col = static_cast<int>(key & 0xffffffffULL);
+    const int row = static_cast<int>(key >> 32);
+    const int col = static_cast<int>(key & 0xffffffffULL);
 
     d_K_columns[tid] = col;
     atomicAdd(d_row_counts + row, 1);
@@ -130,19 +132,19 @@ __global__ void decode_stiffness_keys_kernel(const unsigned long long* d_keys,
 // inside the FEAT10 specialisation – passing nullptr is safe.
 // ---------------------------------------------------------------------------
 __global__ void assemble_stiffness_kernel(GPU_FEAT10_Data* d_data,
-                                          int*             d_K_offsets,
-                                          int*             d_K_columns,
-                                          Real*            d_K_values) {
-    const int tid  = blockIdx.x * blockDim.x + threadIdx.x;
+                                          int* d_K_offsets,
+                                          int* d_K_columns,
+                                          Real* d_K_values) {
+    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
     const int elem = tid / Quadrature::N_QP_T10_5;
-    const int qp   = tid % Quadrature::N_QP_T10_5;
+    const int qp = tid % Quadrature::N_QP_T10_5;
 
-    if (elem >= d_data->gpu_n_elem()) return;
+    if (elem >= d_data->gpu_n_elem())
+        return;
 
     // h = 1.0: no time-step scaling for static assembly.
-    compute_hessian_assemble_csr<GPU_FEAT10_Data>(
-        d_data, static_cast<SyncedNewtonSolver*>(nullptr), elem, qp,
-        d_K_offsets, d_K_columns, d_K_values, 1.0);
+    compute_hessian_assemble_csr<GPU_FEAT10_Data>(d_data, static_cast<SyncedNewtonSolver*>(nullptr), elem, qp,
+                                                  d_K_offsets, d_K_columns, d_K_values, 1.0);
 }
 
 // ---------------------------------------------------------------------------
@@ -151,9 +153,10 @@ __global__ void assemble_stiffness_kernel(GPU_FEAT10_Data* d_data,
 // Phase 1: mark which global DOFs are constrained.
 // ---------------------------------------------------------------------------
 __global__ void mark_fixed_dofs_kernel(GPU_FEAT10_Data* d_data, int* d_is_fixed) {
-    const int tid       = blockIdx.x * blockDim.x + threadIdx.x;
-    const int n_fixed   = d_data->gpu_n_constraint() / 3;
-    if (tid >= n_fixed) return;
+    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    const int n_fixed = d_data->gpu_n_constraint() / 3;
+    if (tid >= n_fixed)
+        return;
 
     const int node = d_data->fixed_nodes()(tid);
     d_is_fixed[3 * node + 0] = 1;
@@ -175,14 +178,15 @@ __global__ void mark_fixed_dofs_kernel(GPU_FEAT10_Data* d_data, int* d_is_fixed)
 __global__ void apply_bcs_kernel(const int* d_is_fixed,
                                  const int* K_offsets,
                                  const int* K_columns,
-                                 Real*      K_values,
-                                 Real*      f,
-                                 int        n_dof) {
+                                 Real* K_values,
+                                 Real* f,
+                                 int n_dof) {
     const int row = blockIdx.x * blockDim.x + threadIdx.x;
-    if (row >= n_dof) return;
+    if (row >= n_dof)
+        return;
 
     const int row_start = K_offsets[row];
-    const int row_end   = K_offsets[row + 1];
+    const int row_end = K_offsets[row + 1];
 
     if (d_is_fixed[row]) {
         // Identity row for Dirichlet DOF.
@@ -202,10 +206,10 @@ __global__ void apply_bcs_kernel(const int* d_is_fixed,
 // ---------------------------------------------------------------------------
 // Position update: x12_i += u_{3i}, y12_i += u_{3i+1}, z12_i += u_{3i+2}.
 // ---------------------------------------------------------------------------
-__global__ void update_positions_kernel(Real* d_x12, Real* d_y12, Real* d_z12,
-                                        const Real* d_u, int n_nodes) {
+__global__ void update_positions_kernel(Real* d_x12, Real* d_y12, Real* d_z12, const Real* d_u, int n_nodes) {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
-    if (i >= n_nodes) return;
+    if (i >= n_nodes)
+        return;
     d_x12[i] += d_u[3 * i + 0];
     d_y12[i] += d_u[3 * i + 1];
     d_z12[i] += d_u[3 * i + 2];
@@ -216,38 +220,46 @@ __global__ void update_positions_kernel(Real* d_x12, Real* d_y12, Real* d_z12,
 // ===========================================================================
 
 LinearStaticSolver::LinearStaticSolver(GPU_FEAT10_Data* data, Real tol, int max_iter)
-    : data_(data),
-      n_dof_(3 * data->get_n_coef()),
-      cg_tol_(tol),
-      cg_max_iter_(max_iter) {
+    : data_(data), n_dof_(3 * data->get_n_coef()), cg_tol_(tol), cg_max_iter_(max_iter) {
     CHECK_CUSPARSE(cusparseCreate(&cusparse_));
     CHECK_CUBLAS(cublasCreate(&cublas_));
 
-    MOPHI_GPU_CALL(cudaMalloc(&d_u_,  static_cast<size_t>(n_dof_) * sizeof(Real)));
-    MOPHI_GPU_CALL(cudaMalloc(&d_f_,  static_cast<size_t>(n_dof_) * sizeof(Real)));
-    MOPHI_GPU_CALL(cudaMalloc(&d_r_,  static_cast<size_t>(n_dof_) * sizeof(Real)));
-    MOPHI_GPU_CALL(cudaMalloc(&d_p_,  static_cast<size_t>(n_dof_) * sizeof(Real)));
+    MOPHI_GPU_CALL(cudaMalloc(&d_u_, static_cast<size_t>(n_dof_) * sizeof(Real)));
+    MOPHI_GPU_CALL(cudaMalloc(&d_f_, static_cast<size_t>(n_dof_) * sizeof(Real)));
+    MOPHI_GPU_CALL(cudaMalloc(&d_r_, static_cast<size_t>(n_dof_) * sizeof(Real)));
+    MOPHI_GPU_CALL(cudaMalloc(&d_p_, static_cast<size_t>(n_dof_) * sizeof(Real)));
     MOPHI_GPU_CALL(cudaMalloc(&d_Kp_, static_cast<size_t>(n_dof_) * sizeof(Real)));
 }
 
 LinearStaticSolver::~LinearStaticSolver() {
-    if (d_K_offsets_) cudaFree(d_K_offsets_);
-    if (d_K_columns_) cudaFree(d_K_columns_);
-    if (d_K_values_)  cudaFree(d_K_values_);
-    if (d_u_)         cudaFree(d_u_);
-    if (d_f_)         cudaFree(d_f_);
-    if (d_r_)         cudaFree(d_r_);
-    if (d_p_)         cudaFree(d_p_);
-    if (d_Kp_)        cudaFree(d_Kp_);
-    if (cusparse_)    cusparseDestroy(cusparse_);
-    if (cublas_)      cublasDestroy(cublas_);
+    if (d_K_offsets_)
+        cudaFree(d_K_offsets_);
+    if (d_K_columns_)
+        cudaFree(d_K_columns_);
+    if (d_K_values_)
+        cudaFree(d_K_values_);
+    if (d_u_)
+        cudaFree(d_u_);
+    if (d_f_)
+        cudaFree(d_f_);
+    if (d_r_)
+        cudaFree(d_r_);
+    if (d_p_)
+        cudaFree(d_p_);
+    if (d_Kp_)
+        cudaFree(d_Kp_);
+    if (cusparse_)
+        cusparseDestroy(cusparse_);
+    if (cublas_)
+        cublasDestroy(cublas_);
 }
 
 // ---------------------------------------------------------------------------
 // BuildStiffnessCSRPattern
 // ---------------------------------------------------------------------------
 void LinearStaticSolver::BuildStiffnessCSRPattern() {
-    if (pattern_built_) return;
+    if (pattern_built_)
+        return;
 
     const int n_elem = data_->get_n_elem();
     const int total_raw = n_elem * STIFFNESS_KEYS_PER_ELEM;
@@ -271,8 +283,8 @@ void LinearStaticSolver::BuildStiffnessCSRPattern() {
 
     // Allocate CSR arrays.
     MOPHI_GPU_CALL(cudaMalloc(&d_K_offsets_, static_cast<size_t>(n_dof_ + 1) * sizeof(int)));
-    MOPHI_GPU_CALL(cudaMalloc(&d_K_columns_, static_cast<size_t>(K_nnz_)     * sizeof(int)));
-    MOPHI_GPU_CALL(cudaMalloc(&d_K_values_,  static_cast<size_t>(K_nnz_)     * sizeof(Real)));
+    MOPHI_GPU_CALL(cudaMalloc(&d_K_columns_, static_cast<size_t>(K_nnz_) * sizeof(int)));
+    MOPHI_GPU_CALL(cudaMalloc(&d_K_values_, static_cast<size_t>(K_nnz_) * sizeof(Real)));
 
     // Decode unique keys into columns + row counts.
     int* d_row_counts = nullptr;
@@ -319,7 +331,8 @@ void LinearStaticSolver::AssembleLinearStiffness() {
 // ---------------------------------------------------------------------------
 void LinearStaticSolver::ApplyDirichletBCs() {
     const int n_constraint = data_->get_n_constraint();
-    if (n_constraint == 0) return;
+    if (n_constraint == 0)
+        return;
 
     const int n_fixed_nodes = n_constraint / 3;
 
@@ -363,27 +376,22 @@ void LinearStaticSolver::SolveLinearSystemCG() {
     MOPHI_GPU_CALL(cudaMemcpy(d_p_, d_f_, static_cast<size_t>(n) * sizeof(Real), cudaMemcpyDeviceToDevice));
 
     // Build cuSPARSE descriptors.
-    cusparseSpMatDescr_t K_descr  = nullptr;
-    cusparseDnVecDescr_t p_descr  = nullptr;
+    cusparseSpMatDescr_t K_descr = nullptr;
+    cusparseDnVecDescr_t p_descr = nullptr;
     cusparseDnVecDescr_t Kp_descr = nullptr;
 
-    CHECK_CUSPARSE(cusparseCreateCsr(
-        &K_descr, n, n, K_nnz_,
-        d_K_offsets_, d_K_columns_, d_K_values_,
-        CUSPARSE_INDEX_32I, CUSPARSE_INDEX_32I,
-        CUSPARSE_INDEX_BASE_ZERO, CUDA_R_64F));
+    CHECK_CUSPARSE(cusparseCreateCsr(&K_descr, n, n, K_nnz_, d_K_offsets_, d_K_columns_, d_K_values_,
+                                     CUSPARSE_INDEX_32I, CUSPARSE_INDEX_32I, CUSPARSE_INDEX_BASE_ZERO, CUDA_R_64F));
 
-    CHECK_CUSPARSE(cusparseCreateDnVec(&p_descr,  n, d_p_,  CUDA_R_64F));
+    CHECK_CUSPARSE(cusparseCreateDnVec(&p_descr, n, d_p_, CUDA_R_64F));
     CHECK_CUSPARSE(cusparseCreateDnVec(&Kp_descr, n, d_Kp_, CUDA_R_64F));
 
-    const Real one  = 1.0;
+    const Real one = 1.0;
     const Real zero = 0.0;
 
     size_t spMV_bufsize = 0;
-    CHECK_CUSPARSE(cusparseSpMV_bufferSize(
-        cusparse_, CUSPARSE_OPERATION_NON_TRANSPOSE,
-        &one, K_descr, p_descr, &zero, Kp_descr,
-        CUDA_R_64F, CUSPARSE_SPMV_ALG_DEFAULT, &spMV_bufsize));
+    CHECK_CUSPARSE(cusparseSpMV_bufferSize(cusparse_, CUSPARSE_OPERATION_NON_TRANSPOSE, &one, K_descr, p_descr, &zero,
+                                           Kp_descr, CUDA_R_64F, CUSPARSE_SPMV_ALG_DEFAULT, &spMV_bufsize));
 
     void* spMV_buf = nullptr;
     if (spMV_bufsize > 0) {
@@ -397,25 +405,24 @@ void LinearStaticSolver::SolveLinearSystemCG() {
     // Early exit: zero RHS means solution is u=0.
     if (rr0 == 0.0) {
         last_iter_count_ = 0;
-        last_residual_   = 0.0;
+        last_residual_ = 0.0;
         CHECK_CUSPARSE(cusparseDestroySpMat(K_descr));
         CHECK_CUSPARSE(cusparseDestroyDnVec(p_descr));
         CHECK_CUSPARSE(cusparseDestroyDnVec(Kp_descr));
-        if (spMV_buf) cudaFree(spMV_buf);
+        if (spMV_buf)
+            cudaFree(spMV_buf);
         return;
     }
 
     Real rr = rr0;
 
     last_iter_count_ = cg_max_iter_;
-    last_residual_   = 1.0;
+    last_residual_ = 1.0;
 
     for (int iter = 0; iter < cg_max_iter_; ++iter) {
         // Kp = K * p.
-        CHECK_CUSPARSE(cusparseSpMV(
-            cusparse_, CUSPARSE_OPERATION_NON_TRANSPOSE,
-            &one, K_descr, p_descr, &zero, Kp_descr,
-            CUDA_R_64F, CUSPARSE_SPMV_ALG_DEFAULT, spMV_buf));
+        CHECK_CUSPARSE(cusparseSpMV(cusparse_, CUSPARSE_OPERATION_NON_TRANSPOSE, &one, K_descr, p_descr, &zero,
+                                    Kp_descr, CUDA_R_64F, CUSPARSE_SPMV_ALG_DEFAULT, spMV_buf));
 
         // alpha = rr / (p · Kp).
         Real pKp = 0.0;
@@ -443,7 +450,7 @@ void LinearStaticSolver::SolveLinearSystemCG() {
         const Real rel_res = (rr0 > 0.0) ? std::sqrt(rr_new / rr0) : std::sqrt(rr_new);
         if (rel_res < cg_tol_) {
             last_iter_count_ = iter + 1;
-            last_residual_   = rel_res;
+            last_residual_ = rel_res;
             break;
         }
 
@@ -452,13 +459,13 @@ void LinearStaticSolver::SolveLinearSystemCG() {
 
         // p = r + beta * p  (cuBLAS: first scale p, then add r).
         CHECK_CUBLAS(cublasDscal(cublas_, n, &beta, d_p_, 1));
-        CHECK_CUBLAS(cublasDaxpy(cublas_, n, &one,  d_r_, 1, d_p_, 1));
+        CHECK_CUBLAS(cublasDaxpy(cublas_, n, &one, d_r_, 1, d_p_, 1));
 
         rr = rr_new;
 
         if (iter == cg_max_iter_ - 1) {
             last_iter_count_ = cg_max_iter_;
-            last_residual_   = rel_res;
+            last_residual_ = rel_res;
         }
     }
 
@@ -466,7 +473,8 @@ void LinearStaticSolver::SolveLinearSystemCG() {
     CHECK_CUSPARSE(cusparseDestroySpMat(K_descr));
     CHECK_CUSPARSE(cusparseDestroyDnVec(p_descr));
     CHECK_CUSPARSE(cusparseDestroyDnVec(Kp_descr));
-    if (spMV_buf) cudaFree(spMV_buf);
+    if (spMV_buf)
+        cudaFree(spMV_buf);
 }
 
 // ---------------------------------------------------------------------------
@@ -502,9 +510,7 @@ void LinearStaticSolver::Solve() {
     // Copy external force vector into the working RHS buffer.
     {
         const Real* d_f_ext = data_->GetExternalForceDevicePtr();
-        MOPHI_GPU_CALL(cudaMemcpy(d_f_, d_f_ext,
-                                  static_cast<size_t>(n_dof_) * sizeof(Real),
-                                  cudaMemcpyDeviceToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_f_, d_f_ext, static_cast<size_t>(n_dof_) * sizeof(Real), cudaMemcpyDeviceToDevice));
     }
 
     // Apply Dirichlet boundary conditions.

@@ -42,9 +42,9 @@ using namespace tlfea;
 // ---------------------------------------------------------------------------
 // Material properties (Aluminium)
 // ---------------------------------------------------------------------------
-static const Real E_mod  = 7e10;   // Young's modulus [Pa]
-static const Real nu_val = 0.33;   // Poisson's ratio
-static const Real rho0   = 2700.0; // Density [kg/m³] (unused for static, kept for completeness)
+static const Real E_mod = 7e10;   // Young's modulus [Pa]
+static const Real nu_val = 0.33;  // Poisson's ratio
+static const Real rho0 = 2700.0;  // Density [kg/m³] (unused for static, kept for completeness)
 
 // ---------------------------------------------------------------------------
 // Load
@@ -52,7 +52,7 @@ static const Real rho0   = 2700.0; // Density [kg/m³] (unused for static, kept 
 static const Real TOTAL_LOAD = -1000.0;  // Total transverse force [N] (negative = −z direction)
 
 // Fraction of beam length used as tolerance for detecting end nodes.
-static constexpr Real BOUNDARY_TOLERANCE_FRACTION = 0.05;
+static constexpr Real BOUNDARY_TOLERANCE_FRACTION = 0.0005;
 
 int main() {
     std::cout << "=======================================================\n"
@@ -62,7 +62,7 @@ int main() {
     // -----------------------------------------------------------------------
     // Load mesh from VTU file
     // -----------------------------------------------------------------------
-    const std::string vtu_path = "data/meshes/T10/beam.vtu";
+    const std::string vtu_path = "data/meshes/T10/beam_highres.vtu";
     std::cout << "Loading mesh: " << vtu_path << "\n";
 
     mophi::Mesh mesh;
@@ -112,8 +112,7 @@ int main() {
     const Real b = y_max - y_min;  // cross-section width
     const Real h = z_max - z_min;  // cross-section height
 
-    std::cout << std::fixed << std::setprecision(4)
-              << "  Bounding box:  x∈[" << x_min << ", " << x_max << "]  "
+    std::cout << std::fixed << std::setprecision(4) << "  Bounding box:  x∈[" << x_min << ", " << x_max << "]  "
               << "y∈[" << y_min << ", " << y_max << "]  "
               << "z∈[" << z_min << ", " << z_max << "]\n"
               << "  L = " << L << "  b = " << b << "  h = " << h << "\n";
@@ -131,7 +130,7 @@ int main() {
 
     gpu_data.Setup(qx, qy, qz, qw, h_x, h_y, h_z, elements);
     gpu_data.SetDensity(rho0);
-    gpu_data.SetDamping(0.0, 0.0);   // no damping for static analysis
+    gpu_data.SetDamping(0.0, 0.0);  // no damping for static analysis
     gpu_data.SetSVK(E_mod, nu_val);
 
     std::cout << "  Material: E = " << (E_mod / 1e9) << " GPa  ν = " << nu_val << "\n";
@@ -168,8 +167,8 @@ int main() {
         h_f_ext(3 * i + 2) = load_per_node;  // force in −z direction
 
     gpu_data.SetExternalForce(h_f_ext);
-    std::cout << "  Load: " << TOTAL_LOAD << " N distributed over "
-              << load_idx.size() << " nodes at x ≈ " << x_max << "\n";
+    std::cout << "  Load: " << TOTAL_LOAD << " N distributed over " << load_idx.size() << " nodes at x ≈ " << x_max
+              << "\n";
 
     // -----------------------------------------------------------------------
     // Run linear static solver
@@ -180,8 +179,8 @@ int main() {
     solver.Solve();
 
     std::cout << "  CG converged in " << solver.GetLastIterCount() << " iterations"
-              << "  (relative residual: " << std::scientific << std::setprecision(3)
-              << solver.GetLastResidual() << ")\n";
+              << "  (relative residual: " << std::scientific << std::setprecision(3) << solver.GetLastResidual()
+              << ")\n";
 
     // -----------------------------------------------------------------------
     // Retrieve displaced positions and compute nodal displacements
@@ -197,7 +196,7 @@ int main() {
     // Maximum displacement magnitude.
     Real max_disp = 0.0;
     for (int i = 0; i < n_nodes; ++i) {
-        Real mag = std::sqrt(ux(i)*ux(i) + uy(i)*uy(i) + uz(i)*uz(i));
+        Real mag = std::sqrt(ux(i) * ux(i) + uy(i) * uy(i) + uz(i) * uz(i));
         max_disp = std::max(max_disp, mag);
     }
 
@@ -210,22 +209,21 @@ int main() {
     // Analytical comparison (Euler-Bernoulli cantilever beam)
     // -----------------------------------------------------------------------
     // Bending about the y-axis, load applied at the free end in −z.
-    const Real I_y       = b * h * h * h / 12.0;
+    const Real I_y = b * h * h * h / 12.0;
     const Real delta_ana = std::abs(TOTAL_LOAD) * L * L * L / (3.0 * E_mod * I_y);
 
     std::cout << std::defaultfloat << std::setprecision(6);
     std::cout << "\n--- Results ---\n"
-              << "  Max tip z-displacement (FEA):        "
-              << std::scientific << std::setprecision(6) << std::abs(tip_uz_min) << " m\n"
-              << "  Analytical Euler-Bernoulli δ_tip:    "
-              << std::scientific << delta_ana << " m\n";
+              << "  Max tip z-displacement (FEA):        " << std::scientific << std::setprecision(6)
+              << std::abs(tip_uz_min) << " m\n"
+              << "  Analytical Euler-Bernoulli δ_tip:    " << std::scientific << delta_ana << " m\n";
 
     const Real rel_err = std::abs(std::abs(tip_uz_min) - delta_ana) / delta_ana;
-    std::cout << "  Relative error vs analytical:        "
-              << std::fixed << std::setprecision(2) << rel_err * 100.0 << " %\n";
+    std::cout << "  Relative error vs analytical:        " << std::fixed << std::setprecision(2) << rel_err * 100.0
+              << " %\n";
 
-    std::cout << "  Max nodal displacement magnitude:    "
-              << std::scientific << std::setprecision(6) << max_disp << " m\n";
+    std::cout << "  Max nodal displacement magnitude:    " << std::scientific << std::setprecision(6) << max_disp
+              << " m\n";
 
     // -----------------------------------------------------------------------
     // Write output VTK

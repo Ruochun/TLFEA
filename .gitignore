@@ -33,3 +33,4 @@ Makefile
 test_feat10_nesterov
 *.exe
 
+_codeql*

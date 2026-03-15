@@ -70,33 +70,33 @@ class LinearStaticSolver : public SolverBase {
 
     /* ---- data ---- */
     GPU_FEAT10_Data* data_;
-    int n_dof_;   // 3 * n_nodes
+    int n_dof_;  // 3 * n_nodes
 
     /* Stiffness K in CSR format (n_dof × n_dof) */
-    int*  d_K_offsets_ = nullptr;
-    int*  d_K_columns_ = nullptr;
-    Real* d_K_values_  = nullptr;
-    int   K_nnz_       = 0;
-    bool  pattern_built_ = false;
+    int* d_K_offsets_ = nullptr;
+    int* d_K_columns_ = nullptr;
+    Real* d_K_values_ = nullptr;
+    int K_nnz_ = 0;
+    bool pattern_built_ = false;
 
     /* CG workspace (length n_dof each) */
-    Real* d_u_  = nullptr;  // displacement solution
-    Real* d_f_  = nullptr;  // RHS (copy of f_ext, modified in-place for BCs)
-    Real* d_r_  = nullptr;  // residual
-    Real* d_p_  = nullptr;  // search direction
+    Real* d_u_ = nullptr;   // displacement solution
+    Real* d_f_ = nullptr;   // RHS (copy of f_ext, modified in-place for BCs)
+    Real* d_r_ = nullptr;   // residual
+    Real* d_p_ = nullptr;   // search direction
     Real* d_Kp_ = nullptr;  // K * p
 
     /* cuBLAS / cuSPARSE handles */
     cusparseHandle_t cusparse_ = nullptr;
-    cublasHandle_t   cublas_   = nullptr;
+    cublasHandle_t cublas_ = nullptr;
 
     /* CG parameters */
     Real cg_tol_;
-    int  cg_max_iter_;
+    int cg_max_iter_;
 
     /* Diagnostics from last Solve() */
-    int  last_iter_count_ = 0;
-    Real last_residual_   = 0.0;
+    int last_iter_count_ = 0;
+    Real last_residual_ = 0.0;
 };
 
 }  // namespace tlfea
