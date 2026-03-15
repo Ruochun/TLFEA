@@ -579,8 +579,8 @@ void GPU_FEAT10_Data::RetrieveDnDuPreToCPU(std::vector<std::vector<MatrixXR>>& d
         dn_du_pre[elem_idx].resize(Quadrature::N_QP_T10_5);
         for (int qp_idx = 0; qp_idx < Quadrature::N_QP_T10_5; qp_idx++) {
             int offset = (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 10 * 3;
-            // No-copy Map view of the host buffer slice
-            dn_du_pre[elem_idx][qp_idx] = Map<const MatrixXR>(host_ptr + offset, 10, 3);
+            // Map is a no-copy host view; assignment to MatrixXR deep-copies the data.
+            dn_du_pre[elem_idx][qp_idx] = Map<const MatrixXR>(host_ptr + offset, 10, 3).eval();
         }
     }
 }
@@ -618,8 +618,8 @@ void GPU_FEAT10_Data::RetrievePFromFToCPU(std::vector<std::vector<MatrixXR>>& p_
         p_from_F[elem_idx].resize(Quadrature::N_QP_T10_5);
         for (int qp_idx = 0; qp_idx < Quadrature::N_QP_T10_5; qp_idx++) {
             int offset = (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 3 * 3;
-            // No-copy Map view of the host buffer slice
-            p_from_F[elem_idx][qp_idx] = Map<const MatrixXR>(host_ptr + offset, 3, 3);
+            // Map is a no-copy host view; assignment to MatrixXR deep-copies the data.
+            p_from_F[elem_idx][qp_idx] = Map<const MatrixXR>(host_ptr + offset, 3, 3).eval();
         }
     }
 }
@@ -627,13 +627,14 @@ void GPU_FEAT10_Data::RetrievePFromFToCPU(std::vector<std::vector<MatrixXR>>& p_
 void GPU_FEAT10_Data::RetrieveInternalForceToCPU(VectorXR& internal_force) {
     int total_dofs = 3 * n_coef;
     da_f_int.ToHost();
-    internal_force = Map<VectorXR>(da_f_int.host(), total_dofs);
+    // Map is a no-copy host view; the assignment to VectorXR deep-copies the data.
+    internal_force = Map<VectorXR>(da_f_int.host(), total_dofs).eval();
 }
 
 void GPU_FEAT10_Data::RetrieveExternalForceToCPU(VectorXR& external_force) {
     int total_dofs = 3 * n_coef;
     da_f_ext.ToHost();
-    external_force = Map<VectorXR>(da_f_ext.host(), total_dofs);
+    external_force = Map<VectorXR>(da_f_ext.host(), total_dofs).eval();
 }
 
 void GPU_FEAT10_Data::RetrievePositionToCPU(VectorXR& x12, VectorXR& y12, VectorXR& z12) {
@@ -641,9 +642,9 @@ void GPU_FEAT10_Data::RetrievePositionToCPU(VectorXR& x12, VectorXR& y12, Vector
     da_h_x12.ToHost();
     da_h_y12.ToHost();
     da_h_z12.ToHost();
-    x12 = Map<VectorXR>(da_h_x12.host(), total_nodes);
-    y12 = Map<VectorXR>(da_h_y12.host(), total_nodes);
-    z12 = Map<VectorXR>(da_h_z12.host(), total_nodes);
+    x12 = Map<VectorXR>(da_h_x12.host(), total_nodes).eval();
+    y12 = Map<VectorXR>(da_h_y12.host(), total_nodes).eval();
+    z12 = Map<VectorXR>(da_h_z12.host(), total_nodes).eval();
 }
 
 void GPU_FEAT10_Data::SetNodalFixed(const VectorXi& fixed_nodes) {
@@ -750,10 +751,9 @@ void GPU_FEAT10_Data::UpdateNodalFixed(const VectorXi& fixed_nodes) {
 }
 
 void GPU_FEAT10_Data::RetrieveConnectivityToCPU(MatrixXi& connectivity) {
-    connectivity.resize(n_elem, Quadrature::N_NODE_T10_10);
     da_element_connectivity.ToHost();
-    connectivity = Map<Matrix<int, DynamicMatrix, DynamicMatrix>>(
-        da_element_connectivity.host(), n_elem, Quadrature::N_NODE_T10_10);
+    // Map is a no-copy host view; assignment to MatrixXi deep-copies the data.
+    connectivity = Map<MatrixXi>(da_element_connectivity.host(), n_elem, Quadrature::N_NODE_T10_10).eval();
 }
 
 void GPU_FEAT10_Data::WriteOutputVTK(const std::string& filename) {

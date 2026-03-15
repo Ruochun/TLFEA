@@ -576,9 +576,10 @@ void GPU_ANCF3243_Data::RetrieveConnectivityToCPU(MatrixXi& connectivity) {
     // `d_element_connectivity` is stored as a flat row-major (n_beam × 2) array.
     // Use DualArray ToHost + Map into a row-major staging matrix, then assign.
     da_element_connectivity.ToHost();
+    // Map is a no-copy host view; the assignment to MatrixXi deep-copies the data.
     Map<Matrix<int, DynamicMatrix, 2, RowMajorMatrix>> connectivity_row_major(
         da_element_connectivity.host(), n_beam, 2);
-    connectivity = connectivity_row_major;
+    connectivity = connectivity_row_major.eval();
 }
 
 void GPU_ANCF3243_Data::RetrieveMassCSRToCPU(std::vector<int>& offsets,
@@ -609,7 +610,8 @@ void GPU_ANCF3243_Data::RetrieveMassCSRToCPU(std::vector<int>& offsets,
 void GPU_ANCF3243_Data::RetrieveInternalForceToCPU(VectorXR& internal_force) {
     int expected_size = n_coef * 3;
     da_f_int.ToHost();
-    internal_force = Map<VectorXR>(da_f_int.host(), expected_size);
+    // Map is a no-copy host view; the assignment to VectorXR deep-copies the data.
+    internal_force = Map<VectorXR>(da_f_int.host(), expected_size).eval();
 }
 
 void GPU_ANCF3243_Data::RetrieveConstraintJacobianCSRToCPU(std::vector<int>& offsets,
@@ -653,7 +655,8 @@ void GPU_ANCF3243_Data::RetrieveDeformationGradientToCPU(std::vector<std::vector
         deformation_gradient[i].resize(Quadrature::N_TOTAL_QP_3_2_2);
         for (int j = 0; j < Quadrature::N_TOTAL_QP_3_2_2; j++) {
             int offset = i * Quadrature::N_TOTAL_QP_3_2_2 * 9 + j * 9;
-            deformation_gradient[i][j] = Map<const MatrixXR>(host_ptr + offset, 3, 3);
+            // Map is a no-copy host view; assignment to MatrixXR deep-copies the data.
+            deformation_gradient[i][j] = Map<const MatrixXR>(host_ptr + offset, 3, 3).eval();
         }
     }
 }
@@ -666,7 +669,8 @@ void GPU_ANCF3243_Data::RetrievePFromFToCPU(std::vector<std::vector<MatrixXR>>& 
         p_from_F[i].resize(Quadrature::N_TOTAL_QP_3_2_2);
         for (int j = 0; j < Quadrature::N_TOTAL_QP_3_2_2; j++) {
             int offset = i * Quadrature::N_TOTAL_QP_3_2_2 * 9 + j * 9;
-            p_from_F[i][j] = Map<const MatrixXR>(host_ptr + offset, 3, 3);
+            // Map is a no-copy host view; assignment to MatrixXR deep-copies the data.
+            p_from_F[i][j] = Map<const MatrixXR>(host_ptr + offset, 3, 3).eval();
         }
     }
 }
@@ -674,7 +678,8 @@ void GPU_ANCF3243_Data::RetrievePFromFToCPU(std::vector<std::vector<MatrixXR>>& 
 void GPU_ANCF3243_Data::RetrieveConstraintDataToCPU(VectorXR& constraint) {
     int expected_size = n_constraint;
     da_constraint.ToHost();
-    constraint = Map<VectorXR>(da_constraint.host(), expected_size);
+    // Map is a no-copy host view; the assignment to VectorXR deep-copies the data.
+    constraint = Map<VectorXR>(da_constraint.host(), expected_size).eval();
 }
 
 void GPU_ANCF3243_Data::RetrieveConstraintJacobianToCPU(MatrixXR& constraint_jac) {
@@ -702,9 +707,10 @@ void GPU_ANCF3243_Data::RetrievePositionToCPU(VectorXR& x12, VectorXR& y12, Vect
     da_x12.ToHost();
     da_y12.ToHost();
     da_z12.ToHost();
-    x12 = Map<VectorXR>(da_x12.host(), expected_size);
-    y12 = Map<VectorXR>(da_y12.host(), expected_size);
-    z12 = Map<VectorXR>(da_z12.host(), expected_size);
+    // Map is a no-copy host view; the assignment to VectorXR deep-copies the data.
+    x12 = Map<VectorXR>(da_x12.host(), expected_size).eval();
+    y12 = Map<VectorXR>(da_y12.host(), expected_size).eval();
+    z12 = Map<VectorXR>(da_z12.host(), expected_size).eval();
 }
 
 __global__ void compute_internal_force_kernel(GPU_ANCF3243_Data* d_data) {
