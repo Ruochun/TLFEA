@@ -438,54 +438,58 @@ struct GPU_ANCF3443_Data : public ElementBase {
     }
 
     void Initialize() {
-        MOPHI_GPU_CALL(
-            cudaMalloc(&d_B_inv, n_beam * Quadrature::N_SHAPE_3443 * Quadrature::N_SHAPE_3443 * sizeof(Real)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_grad_N_ref,
-                                  n_beam * Quadrature::N_TOTAL_QP_4_4_3 * Quadrature::N_SHAPE_3443 * 3 * sizeof(Real)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_detJ_ref, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * sizeof(Real)));
+        // Long arrays: use DualArray (manages both pinned host and device memory).
+        da_B_inv.resize(n_beam * Quadrature::N_SHAPE_3443 * Quadrature::N_SHAPE_3443);
+        da_B_inv.BindDevicePointer(&d_B_inv);
+        da_grad_N_ref.resize(n_beam * Quadrature::N_TOTAL_QP_4_4_3 * Quadrature::N_SHAPE_3443 * 3);
+        da_grad_N_ref.BindDevicePointer(&d_grad_N_ref);
+        da_detJ_ref.resize(n_beam * Quadrature::N_TOTAL_QP_4_4_3);
+        da_detJ_ref.BindDevicePointer(&d_detJ_ref);
 
-        MOPHI_GPU_CALL(cudaMalloc(&d_gauss_xi_m, Quadrature::N_QP_7 * sizeof(Real)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_gauss_eta_m, Quadrature::N_QP_7 * sizeof(Real)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_gauss_zeta_m, Quadrature::N_QP_3 * sizeof(Real)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_gauss_xi, Quadrature::N_QP_4 * sizeof(Real)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_gauss_eta, Quadrature::N_QP_4 * sizeof(Real)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_gauss_zeta, Quadrature::N_QP_3 * sizeof(Real)));
+        da_gauss_xi_m.resize(Quadrature::N_QP_7); da_gauss_xi_m.BindDevicePointer(&d_gauss_xi_m);
+        da_gauss_eta_m.resize(Quadrature::N_QP_7); da_gauss_eta_m.BindDevicePointer(&d_gauss_eta_m);
+        da_gauss_zeta_m.resize(Quadrature::N_QP_3); da_gauss_zeta_m.BindDevicePointer(&d_gauss_zeta_m);
+        da_gauss_xi.resize(Quadrature::N_QP_4); da_gauss_xi.BindDevicePointer(&d_gauss_xi);
+        da_gauss_eta.resize(Quadrature::N_QP_4); da_gauss_eta.BindDevicePointer(&d_gauss_eta);
+        da_gauss_zeta.resize(Quadrature::N_QP_3); da_gauss_zeta.BindDevicePointer(&d_gauss_zeta);
 
-        MOPHI_GPU_CALL(cudaMalloc(&d_weight_xi_m, Quadrature::N_QP_7 * sizeof(Real)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_weight_eta_m, Quadrature::N_QP_7 * sizeof(Real)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_weight_zeta_m, Quadrature::N_QP_3 * sizeof(Real)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_weight_xi, Quadrature::N_QP_4 * sizeof(Real)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_weight_eta, Quadrature::N_QP_4 * sizeof(Real)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_weight_zeta, Quadrature::N_QP_3 * sizeof(Real)));
+        da_weight_xi_m.resize(Quadrature::N_QP_7); da_weight_xi_m.BindDevicePointer(&d_weight_xi_m);
+        da_weight_eta_m.resize(Quadrature::N_QP_7); da_weight_eta_m.BindDevicePointer(&d_weight_eta_m);
+        da_weight_zeta_m.resize(Quadrature::N_QP_3); da_weight_zeta_m.BindDevicePointer(&d_weight_zeta_m);
+        da_weight_xi.resize(Quadrature::N_QP_4); da_weight_xi.BindDevicePointer(&d_weight_xi);
+        da_weight_eta.resize(Quadrature::N_QP_4); da_weight_eta.BindDevicePointer(&d_weight_eta);
+        da_weight_zeta.resize(Quadrature::N_QP_3); da_weight_zeta.BindDevicePointer(&d_weight_zeta);
 
-        MOPHI_GPU_CALL(cudaMalloc(&d_x12_jac, n_coef * sizeof(Real)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_y12_jac, n_coef * sizeof(Real)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_z12_jac, n_coef * sizeof(Real)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_x12, n_coef * sizeof(Real)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_y12, n_coef * sizeof(Real)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_z12, n_coef * sizeof(Real)));
+        da_x12_jac.resize(n_coef); da_x12_jac.BindDevicePointer(&d_x12_jac);
+        da_y12_jac.resize(n_coef); da_y12_jac.BindDevicePointer(&d_y12_jac);
+        da_z12_jac.resize(n_coef); da_z12_jac.BindDevicePointer(&d_z12_jac);
+        da_x12.resize(n_coef); da_x12.BindDevicePointer(&d_x12);
+        da_y12.resize(n_coef); da_y12.BindDevicePointer(&d_y12);
+        da_z12.resize(n_coef); da_z12.BindDevicePointer(&d_z12);
 
-        MOPHI_GPU_CALL(cudaMalloc(&d_element_connectivity, n_beam * 4 * sizeof(int)));
+        da_element_connectivity.resize(n_beam * 4);
+        da_element_connectivity.BindDevicePointer(&d_element_connectivity);
 
-        MOPHI_GPU_CALL(cudaMalloc(&d_F, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(Real)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_P, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(Real)));
-        // Kelvin-Voigt viscous buffers
-        MOPHI_GPU_CALL(cudaMalloc(&d_Fdot, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(Real)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_P_vis, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(Real)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_f_int, n_coef * 3 * sizeof(Real)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_f_ext, n_coef * 3 * sizeof(Real)));
-        // damping parameters (single scalar copied to device)
+        da_F.resize(n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3); da_F.BindDevicePointer(&d_F);
+        da_P.resize(n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3); da_P.BindDevicePointer(&d_P);
+        da_Fdot.resize(n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3); da_Fdot.BindDevicePointer(&d_Fdot);
+        da_P_vis.resize(n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3); da_P_vis.BindDevicePointer(&d_P_vis);
+        da_f_int.resize(n_coef * 3); da_f_int.BindDevicePointer(&d_f_int);
+        da_f_ext.resize(n_coef * 3); da_f_ext.BindDevicePointer(&d_f_ext);
+
+        // Scalar damping parameters: single values on device only.
         MOPHI_GPU_CALL(cudaMalloc(&d_eta_damp, sizeof(Real)));
         MOPHI_GPU_CALL(cudaMalloc(&d_lambda_damp, sizeof(Real)));
 
         // copy struct to device
         MOPHI_GPU_CALL(cudaMalloc(&d_data, sizeof(GPU_ANCF3443_Data)));
 
-        // beam data
-        MOPHI_GPU_CALL(cudaMalloc(&d_H, n_beam * sizeof(Real)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_W, n_beam * sizeof(Real)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_L, n_beam * sizeof(Real)));
+        // beam dimension data
+        da_H.resize(n_beam); da_H.BindDevicePointer(&d_H);
+        da_W.resize(n_beam); da_W.BindDevicePointer(&d_W);
+        da_L.resize(n_beam); da_L.BindDevicePointer(&d_L);
 
+        // Scalar material parameters: single values on device only.
         MOPHI_GPU_CALL(cudaMalloc(&d_rho0, sizeof(Real)));
         MOPHI_GPU_CALL(cudaMalloc(&d_nu, sizeof(Real)));
         MOPHI_GPU_CALL(cudaMalloc(&d_E, sizeof(Real)));
@@ -536,55 +540,71 @@ struct GPU_ANCF3443_Data : public ElementBase {
         }
         const int n_binv = static_cast<int>(h_B_inv_flat.size());
 
-        MOPHI_GPU_CALL(cudaMemcpy(d_B_inv, h_B_inv_flat.data(), n_binv * sizeof(Real), cudaMemcpyHostToDevice));
+        std::copy(h_B_inv_flat.data(), h_B_inv_flat.data() + n_binv, da_B_inv.host());
+        da_B_inv.ToDevice();
 
-        MOPHI_GPU_CALL(
-            cudaMemcpy(d_gauss_xi_m, gauss_xi_m.data(), Quadrature::N_QP_7 * sizeof(Real), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(
-            cudaMemcpy(d_gauss_eta_m, gauss_eta_m.data(), Quadrature::N_QP_7 * sizeof(Real), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(
-            cudaMemcpy(d_gauss_zeta_m, gauss_zeta_m.data(), Quadrature::N_QP_3 * sizeof(Real), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(
-            cudaMemcpy(d_gauss_xi, gauss_xi.data(), Quadrature::N_QP_4 * sizeof(Real), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(
-            cudaMemcpy(d_gauss_eta, gauss_eta.data(), Quadrature::N_QP_4 * sizeof(Real), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(
-            cudaMemcpy(d_gauss_zeta, gauss_zeta.data(), Quadrature::N_QP_3 * sizeof(Real), cudaMemcpyHostToDevice));
+        std::copy(gauss_xi_m.data(), gauss_xi_m.data() + Quadrature::N_QP_7, da_gauss_xi_m.host());
+        da_gauss_xi_m.ToDevice();
+        std::copy(gauss_eta_m.data(), gauss_eta_m.data() + Quadrature::N_QP_7, da_gauss_eta_m.host());
+        da_gauss_eta_m.ToDevice();
+        std::copy(gauss_zeta_m.data(), gauss_zeta_m.data() + Quadrature::N_QP_3, da_gauss_zeta_m.host());
+        da_gauss_zeta_m.ToDevice();
+        std::copy(gauss_xi.data(), gauss_xi.data() + Quadrature::N_QP_4, da_gauss_xi.host());
+        da_gauss_xi.ToDevice();
+        std::copy(gauss_eta.data(), gauss_eta.data() + Quadrature::N_QP_4, da_gauss_eta.host());
+        da_gauss_eta.ToDevice();
+        std::copy(gauss_zeta.data(), gauss_zeta.data() + Quadrature::N_QP_3, da_gauss_zeta.host());
+        da_gauss_zeta.ToDevice();
 
-        MOPHI_GPU_CALL(
-            cudaMemcpy(d_weight_xi_m, weight_xi_m.data(), Quadrature::N_QP_7 * sizeof(Real), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(
-            cudaMemcpy(d_weight_eta_m, weight_eta_m.data(), Quadrature::N_QP_7 * sizeof(Real), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_weight_zeta_m, weight_zeta_m.data(), Quadrature::N_QP_3 * sizeof(Real),
-                                  cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(
-            cudaMemcpy(d_weight_xi, weight_xi.data(), Quadrature::N_QP_4 * sizeof(Real), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(
-            cudaMemcpy(d_weight_eta, weight_eta.data(), Quadrature::N_QP_4 * sizeof(Real), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(
-            cudaMemcpy(d_weight_zeta, weight_zeta.data(), Quadrature::N_QP_3 * sizeof(Real), cudaMemcpyHostToDevice));
+        std::copy(weight_xi_m.data(), weight_xi_m.data() + Quadrature::N_QP_7, da_weight_xi_m.host());
+        da_weight_xi_m.ToDevice();
+        std::copy(weight_eta_m.data(), weight_eta_m.data() + Quadrature::N_QP_7, da_weight_eta_m.host());
+        da_weight_eta_m.ToDevice();
+        std::copy(weight_zeta_m.data(), weight_zeta_m.data() + Quadrature::N_QP_3, da_weight_zeta_m.host());
+        da_weight_zeta_m.ToDevice();
+        std::copy(weight_xi.data(), weight_xi.data() + Quadrature::N_QP_4, da_weight_xi.host());
+        da_weight_xi.ToDevice();
+        std::copy(weight_eta.data(), weight_eta.data() + Quadrature::N_QP_4, da_weight_eta.host());
+        da_weight_eta.ToDevice();
+        std::copy(weight_zeta.data(), weight_zeta.data() + Quadrature::N_QP_3, da_weight_zeta.host());
+        da_weight_zeta.ToDevice();
 
-        MOPHI_GPU_CALL(cudaMemcpy(d_x12_jac, h_x12.data(), n_coef * sizeof(Real), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_y12_jac, h_y12.data(), n_coef * sizeof(Real), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_z12_jac, h_z12.data(), n_coef * sizeof(Real), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_x12, h_x12.data(), n_coef * sizeof(Real), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_y12, h_y12.data(), n_coef * sizeof(Real), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_z12, h_z12.data(), n_coef * sizeof(Real), cudaMemcpyHostToDevice));
+        std::copy(h_x12.data(), h_x12.data() + n_coef, da_x12_jac.host());
+        da_x12_jac.ToDevice();
+        std::copy(h_y12.data(), h_y12.data() + n_coef, da_y12_jac.host());
+        da_y12_jac.ToDevice();
+        std::copy(h_z12.data(), h_z12.data() + n_coef, da_z12_jac.host());
+        da_z12_jac.ToDevice();
+        std::copy(h_x12.data(), h_x12.data() + n_coef, da_x12.host());
+        da_x12.ToDevice();
+        std::copy(h_y12.data(), h_y12.data() + n_coef, da_y12.host());
+        da_y12.ToDevice();
+        std::copy(h_z12.data(), h_z12.data() + n_coef, da_z12.host());
+        da_z12.ToDevice();
 
-        MOPHI_GPU_CALL(cudaMemcpy(d_element_connectivity, element_connectivity.data(), n_beam * 4 * sizeof(int),
-                                  cudaMemcpyHostToDevice));
+        std::copy(element_connectivity.data(),
+                  element_connectivity.data() + n_beam * 4,
+                  da_element_connectivity.host());
+        da_element_connectivity.ToDevice();
 
-        cudaMemset(d_f_int, 0, n_coef * 3 * sizeof(Real));
+        da_f_int.SetVal(Real(0));
+        da_f_int.MakeReadyDevice();
 
-        cudaMemset(d_F, 0, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(Real));
-        cudaMemset(d_P, 0, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(Real));
-        // initialize viscous buffers to zero
-        cudaMemset(d_Fdot, 0, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(Real));
-        cudaMemset(d_P_vis, 0, n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3 * sizeof(Real));
+        da_F.SetVal(Real(0));
+        da_F.MakeReadyDevice();
+        da_P.SetVal(Real(0));
+        da_P.MakeReadyDevice();
+        da_Fdot.SetVal(Real(0));
+        da_Fdot.MakeReadyDevice();
+        da_P_vis.SetVal(Real(0));
+        da_P_vis.MakeReadyDevice();
 
-        MOPHI_GPU_CALL(cudaMemcpy(d_H, height.data(), n_beam * sizeof(Real), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_W, width.data(), n_beam * sizeof(Real), cudaMemcpyHostToDevice));
-        MOPHI_GPU_CALL(cudaMemcpy(d_L, length.data(), n_beam * sizeof(Real), cudaMemcpyHostToDevice));
+        std::copy(height.data(), height.data() + n_beam, da_H.host());
+        da_H.ToDevice();
+        std::copy(width.data(), width.data() + n_beam, da_W.host());
+        da_W.ToDevice();
+        std::copy(length.data(), length.data() + n_beam, da_L.host());
+        da_L.ToDevice();
 
         Real rho0 = 0.0;
         Real nu = 0.0;
@@ -728,8 +748,8 @@ struct GPU_ANCF3443_Data : public ElementBase {
             MOPHI_ERROR("External force vector size mismatch.");
             return;
         }
-        cudaMemset(d_f_ext, 0, n_coef * 3 * sizeof(Real));
-        MOPHI_GPU_CALL(cudaMemcpy(d_f_ext, f_ext.data(), n_coef * 3 * sizeof(Real), cudaMemcpyHostToDevice));
+        std::copy(f_ext.data(), f_ext.data() + n_coef * 3, da_f_ext.host());
+        da_f_ext.ToDevice();
     }
 
     void SetNodalFixed(const VectorXi& fixed_nodes) {
@@ -741,12 +761,15 @@ struct GPU_ANCF3443_Data : public ElementBase {
         n_constraint = fixed_nodes.size() * 3;
         constraint_mode = kConstraintFixedCoefficients;
 
-        MOPHI_GPU_CALL(cudaMalloc(&d_constraint, n_constraint * sizeof(Real)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_fixed_nodes, fixed_nodes.size() * sizeof(int)));
+        da_constraint.resize(n_constraint);
+        da_constraint.BindDevicePointer(&d_constraint);
+        da_fixed_nodes.resize(fixed_nodes.size());
+        da_fixed_nodes.BindDevicePointer(&d_fixed_nodes);
 
-        MOPHI_GPU_CALL(cudaMemset(d_constraint, 0, n_constraint * sizeof(Real)));
-        MOPHI_GPU_CALL(
-            cudaMemcpy(d_fixed_nodes, fixed_nodes.data(), fixed_nodes.size() * sizeof(int), cudaMemcpyHostToDevice));
+        da_constraint.SetVal(Real(0));
+        da_constraint.MakeReadyDevice();
+        std::copy(fixed_nodes.data(), fixed_nodes.data() + fixed_nodes.size(), da_fixed_nodes.host());
+        da_fixed_nodes.ToDevice();
 
         is_constraints_setup = true;
         if (d_data) {
@@ -800,8 +823,10 @@ struct GPU_ANCF3443_Data : public ElementBase {
         n_constraint = static_cast<int>(rhs.size());
         constraint_mode = kConstraintLinearCSR;
 
-        MOPHI_GPU_CALL(cudaMalloc(&d_constraint, n_constraint * sizeof(Real)));
-        MOPHI_GPU_CALL(cudaMemset(d_constraint, 0, n_constraint * sizeof(Real)));
+        da_constraint.resize(n_constraint);
+        da_constraint.BindDevicePointer(&d_constraint);
+        da_constraint.SetVal(Real(0));
+        da_constraint.MakeReadyDevice();
 
         MOPHI_GPU_CALL(cudaMalloc(&d_constraint_rhs, n_constraint * sizeof(Real)));
         MOPHI_GPU_CALL(cudaMemcpy(d_constraint_rhs, rhs.data(), n_constraint * sizeof(Real), cudaMemcpyHostToDevice));
@@ -890,31 +915,32 @@ struct GPU_ANCF3443_Data : public ElementBase {
 
     // Free memory
     void Destroy() {
-        MOPHI_GPU_CALL(cudaFree(d_B_inv));
-        MOPHI_GPU_CALL(cudaFree(d_grad_N_ref));
-        MOPHI_GPU_CALL(cudaFree(d_detJ_ref));
+        // Long arrays managed by DualArrays
+        da_B_inv.free();
+        da_grad_N_ref.free();
+        da_detJ_ref.free();
 
-        MOPHI_GPU_CALL(cudaFree(d_gauss_xi_m));
-        MOPHI_GPU_CALL(cudaFree(d_gauss_eta_m));
-        MOPHI_GPU_CALL(cudaFree(d_gauss_zeta_m));
-        MOPHI_GPU_CALL(cudaFree(d_gauss_xi));
-        MOPHI_GPU_CALL(cudaFree(d_gauss_eta));
-        MOPHI_GPU_CALL(cudaFree(d_gauss_zeta));
-        MOPHI_GPU_CALL(cudaFree(d_weight_xi_m));
-        MOPHI_GPU_CALL(cudaFree(d_weight_eta_m));
-        MOPHI_GPU_CALL(cudaFree(d_weight_zeta_m));
-        MOPHI_GPU_CALL(cudaFree(d_weight_xi));
-        MOPHI_GPU_CALL(cudaFree(d_weight_eta));
-        MOPHI_GPU_CALL(cudaFree(d_weight_zeta));
+        da_gauss_xi_m.free();
+        da_gauss_eta_m.free();
+        da_gauss_zeta_m.free();
+        da_gauss_xi.free();
+        da_gauss_eta.free();
+        da_gauss_zeta.free();
+        da_weight_xi_m.free();
+        da_weight_eta_m.free();
+        da_weight_zeta_m.free();
+        da_weight_xi.free();
+        da_weight_eta.free();
+        da_weight_zeta.free();
 
-        MOPHI_GPU_CALL(cudaFree(d_x12_jac));
-        MOPHI_GPU_CALL(cudaFree(d_y12_jac));
-        MOPHI_GPU_CALL(cudaFree(d_z12_jac));
-        MOPHI_GPU_CALL(cudaFree(d_x12));
-        MOPHI_GPU_CALL(cudaFree(d_y12));
-        MOPHI_GPU_CALL(cudaFree(d_z12));
+        da_x12_jac.free();
+        da_y12_jac.free();
+        da_z12_jac.free();
+        da_x12.free();
+        da_y12.free();
+        da_z12.free();
 
-        MOPHI_GPU_CALL(cudaFree(d_element_connectivity));
+        da_element_connectivity.free();
 
         if (is_csr_setup) {
             MOPHI_GPU_CALL(cudaFree(d_csr_offsets));
@@ -939,18 +965,18 @@ struct GPU_ANCF3443_Data : public ElementBase {
             is_j_csr_setup = false;
         }
 
-        MOPHI_GPU_CALL(cudaFree(d_F));
-        MOPHI_GPU_CALL(cudaFree(d_P));
-        MOPHI_GPU_CALL(cudaFree(d_Fdot));
-        MOPHI_GPU_CALL(cudaFree(d_P_vis));
-        MOPHI_GPU_CALL(cudaFree(d_f_int));
-        MOPHI_GPU_CALL(cudaFree(d_f_ext));
+        da_F.free();
+        da_P.free();
+        da_Fdot.free();
+        da_P_vis.free();
+        da_f_int.free();
+        da_f_ext.free();
         MOPHI_GPU_CALL(cudaFree(d_eta_damp));
         MOPHI_GPU_CALL(cudaFree(d_lambda_damp));
 
-        MOPHI_GPU_CALL(cudaFree(d_H));
-        MOPHI_GPU_CALL(cudaFree(d_W));
-        MOPHI_GPU_CALL(cudaFree(d_L));
+        da_H.free();
+        da_W.free();
+        da_L.free();
 
         MOPHI_GPU_CALL(cudaFree(d_rho0));
         MOPHI_GPU_CALL(cudaFree(d_nu));
@@ -965,11 +991,8 @@ struct GPU_ANCF3443_Data : public ElementBase {
         MOPHI_GPU_CALL(cudaFree(d_data));
 
         if (is_constraints_setup) {
-            MOPHI_GPU_CALL(cudaFree(d_constraint));
-            if (d_fixed_nodes) {
-                MOPHI_GPU_CALL(cudaFree(d_fixed_nodes));
-                d_fixed_nodes = nullptr;
-            }
+            da_constraint.free();
+            da_fixed_nodes.free();
             if (d_constraint_rhs) {
                 MOPHI_GPU_CALL(cudaFree(d_constraint_rhs));
                 d_constraint_rhs = nullptr;
@@ -1045,6 +1068,27 @@ struct GPU_ANCF3443_Data : public ElementBase {
     int n_constraint;
 
   private:
+    // DualArrays for long arrays (manage both pinned host and device memory).
+    // The raw device pointers below are bound to these DualArrays via
+    // BindDevicePointer so that GPU kernels can access data through them.
+    mophi::DualArray<Real> da_B_inv;
+    mophi::DualArray<Real> da_grad_N_ref;
+    mophi::DualArray<Real> da_detJ_ref;
+    mophi::DualArray<Real> da_gauss_xi_m, da_gauss_eta_m, da_gauss_zeta_m;
+    mophi::DualArray<Real> da_gauss_xi, da_gauss_eta, da_gauss_zeta;
+    mophi::DualArray<Real> da_weight_xi_m, da_weight_eta_m, da_weight_zeta_m;
+    mophi::DualArray<Real> da_weight_xi, da_weight_eta, da_weight_zeta;
+    mophi::DualArray<Real> da_x12_jac, da_y12_jac, da_z12_jac;
+    mophi::DualArray<Real> da_x12, da_y12, da_z12;
+    mophi::DualArray<int> da_element_connectivity;
+    mophi::DualArray<Real> da_F, da_P, da_Fdot, da_P_vis;
+    mophi::DualArray<Real> da_H, da_W, da_L;
+    mophi::DualArray<Real> da_f_int, da_f_ext;
+    mophi::DualArray<Real> da_constraint;
+    mophi::DualArray<int> da_fixed_nodes;
+
+    // Raw device pointers for GPU kernel access (managed by DualArrays above
+    // via BindDevicePointer; scalars and CSR arrays kept as raw pointers).
     Real* d_B_inv;
     Real* d_grad_N_ref;  // (n_beam, N_QP, N_SHAPE, 3)
     Real* d_detJ_ref;    // (n_beam, N_QP)
@@ -1062,7 +1106,7 @@ struct GPU_ANCF3443_Data : public ElementBase {
     Real *d_F, *d_P;
     Real *d_Fdot, *d_P_vis;
 
-    // per-element damping parameters
+    // per-element damping parameters (scalar device values)
     Real *d_eta_damp, *d_lambda_damp;
 
     Real *d_H, *d_W, *d_L;
@@ -1075,12 +1119,12 @@ struct GPU_ANCF3443_Data : public ElementBase {
     Real* d_constraint_rhs = nullptr;
     int* d_fixed_nodes;
 
-    // Constraint Jacobian J^T in CSR format
+    // Constraint Jacobian J^T in CSR format (dynamically sized)
     int *d_cj_csr_offsets, *d_cj_csr_columns;
     Real* d_cj_csr_values;
     int* d_cj_nnz;
 
-    // Constraint Jacobian J in CSR format
+    // Constraint Jacobian J in CSR format (dynamically sized)
     int *d_j_csr_offsets, *d_j_csr_columns;
     Real* d_j_csr_values;
     int* d_j_nnz;

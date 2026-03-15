@@ -573,14 +573,11 @@ void GPU_ANCF3243_Data::ConvertToCSR_ConstraintJac() {
 }
 
 void GPU_ANCF3243_Data::RetrieveConnectivityToCPU(MatrixXi& connectivity) {
-    // `d_element_connectivity` is stored as a flat row-major (n_beam × 2) array
-    // (see Setup(), which accepts a RowMajorMatrix matrix). `MatrixXi` is
-    // column-major by default, so copying directly into it would scramble the
-    // connectivity. Use a row-major staging matrix, then assign.
-    Matrix<int, DynamicMatrix, 2, RowMajorMatrix> connectivity_row_major;
-    connectivity_row_major.resize(n_beam, 2);
-    MOPHI_GPU_CALL(cudaMemcpy(connectivity_row_major.data(), d_element_connectivity,
-                              static_cast<size_t>(n_beam) * 2 * sizeof(int), cudaMemcpyDeviceToHost));
+    // `d_element_connectivity` is stored as a flat row-major (n_beam × 2) array.
+    // Use DualArray ToHost + Map into a row-major staging matrix, then assign.
+    da_element_connectivity.ToHost();
+    Map<Matrix<int, DynamicMatrix, 2, RowMajorMatrix>> connectivity_row_major(
+        da_element_connectivity.host(), n_beam, 2);
     connectivity = connectivity_row_major;
 }
 
@@ -611,9 +608,8 @@ void GPU_ANCF3243_Data::RetrieveMassCSRToCPU(std::vector<int>& offsets,
 
 void GPU_ANCF3243_Data::RetrieveInternalForceToCPU(VectorXR& internal_force) {
     int expected_size = n_coef * 3;
-    internal_force.resize(expected_size);
-
-    MOPHI_GPU_CALL(cudaMemcpy(internal_force.data(), d_f_int, expected_size * sizeof(Real), cudaMemcpyDeviceToHost));
+    da_f_int.ToHost();
+    internal_force = Map<VectorXR>(da_f_int.host(), expected_size);
 }
 
 void GPU_ANCF3243_Data::RetrieveConstraintJacobianCSRToCPU(std::vector<int>& offsets,
@@ -650,34 +646,35 @@ void GPU_ANCF3243_Data::RetrieveConstraintJacobianCSRToCPU(std::vector<int>& off
 }
 
 void GPU_ANCF3243_Data::RetrieveDeformationGradientToCPU(std::vector<std::vector<MatrixXR>>& deformation_gradient) {
+    da_F.ToHost();
+    const Real* host_ptr = da_F.host();
     deformation_gradient.resize(n_beam);
     for (int i = 0; i < n_beam; i++) {
         deformation_gradient[i].resize(Quadrature::N_TOTAL_QP_3_2_2);
         for (int j = 0; j < Quadrature::N_TOTAL_QP_3_2_2; j++) {
-            deformation_gradient[i][j].resize(3, 3);
-            MOPHI_GPU_CALL(cudaMemcpy(deformation_gradient[i][j].data(),
-                                      d_F + i * Quadrature::N_TOTAL_QP_3_2_2 * 3 * 3 + j * 3 * 3, 3 * 3 * sizeof(Real),
-                                      cudaMemcpyDeviceToHost));
+            int offset = i * Quadrature::N_TOTAL_QP_3_2_2 * 9 + j * 9;
+            deformation_gradient[i][j] = Map<const MatrixXR>(host_ptr + offset, 3, 3);
         }
     }
 }
 
 void GPU_ANCF3243_Data::RetrievePFromFToCPU(std::vector<std::vector<MatrixXR>>& p_from_F) {
+    da_P.ToHost();
+    const Real* host_ptr = da_P.host();
     p_from_F.resize(n_beam);
     for (int i = 0; i < n_beam; i++) {
         p_from_F[i].resize(Quadrature::N_TOTAL_QP_3_2_2);
         for (int j = 0; j < Quadrature::N_TOTAL_QP_3_2_2; j++) {
-            p_from_F[i][j].resize(3, 3);
-            MOPHI_GPU_CALL(cudaMemcpy(p_from_F[i][j].data(), d_P + i * Quadrature::N_TOTAL_QP_3_2_2 * 3 * 3 + j * 3 * 3,
-                                      3 * 3 * sizeof(Real), cudaMemcpyDeviceToHost));
+            int offset = i * Quadrature::N_TOTAL_QP_3_2_2 * 9 + j * 9;
+            p_from_F[i][j] = Map<const MatrixXR>(host_ptr + offset, 3, 3);
         }
     }
 }
 
 void GPU_ANCF3243_Data::RetrieveConstraintDataToCPU(VectorXR& constraint) {
     int expected_size = n_constraint;
-    constraint.resize(expected_size);
-    MOPHI_GPU_CALL(cudaMemcpy(constraint.data(), d_constraint, expected_size * sizeof(Real), cudaMemcpyDeviceToHost));
+    da_constraint.ToHost();
+    constraint = Map<VectorXR>(da_constraint.host(), expected_size);
 }
 
 void GPU_ANCF3243_Data::RetrieveConstraintJacobianToCPU(MatrixXR& constraint_jac) {
@@ -689,8 +686,8 @@ void GPU_ANCF3243_Data::RetrieveConstraintJacobianToCPU(MatrixXR& constraint_jac
     }
 
     std::vector<int> h_fixed(static_cast<size_t>(n_constraint / 3), 0);
-    MOPHI_GPU_CALL(cudaMemcpy(h_fixed.data(), d_fixed_nodes, static_cast<size_t>(n_constraint / 3) * sizeof(int),
-                              cudaMemcpyDeviceToHost));
+    da_fixed_nodes.ToHost();
+    std::copy(da_fixed_nodes.host(), da_fixed_nodes.host() + n_constraint / 3, h_fixed.begin());
 
     for (int i = 0; i < n_constraint / 3; ++i) {
         int node = h_fixed[static_cast<size_t>(i)];
@@ -702,12 +699,12 @@ void GPU_ANCF3243_Data::RetrieveConstraintJacobianToCPU(MatrixXR& constraint_jac
 
 void GPU_ANCF3243_Data::RetrievePositionToCPU(VectorXR& x12, VectorXR& y12, VectorXR& z12) {
     int expected_size = n_coef;
-    x12.resize(expected_size);
-    y12.resize(expected_size);
-    z12.resize(expected_size);
-    MOPHI_GPU_CALL(cudaMemcpy(x12.data(), d_x12, expected_size * sizeof(Real), cudaMemcpyDeviceToHost));
-    MOPHI_GPU_CALL(cudaMemcpy(y12.data(), d_y12, expected_size * sizeof(Real), cudaMemcpyDeviceToHost));
-    MOPHI_GPU_CALL(cudaMemcpy(z12.data(), d_z12, expected_size * sizeof(Real), cudaMemcpyDeviceToHost));
+    da_x12.ToHost();
+    da_y12.ToHost();
+    da_z12.ToHost();
+    x12 = Map<VectorXR>(da_x12.host(), expected_size);
+    y12 = Map<VectorXR>(da_y12.host(), expected_size);
+    z12 = Map<VectorXR>(da_z12.host(), expected_size);
 }
 
 __global__ void compute_internal_force_kernel(GPU_ANCF3243_Data* d_data) {

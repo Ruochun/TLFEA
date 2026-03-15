@@ -562,31 +562,25 @@ void GPU_FEAT10_Data::ConvertToCSR_ConstraintJacT() {
 }
 
 void GPU_FEAT10_Data::RetrieveDetJToCPU(std::vector<std::vector<Real>>& detJ) {
+    da_detJ_ref.ToHost();
+    const Real* host_ptr = da_detJ_ref.host();
     detJ.resize(n_elem);
     for (int elem_idx = 0; elem_idx < n_elem; elem_idx++) {
-        detJ[elem_idx].resize(Quadrature::N_QP_T10_5);
-        MOPHI_GPU_CALL(cudaMemcpy(detJ[elem_idx].data(), d_detJ_ref + elem_idx * Quadrature::N_QP_T10_5,
-                                  Quadrature::N_QP_T10_5 * sizeof(Real), cudaMemcpyDeviceToHost));
+        detJ[elem_idx].assign(host_ptr + elem_idx * Quadrature::N_QP_T10_5,
+                              host_ptr + (elem_idx + 1) * Quadrature::N_QP_T10_5);
     }
 }
 
 void GPU_FEAT10_Data::RetrieveDnDuPreToCPU(std::vector<std::vector<MatrixXR>>& dn_du_pre) {
-    // Resize to [n_elem][N_QP_T10_5]
+    da_grad_N_ref.ToHost();
+    const Real* host_ptr = da_grad_N_ref.host();
     dn_du_pre.resize(n_elem);
-
     for (int elem_idx = 0; elem_idx < n_elem; elem_idx++) {
         dn_du_pre[elem_idx].resize(Quadrature::N_QP_T10_5);
-
         for (int qp_idx = 0; qp_idx < Quadrature::N_QP_T10_5; qp_idx++) {
-            // Each QP matrix: 10 × 3 (10 shape functions × 3 derivatives)
-            dn_du_pre[elem_idx][qp_idx].resize(10, 3);
-
-            // Calculate offset for this specific element + QP
             int offset = (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 10 * 3;
-            int size = 10 * 3 * sizeof(Real);
-
-            MOPHI_GPU_CALL(
-                cudaMemcpy(dn_du_pre[elem_idx][qp_idx].data(), d_grad_N_ref + offset, size, cudaMemcpyDeviceToHost));
+            // No-copy Map view of the host buffer slice
+            dn_du_pre[elem_idx][qp_idx] = Map<const MatrixXR>(host_ptr + offset, 10, 3);
         }
     }
 }
@@ -617,55 +611,39 @@ void GPU_FEAT10_Data::RetrieveMassCSRToCPU(std::vector<int>& offsets,
 }
 
 void GPU_FEAT10_Data::RetrievePFromFToCPU(std::vector<std::vector<MatrixXR>>& p_from_F) {
-    // Resize to [n_elem][N_QP_T10_5]
+    da_P.ToHost();
+    const Real* host_ptr = da_P.host();
     p_from_F.resize(n_elem);
-
     for (int elem_idx = 0; elem_idx < n_elem; elem_idx++) {
         p_from_F[elem_idx].resize(Quadrature::N_QP_T10_5);
-
         for (int qp_idx = 0; qp_idx < Quadrature::N_QP_T10_5; qp_idx++) {
-            // Each P matrix: 3 × 3 (first Piola-Kirchhoff stress tensor)
-            p_from_F[elem_idx][qp_idx].resize(3, 3);
-
-            // Calculate offset for this specific element + QP
-            // P is stored as [elem][qp](i,j) where i,j are 0,1,2
             int offset = (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 3 * 3;
-            int size = 3 * 3 * sizeof(Real);
-
-            MOPHI_GPU_CALL(cudaMemcpy(p_from_F[elem_idx][qp_idx].data(), d_P + offset, size, cudaMemcpyDeviceToHost));
+            // No-copy Map view of the host buffer slice
+            p_from_F[elem_idx][qp_idx] = Map<const MatrixXR>(host_ptr + offset, 3, 3);
         }
     }
 }
 
 void GPU_FEAT10_Data::RetrieveInternalForceToCPU(VectorXR& internal_force) {
-    // Resize to total DOFs (3 * number of nodes)
     int total_dofs = 3 * n_coef;
-    internal_force.resize(total_dofs);
-
-    // Copy from device to host
-    MOPHI_GPU_CALL(cudaMemcpy(internal_force.data(), d_f_int, total_dofs * sizeof(Real), cudaMemcpyDeviceToHost));
+    da_f_int.ToHost();
+    internal_force = Map<VectorXR>(da_f_int.host(), total_dofs);
 }
 
 void GPU_FEAT10_Data::RetrieveExternalForceToCPU(VectorXR& external_force) {
-    // Resize to total DOFs (3 * number of nodes)
     int total_dofs = 3 * n_coef;
-    external_force.resize(total_dofs);
-
-    // Copy from device to host
-    MOPHI_GPU_CALL(cudaMemcpy(external_force.data(), d_f_ext, total_dofs * sizeof(Real), cudaMemcpyDeviceToHost));
+    da_f_ext.ToHost();
+    external_force = Map<VectorXR>(da_f_ext.host(), total_dofs);
 }
 
 void GPU_FEAT10_Data::RetrievePositionToCPU(VectorXR& x12, VectorXR& y12, VectorXR& z12) {
-    // Resize to total number of nodes
     int total_nodes = n_coef;
-    x12.resize(total_nodes);
-    y12.resize(total_nodes);
-    z12.resize(total_nodes);
-
-    // Copy from device to host
-    MOPHI_GPU_CALL(cudaMemcpy(x12.data(), d_h_x12, total_nodes * sizeof(Real), cudaMemcpyDeviceToHost));
-    MOPHI_GPU_CALL(cudaMemcpy(y12.data(), d_h_y12, total_nodes * sizeof(Real), cudaMemcpyDeviceToHost));
-    MOPHI_GPU_CALL(cudaMemcpy(z12.data(), d_h_z12, total_nodes * sizeof(Real), cudaMemcpyDeviceToHost));
+    da_h_x12.ToHost();
+    da_h_y12.ToHost();
+    da_h_z12.ToHost();
+    x12 = Map<VectorXR>(da_h_x12.host(), total_nodes);
+    y12 = Map<VectorXR>(da_h_y12.host(), total_nodes);
+    z12 = Map<VectorXR>(da_h_z12.host(), total_nodes);
 }
 
 void GPU_FEAT10_Data::SetNodalFixed(const VectorXi& fixed_nodes) {
@@ -676,12 +654,15 @@ void GPU_FEAT10_Data::SetNodalFixed(const VectorXi& fixed_nodes) {
 
     n_constraint = fixed_nodes.size() * 3;
 
-    MOPHI_GPU_CALL(cudaMalloc(&d_constraint, n_constraint * sizeof(Real)));
-    MOPHI_GPU_CALL(cudaMalloc(&d_fixed_nodes, fixed_nodes.size() * sizeof(int)));
+    da_constraint.resize(n_constraint);
+    da_constraint.BindDevicePointer(&d_constraint);
+    da_fixed_nodes.resize(fixed_nodes.size());
+    da_fixed_nodes.BindDevicePointer(&d_fixed_nodes);
 
-    MOPHI_GPU_CALL(cudaMemset(d_constraint, 0, n_constraint * sizeof(Real)));
-    MOPHI_GPU_CALL(
-        cudaMemcpy(d_fixed_nodes, fixed_nodes.data(), fixed_nodes.size() * sizeof(int), cudaMemcpyHostToDevice));
+    da_constraint.SetVal(Real(0));
+    da_constraint.MakeReadyDevice();
+    std::copy(fixed_nodes.data(), fixed_nodes.data() + fixed_nodes.size(), da_fixed_nodes.host());
+    da_fixed_nodes.ToDevice();
 
     is_constraints_setup = true;
     if (d_data) {
@@ -698,12 +679,8 @@ void GPU_FEAT10_Data::UpdateNodalFixed(const VectorXi& fixed_nodes) {
         return;
     }
 
-    // If number of constraints changed, reallocate
+    // If number of constraints changed, resize DualArrays (realloc device if needed)
     if (new_n_constraint != n_constraint) {
-        // Free old buffers
-        MOPHI_GPU_CALL(cudaFree(d_constraint));
-        MOPHI_GPU_CALL(cudaFree(d_fixed_nodes));
-
         // Free old CSR buffers if they exist
         if (is_cj_csr_setup) {
             MOPHI_GPU_CALL(cudaFree(d_cj_csr_offsets));
@@ -731,15 +708,17 @@ void GPU_FEAT10_Data::UpdateNodalFixed(const VectorXi& fixed_nodes) {
 
         n_constraint = new_n_constraint;
 
-        // Allocate new buffers
-        MOPHI_GPU_CALL(cudaMalloc(&d_constraint, n_constraint * sizeof(Real)));
-        MOPHI_GPU_CALL(cudaMalloc(&d_fixed_nodes, fixed_nodes.size() * sizeof(int)));
+        // DualArray handles reallocation; BindDevicePointer was already called
+        // in SetNodalFixed so d_constraint and d_fixed_nodes are auto-updated.
+        da_constraint.resize(n_constraint);
+        da_fixed_nodes.resize(fixed_nodes.size());
     }
 
-    // Clear and update constraint data
-    MOPHI_GPU_CALL(cudaMemset(d_constraint, 0, n_constraint * sizeof(Real)));
-    MOPHI_GPU_CALL(
-        cudaMemcpy(d_fixed_nodes, fixed_nodes.data(), fixed_nodes.size() * sizeof(int), cudaMemcpyHostToDevice));
+    // Clear constraint data and upload new fixed nodes
+    da_constraint.SetVal(Real(0));
+    da_constraint.MakeReadyDevice();
+    std::copy(fixed_nodes.data(), fixed_nodes.data() + fixed_nodes.size(), da_fixed_nodes.host());
+    da_fixed_nodes.ToDevice();
 
     // Invalidate Jacobian CSR caches: fixed nodes may have changed even if the
     // constraint count stayed the same.
@@ -772,8 +751,9 @@ void GPU_FEAT10_Data::UpdateNodalFixed(const VectorXi& fixed_nodes) {
 
 void GPU_FEAT10_Data::RetrieveConnectivityToCPU(MatrixXi& connectivity) {
     connectivity.resize(n_elem, Quadrature::N_NODE_T10_10);
-    MOPHI_GPU_CALL(cudaMemcpy(connectivity.data(), d_element_connectivity,
-                              n_elem * Quadrature::N_NODE_T10_10 * sizeof(int), cudaMemcpyDeviceToHost));
+    da_element_connectivity.ToHost();
+    connectivity = Map<Matrix<int, DynamicMatrix, DynamicMatrix>>(
+        da_element_connectivity.host(), n_elem, Quadrature::N_NODE_T10_10);
 }
 
 void GPU_FEAT10_Data::WriteOutputVTK(const std::string& filename) {
