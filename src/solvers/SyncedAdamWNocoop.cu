@@ -488,8 +488,7 @@ template __global__ void adamw_compute_internal_force_kernel<GPU_ANCF3443_Data>(
                                                                                 SyncedAdamWNocoopSolver*);
 template __global__ void adamw_compute_internal_force_kernel<GPU_FEAT10_Data>(GPU_FEAT10_Data*,
                                                                               SyncedAdamWNocoopSolver*);
-template __global__ void adamw_compute_internal_force_kernel<GPU_FEAT4_Data>(GPU_FEAT4_Data*,
-                                                                             SyncedAdamWNocoopSolver*);
+template __global__ void adamw_compute_internal_force_kernel<GPU_FEAT4_Data>(GPU_FEAT4_Data*, SyncedAdamWNocoopSolver*);
 
 template __global__ void adamw_compute_constraints_kernel<GPU_ANCF3243_Data>(GPU_ANCF3243_Data*);
 template __global__ void adamw_compute_constraints_kernel<GPU_ANCF3443_Data>(GPU_ANCF3443_Data*);

@@ -62,7 +62,7 @@ int main() {
     // -----------------------------------------------------------------------
     // Load mesh from VTU file
     // -----------------------------------------------------------------------
-    const std::string vtu_path = "data/meshes/T4/beam.vtu";
+    const std::string vtu_path = "data/meshes/T4/beam_highres.vtu";
     std::cout << "Loading mesh: " << vtu_path << "\n";
 
     mophi::Mesh mesh;

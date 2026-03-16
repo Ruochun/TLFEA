@@ -136,8 +136,7 @@ __global__ void dn_du_pre_feat4_kernel(GPU_FEAT4_Data* d_data) {
     }
 
     // Determinant
-    Real detJ = J[0][0] * (J[1][1] * J[2][2] - J[1][2] * J[2][1]) -
-                J[0][1] * (J[1][0] * J[2][2] - J[1][2] * J[2][0]) +
+    Real detJ = J[0][0] * (J[1][1] * J[2][2] - J[1][2] * J[2][1]) - J[0][1] * (J[1][0] * J[2][2] - J[1][2] * J[2][0]) +
                 J[0][2] * (J[1][0] * J[2][1] - J[1][1] * J[2][0]);
 
     d_data->detJ_ref(elem_idx, qp_idx) = detJ;
@@ -406,9 +405,7 @@ __global__ void build_constraint_j_csr_feat4_kernel(int n_constraint,
     j_values[tid] = 1.0;
 }
 
-__global__ void build_constraint_jt_row_counts_feat4_kernel(int n_constraint,
-                                                            const int* fixed_nodes,
-                                                            int* row_counts) {
+__global__ void build_constraint_jt_row_counts_feat4_kernel(int n_constraint, const int* fixed_nodes, int* row_counts) {
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     if (tid >= n_constraint) {
         return;

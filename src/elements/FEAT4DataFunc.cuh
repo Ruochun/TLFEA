@@ -491,8 +491,7 @@ __device__ __forceinline__ void compute_hessian_assemble_csr<GPU_FEAT4_Data>(GPU
                     int global_col = 3 * global_node_col + c_dof;
                     int local_col = 3 * local_col_node + c_dof;
 
-                    int pos =
-                        binary_search_column_csr_feat4(&d_csr_col_indices[row_begin], row_len, global_col);
+                    int pos = binary_search_column_csr_feat4(&d_csr_col_indices[row_begin], row_len, global_col);
                     if (pos >= 0) {
                         atomicAdd(&d_csr_values[row_begin + pos], h * K_elem[local_row][local_col]);
                     }
@@ -530,26 +529,17 @@ __device__ __forceinline__ void compute_hessian_assemble_csr<GPU_FEAT4_Data>(GPU
 
             Real hdot = h_a[0] * h_b[0] + h_a[1] * h_b[1] + h_a[2] * h_b[2];
 
-            Real Cblock00 =
-                (eta_d * (Fh_b0 * Fh_a0) + eta_d * FFT[0][0] * hdot + lambda_d * (Fh_a0 * Fh_b0)) * dV;
-            Real Cblock01 =
-                (eta_d * (Fh_b0 * Fh_a1) + eta_d * FFT[0][1] * hdot + lambda_d * (Fh_a0 * Fh_b1)) * dV;
-            Real Cblock02 =
-                (eta_d * (Fh_b0 * Fh_a2) + eta_d * FFT[0][2] * hdot + lambda_d * (Fh_a0 * Fh_b2)) * dV;
+            Real Cblock00 = (eta_d * (Fh_b0 * Fh_a0) + eta_d * FFT[0][0] * hdot + lambda_d * (Fh_a0 * Fh_b0)) * dV;
+            Real Cblock01 = (eta_d * (Fh_b0 * Fh_a1) + eta_d * FFT[0][1] * hdot + lambda_d * (Fh_a0 * Fh_b1)) * dV;
+            Real Cblock02 = (eta_d * (Fh_b0 * Fh_a2) + eta_d * FFT[0][2] * hdot + lambda_d * (Fh_a0 * Fh_b2)) * dV;
 
-            Real Cblock10 =
-                (eta_d * (Fh_b1 * Fh_a0) + eta_d * FFT[1][0] * hdot + lambda_d * (Fh_a1 * Fh_b0)) * dV;
-            Real Cblock11 =
-                (eta_d * (Fh_b1 * Fh_a1) + eta_d * FFT[1][1] * hdot + lambda_d * (Fh_a1 * Fh_b1)) * dV;
-            Real Cblock12 =
-                (eta_d * (Fh_b1 * Fh_a2) + eta_d * FFT[1][2] * hdot + lambda_d * (Fh_a1 * Fh_b2)) * dV;
+            Real Cblock10 = (eta_d * (Fh_b1 * Fh_a0) + eta_d * FFT[1][0] * hdot + lambda_d * (Fh_a1 * Fh_b0)) * dV;
+            Real Cblock11 = (eta_d * (Fh_b1 * Fh_a1) + eta_d * FFT[1][1] * hdot + lambda_d * (Fh_a1 * Fh_b1)) * dV;
+            Real Cblock12 = (eta_d * (Fh_b1 * Fh_a2) + eta_d * FFT[1][2] * hdot + lambda_d * (Fh_a1 * Fh_b2)) * dV;
 
-            Real Cblock20 =
-                (eta_d * (Fh_b2 * Fh_a0) + eta_d * FFT[2][0] * hdot + lambda_d * (Fh_a2 * Fh_b0)) * dV;
-            Real Cblock21 =
-                (eta_d * (Fh_b2 * Fh_a1) + eta_d * FFT[2][1] * hdot + lambda_d * (Fh_a2 * Fh_b1)) * dV;
-            Real Cblock22 =
-                (eta_d * (Fh_b2 * Fh_a2) + eta_d * FFT[2][2] * hdot + lambda_d * (Fh_a2 * Fh_b2)) * dV;
+            Real Cblock20 = (eta_d * (Fh_b2 * Fh_a0) + eta_d * FFT[2][0] * hdot + lambda_d * (Fh_a2 * Fh_b0)) * dV;
+            Real Cblock21 = (eta_d * (Fh_b2 * Fh_a1) + eta_d * FFT[2][1] * hdot + lambda_d * (Fh_a2 * Fh_b1)) * dV;
+            Real Cblock22 = (eta_d * (Fh_b2 * Fh_a2) + eta_d * FFT[2][2] * hdot + lambda_d * (Fh_a2 * Fh_b2)) * dV;
 
             int row0 = 3 * a;
             int col0 = 3 * b;
@@ -582,8 +572,7 @@ __device__ __forceinline__ void compute_hessian_assemble_csr<GPU_FEAT4_Data>(GPU
                     int global_col = 3 * global_node_col + c_dof;
                     int local_col = 3 * local_col_node + c_dof;
 
-                    int pos =
-                        binary_search_column_csr_feat4(&d_csr_col_indices[row_begin], row_len, global_col);
+                    int pos = binary_search_column_csr_feat4(&d_csr_col_indices[row_begin], row_len, global_col);
                     if (pos >= 0) {
                         atomicAdd(&d_csr_values[row_begin + pos], C_elem[local_row][local_col]);
                     }

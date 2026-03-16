@@ -125,10 +125,7 @@ __global__ void decode_stiffness_keys_kernel(const unsigned long long* d_keys,
 // Stiffness assembly: one thread per (element, quadrature-point) pair.
 // ---------------------------------------------------------------------------
 template <typename TData>
-__global__ void assemble_stiffness_kernel(TData* d_data,
-                                          int* d_K_offsets,
-                                          int* d_K_columns,
-                                          Real* d_K_values) {
+__global__ void assemble_stiffness_kernel(TData* d_data, int* d_K_offsets, int* d_K_columns, Real* d_K_values) {
     constexpr int N_QP = TData::N_QP_PER_ELEM;
 
     const int tid = blockIdx.x * blockDim.x + threadIdx.x;
@@ -139,8 +136,8 @@ __global__ void assemble_stiffness_kernel(TData* d_data,
         return;
 
     // h = 1.0: no time-step scaling for static assembly.
-    compute_hessian_assemble_csr<TData>(d_data, static_cast<SyncedNewtonSolver*>(nullptr), elem, qp,
-                                        d_K_offsets, d_K_columns, d_K_values, 1.0);
+    compute_hessian_assemble_csr<TData>(d_data, static_cast<SyncedNewtonSolver*>(nullptr), elem, qp, d_K_offsets,
+                                        d_K_columns, d_K_values, 1.0);
 }
 
 // ---------------------------------------------------------------------------

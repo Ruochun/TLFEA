@@ -126,8 +126,8 @@ constexpr int N_QP_T10_5 = 5;      // 5-point quadrature
 constexpr int N_NODE_T10_10 = 10;  // 10-node tetrahedral element
 
 // 1-point centroid quadrature for TET4 (linear tetrahedral) elements
-constexpr int N_QP_T4_1 = 1;      // 1-point quadrature (centroid)
-constexpr int N_NODE_T4_4 = 4;    // 4-node tetrahedral element
+constexpr int N_QP_T4_1 = 1;    // 1-point quadrature (centroid)
+constexpr int N_NODE_T4_4 = 4;  // 4-node tetrahedral element
 
 // Barycentric coordinates for 5-point Keast quadrature (each row: [L1, L2, L3,
 // L4])

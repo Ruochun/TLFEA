@@ -332,7 +332,6 @@ class SyncedAdamWSolver : public SolverBase {
 
     // Raw device pointers for GPU kernel access (bound to DualArrays above).
     Real *d_x12_prev, *d_y12_prev, *d_z12_prev;
-
     Real *d_v_guess_, *d_v_prev_, *d_v_k_, *d_v_next_;
     Real *d_lambda_guess_, *d_g_;
     Real* d_norm_g_;
