@@ -49,6 +49,13 @@ class SyncedAdamWNocoopSolver : public SolverBase {
             d_constraint_ptr_ = typed_data->Get_Is_Constraint_Setup() ? typed_data->Get_Constraint_Ptr() : nullptr;
             n_total_qp_ = Quadrature::N_QP_T10_5;
             n_shape_ = Quadrature::N_NODE_T10_10;
+        } else if (data->type == TYPE_T4) {
+            type_ = TYPE_T4;
+            auto* typed_data = static_cast<GPU_FEAT4_Data*>(data);
+            d_data_ = typed_data->d_data;
+            d_constraint_ptr_ = typed_data->Get_Is_Constraint_Setup() ? typed_data->Get_Constraint_Ptr() : nullptr;
+            n_total_qp_ = Quadrature::N_QP_T4_1;
+            n_shape_ = Quadrature::N_NODE_T4_4;
         } else {
             d_data_ = nullptr;
             d_constraint_ptr_ = nullptr;

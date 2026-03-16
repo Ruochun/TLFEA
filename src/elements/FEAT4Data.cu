@@ -106,9 +106,9 @@ __global__ void dn_du_pre_feat4_kernel(GPU_FEAT4_Data* d_data) {
         return;
     }
 
-    // Reference-coordinate derivatives for 4-node tet:
+    // Reference-coordinate (xi, eta, zeta) derivatives for TET4 shape functions:
     //   N1 = 1 - xi - eta - zeta,  N2 = xi,  N3 = eta,  N4 = zeta
-    //   dL[0] = [-1,-1,-1], dL[1] = [1,0,0], dL[2] = [0,1,0], dL[3] = [0,0,1]
+    //   dN_dxi[i] = [dNi/dxi, dNi/deta, dNi/dzeta]
     Real dN_dxi[4][3] = {
         {-1.0, -1.0, -1.0},  // dN1/dxi, dN1/deta, dN1/dzeta
         {1.0, 0.0, 0.0},     // dN2/dxi, dN2/deta, dN2/dzeta
@@ -255,9 +255,6 @@ void GPU_FEAT4_Data::CalcDnDuPre() {
 
     dn_du_pre_feat4_kernel<<<blocks, threads_per_block>>>(d_data);
     cudaDeviceSynchronize();
-
-    // Sync struct to device after positions are set up
-    MOPHI_GPU_CALL(cudaMemcpy(d_data, this, sizeof(GPU_FEAT4_Data), cudaMemcpyHostToDevice));
 }
 
 __global__ void calc_p_feat4_kernel(GPU_FEAT4_Data* d_data) {

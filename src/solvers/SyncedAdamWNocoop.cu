@@ -23,6 +23,8 @@
 #include "../elements/ANCF3443DataFunc.cuh"
 #include "../elements/FEAT10Data.cuh"
 #include "../elements/FEAT10DataFunc.cuh"
+#include "../elements/FEAT4Data.cuh"
+#include "../elements/FEAT4DataFunc.cuh"
 #include "SyncedAdamWNocoop.cuh"
 #include <MoPhiEssentials.h>
 
@@ -435,6 +437,8 @@ void SyncedAdamWNocoopSolver::OneStepAdamWNocoop() {
 
     if (type_ == TYPE_T10) {
         one_step_typed(static_cast<GPU_FEAT10_Data*>(d_data_));
+    } else if (type_ == TYPE_T4) {
+        one_step_typed(static_cast<GPU_FEAT4_Data*>(d_data_));
     } else if (type_ == TYPE_3243) {
         one_step_typed(static_cast<GPU_ANCF3243_Data*>(d_data_));
     } else if (type_ == TYPE_3443) {
@@ -457,6 +461,7 @@ void SyncedAdamWNocoopSolver::OneStepAdamWNocoop() {
 template __global__ void adamw_save_prev_pos_kernel<GPU_ANCF3243_Data>(GPU_ANCF3243_Data*, SyncedAdamWNocoopSolver*);
 template __global__ void adamw_save_prev_pos_kernel<GPU_ANCF3443_Data>(GPU_ANCF3443_Data*, SyncedAdamWNocoopSolver*);
 template __global__ void adamw_save_prev_pos_kernel<GPU_FEAT10_Data>(GPU_FEAT10_Data*, SyncedAdamWNocoopSolver*);
+template __global__ void adamw_save_prev_pos_kernel<GPU_FEAT4_Data>(GPU_FEAT4_Data*, SyncedAdamWNocoopSolver*);
 
 template __global__ void adamw_update_positions_from_prev_kernel<GPU_ANCF3243_Data>(GPU_ANCF3243_Data*,
                                                                                     SyncedAdamWNocoopSolver*);
@@ -464,14 +469,18 @@ template __global__ void adamw_update_positions_from_prev_kernel<GPU_ANCF3443_Da
                                                                                     SyncedAdamWNocoopSolver*);
 template __global__ void adamw_update_positions_from_prev_kernel<GPU_FEAT10_Data>(GPU_FEAT10_Data*,
                                                                                   SyncedAdamWNocoopSolver*);
+template __global__ void adamw_update_positions_from_prev_kernel<GPU_FEAT4_Data>(GPU_FEAT4_Data*,
+                                                                                 SyncedAdamWNocoopSolver*);
 
 template __global__ void adamw_compute_p_kernel<GPU_ANCF3243_Data>(GPU_ANCF3243_Data*, SyncedAdamWNocoopSolver*);
 template __global__ void adamw_compute_p_kernel<GPU_ANCF3443_Data>(GPU_ANCF3443_Data*, SyncedAdamWNocoopSolver*);
 template __global__ void adamw_compute_p_kernel<GPU_FEAT10_Data>(GPU_FEAT10_Data*, SyncedAdamWNocoopSolver*);
+template __global__ void adamw_compute_p_kernel<GPU_FEAT4_Data>(GPU_FEAT4_Data*, SyncedAdamWNocoopSolver*);
 
 template __global__ void adamw_clear_internal_force_kernel<GPU_ANCF3243_Data>(GPU_ANCF3243_Data*);
 template __global__ void adamw_clear_internal_force_kernel<GPU_ANCF3443_Data>(GPU_ANCF3443_Data*);
 template __global__ void adamw_clear_internal_force_kernel<GPU_FEAT10_Data>(GPU_FEAT10_Data*);
+template __global__ void adamw_clear_internal_force_kernel<GPU_FEAT4_Data>(GPU_FEAT4_Data*);
 
 template __global__ void adamw_compute_internal_force_kernel<GPU_ANCF3243_Data>(GPU_ANCF3243_Data*,
                                                                                 SyncedAdamWNocoopSolver*);
@@ -479,17 +488,22 @@ template __global__ void adamw_compute_internal_force_kernel<GPU_ANCF3443_Data>(
                                                                                 SyncedAdamWNocoopSolver*);
 template __global__ void adamw_compute_internal_force_kernel<GPU_FEAT10_Data>(GPU_FEAT10_Data*,
                                                                               SyncedAdamWNocoopSolver*);
+template __global__ void adamw_compute_internal_force_kernel<GPU_FEAT4_Data>(GPU_FEAT4_Data*,
+                                                                             SyncedAdamWNocoopSolver*);
 
 template __global__ void adamw_compute_constraints_kernel<GPU_ANCF3243_Data>(GPU_ANCF3243_Data*);
 template __global__ void adamw_compute_constraints_kernel<GPU_ANCF3443_Data>(GPU_ANCF3443_Data*);
 template __global__ void adamw_compute_constraints_kernel<GPU_FEAT10_Data>(GPU_FEAT10_Data*);
+template __global__ void adamw_compute_constraints_kernel<GPU_FEAT4_Data>(GPU_FEAT4_Data*);
 
 template __global__ void adamw_compute_gradient_kernel<GPU_ANCF3243_Data>(GPU_ANCF3243_Data*, SyncedAdamWNocoopSolver*);
 template __global__ void adamw_compute_gradient_kernel<GPU_ANCF3443_Data>(GPU_ANCF3443_Data*, SyncedAdamWNocoopSolver*);
 template __global__ void adamw_compute_gradient_kernel<GPU_FEAT10_Data>(GPU_FEAT10_Data*, SyncedAdamWNocoopSolver*);
+template __global__ void adamw_compute_gradient_kernel<GPU_FEAT4_Data>(GPU_FEAT4_Data*, SyncedAdamWNocoopSolver*);
 
 template __global__ void adamw_dual_update_kernel<GPU_ANCF3243_Data>(GPU_ANCF3243_Data*, SyncedAdamWNocoopSolver*);
 template __global__ void adamw_dual_update_kernel<GPU_ANCF3443_Data>(GPU_ANCF3443_Data*, SyncedAdamWNocoopSolver*);
 template __global__ void adamw_dual_update_kernel<GPU_FEAT10_Data>(GPU_FEAT10_Data*, SyncedAdamWNocoopSolver*);
+template __global__ void adamw_dual_update_kernel<GPU_FEAT4_Data>(GPU_FEAT4_Data*, SyncedAdamWNocoopSolver*);
 
 }  // namespace tlfea
