@@ -318,7 +318,8 @@ void LinearStaticSolver::BuildStiffnessCSRPattern() {
 // ---------------------------------------------------------------------------
 void LinearStaticSolver::AssembleLinearStiffness() {
     // Zero K values before accumulation.
-    da_K_values_.SetVal(Real(0)); da_K_values_.MakeReadyDevice();
+    da_K_values_.SetVal(Real(0));
+    da_K_values_.MakeReadyDevice();
 
     const int total_qp = data_->get_n_elem() * Quadrature::N_QP_T10_5;
     constexpr int threads = 128;
@@ -373,7 +374,8 @@ void LinearStaticSolver::SolveLinearSystemCG() {
     const int n = n_dof_;
 
     // u = 0, r = f, p = r.
-    da_u_.SetVal(Real(0)); da_u_.MakeReadyDevice();
+    da_u_.SetVal(Real(0));
+    da_u_.MakeReadyDevice();
     MOPHI_GPU_CALL(cudaMemcpy(d_r_, d_f_, static_cast<size_t>(n) * sizeof(Real), cudaMemcpyDeviceToDevice));
     MOPHI_GPU_CALL(cudaMemcpy(d_p_, d_f_, static_cast<size_t>(n) * sizeof(Real), cudaMemcpyDeviceToDevice));
 
