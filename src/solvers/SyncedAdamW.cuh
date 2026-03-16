@@ -71,12 +71,6 @@ class SyncedAdamWSolver : public SolverBase {
             MOPHI_ERROR("d_data_ is null in SyncedAdamWSolver constructor");
         }
 
-        cudaMalloc(&d_v_guess_, n_coef_ * 3 * sizeof(Real));
-        cudaMalloc(&d_v_prev_, n_coef_ * 3 * sizeof(Real));
-        cudaMalloc(&d_v_k_, n_coef_ * 3 * sizeof(Real));
-        cudaMalloc(&d_v_next_, n_coef_ * 3 * sizeof(Real));
-        cudaMalloc(&d_lambda_guess_, n_constraints_ * sizeof(Real));
-        cudaMalloc(&d_g_, n_coef_ * 3 * sizeof(Real));
         cudaMalloc(&d_norm_g_, sizeof(Real));
         cudaMalloc(&d_inner_flag_, sizeof(int));
         cudaMalloc(&d_outer_flag_, sizeof(int));
@@ -99,18 +93,39 @@ class SyncedAdamWSolver : public SolverBase {
         cudaMalloc(&d_weight_decay_, sizeof(Real));
         cudaMalloc(&d_lr_decay_, sizeof(Real));
 
-        cudaMalloc(&d_x12_prev, n_coef_ * sizeof(Real));
-        cudaMalloc(&d_y12_prev, n_coef_ * sizeof(Real));
-        cudaMalloc(&d_z12_prev, n_coef_ * sizeof(Real));
+        // Long arrays: use DualArray (manages both pinned host and device memory).
+        da_v_guess_.resize(static_cast<size_t>(n_coef_) * 3);
+        da_v_guess_.BindDevicePointer(&d_v_guess_);
+        da_v_prev_.resize(static_cast<size_t>(n_coef_) * 3);
+        da_v_prev_.BindDevicePointer(&d_v_prev_);
+        da_v_k_.resize(static_cast<size_t>(n_coef_) * 3);
+        da_v_k_.BindDevicePointer(&d_v_k_);
+        da_v_next_.resize(static_cast<size_t>(n_coef_) * 3);
+        da_v_next_.BindDevicePointer(&d_v_next_);
+        da_lambda_guess_.resize(static_cast<size_t>(n_constraints_));
+        da_lambda_guess_.BindDevicePointer(&d_lambda_guess_);
+        da_g_.resize(static_cast<size_t>(n_coef_) * 3);
+        da_g_.BindDevicePointer(&d_g_);
+        da_x12_prev_.resize(static_cast<size_t>(n_coef_));
+        da_x12_prev_.BindDevicePointer(&d_x12_prev);
+        da_y12_prev_.resize(static_cast<size_t>(n_coef_));
+        da_y12_prev_.BindDevicePointer(&d_y12_prev);
+        da_z12_prev_.resize(static_cast<size_t>(n_coef_));
+        da_z12_prev_.BindDevicePointer(&d_z12_prev);
     }
 
     ~SyncedAdamWSolver() {
-        cudaFree(d_v_guess_);
-        cudaFree(d_v_prev_);
-        cudaFree(d_v_k_);
-        cudaFree(d_v_next_);
-        cudaFree(d_lambda_guess_);
-        cudaFree(d_g_);
+        // Long arrays managed by DualArrays
+        da_v_guess_.free();
+        da_v_prev_.free();
+        da_v_k_.free();
+        da_v_next_.free();
+        da_lambda_guess_.free();
+        da_g_.free();
+        da_x12_prev_.free();
+        da_y12_prev_.free();
+        da_z12_prev_.free();
+
         cudaFree(d_norm_g_);
         cudaFree(d_inner_flag_);
         cudaFree(d_outer_flag_);
@@ -132,10 +147,6 @@ class SyncedAdamWSolver : public SolverBase {
         cudaFree(d_lr_decay_);
 
         cudaFree(d_adamw_solver_);
-
-        cudaFree(d_x12_prev);
-        cudaFree(d_y12_prev);
-        cudaFree(d_z12_prev);
     }
 
     void SetParameters(void* params) override {
@@ -157,22 +168,34 @@ class SyncedAdamWSolver : public SolverBase {
         cudaMemcpy(d_solver_rho_, &p->rho, sizeof(Real), cudaMemcpyHostToDevice);
         cudaMemcpy(d_convergence_check_interval_, &p->convergence_check_interval, sizeof(int), cudaMemcpyHostToDevice);
 
-        cudaMemset(d_v_guess_, 0, n_coef_ * 3 * sizeof(Real));
-        cudaMemset(d_v_prev_, 0, n_coef_ * 3 * sizeof(Real));
-        cudaMemset(d_lambda_guess_, 0, n_constraints_ * sizeof(Real));
+        da_v_guess_.SetVal(Real(0));
+        da_v_guess_.MakeReadyDevice();
+        da_v_prev_.SetVal(Real(0));
+        da_v_prev_.MakeReadyDevice();
+        da_lambda_guess_.SetVal(Real(0));
+        da_lambda_guess_.MakeReadyDevice();
     }
 
     void Setup() {
-        cudaMemset(d_x12_prev, 0, n_coef_ * sizeof(Real));
-        cudaMemset(d_y12_prev, 0, n_coef_ * sizeof(Real));
-        cudaMemset(d_z12_prev, 0, n_coef_ * sizeof(Real));
+        da_x12_prev_.SetVal(Real(0));
+        da_x12_prev_.MakeReadyDevice();
+        da_y12_prev_.SetVal(Real(0));
+        da_y12_prev_.MakeReadyDevice();
+        da_z12_prev_.SetVal(Real(0));
+        da_z12_prev_.MakeReadyDevice();
 
-        cudaMemset(d_v_guess_, 0, n_coef_ * 3 * sizeof(Real));
-        cudaMemset(d_v_prev_, 0, n_coef_ * 3 * sizeof(Real));
-        cudaMemset(d_v_k_, 0, n_coef_ * 3 * sizeof(Real));
-        cudaMemset(d_v_next_, 0, n_coef_ * 3 * sizeof(Real));
-        cudaMemset(d_lambda_guess_, 0, n_constraints_ * sizeof(Real));
-        cudaMemset(d_g_, 0, n_coef_ * 3 * sizeof(Real));
+        da_v_guess_.SetVal(Real(0));
+        da_v_guess_.MakeReadyDevice();
+        da_v_prev_.SetVal(Real(0));
+        da_v_prev_.MakeReadyDevice();
+        da_v_k_.SetVal(Real(0));
+        da_v_k_.MakeReadyDevice();
+        da_v_next_.SetVal(Real(0));
+        da_v_next_.MakeReadyDevice();
+        da_lambda_guess_.SetVal(Real(0));
+        da_lambda_guess_.MakeReadyDevice();
+        da_g_.SetVal(Real(0));
+        da_g_.MakeReadyDevice();
 
         MOPHI_GPU_CALL(cudaMemcpy(d_adamw_solver_, this, sizeof(SyncedAdamWSolver), cudaMemcpyHostToDevice));
     }
@@ -295,6 +318,12 @@ class SyncedAdamWSolver : public SolverBase {
     int n_total_qp_, n_shape_;
     int n_coef_, n_beam_, n_constraints_;
 
+    // DualArrays for long arrays (manage both pinned host and device memory).
+    mophi::DualArray<Real> da_v_guess_, da_v_prev_, da_v_k_, da_v_next_;
+    mophi::DualArray<Real> da_lambda_guess_, da_g_;
+    mophi::DualArray<Real> da_x12_prev_, da_y12_prev_, da_z12_prev_;
+
+    // Raw device pointers for GPU kernel access (bound to DualArrays above).
     Real *d_x12_prev, *d_y12_prev, *d_z12_prev;
 
     Real *d_v_guess_, *d_v_prev_, *d_v_k_, *d_v_next_;
