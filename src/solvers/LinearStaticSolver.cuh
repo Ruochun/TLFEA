@@ -72,14 +72,19 @@ class LinearStaticSolver : public SolverBase {
     GPU_FEAT10_Data* data_;
     int n_dof_;  // 3 * n_nodes
 
-    /* Stiffness K in CSR format (n_dof × n_dof) */
+    /* DualArrays for long arrays (manage both pinned host and device memory). */
+    mophi::DualArray<int> da_K_offsets_, da_K_columns_;
+    mophi::DualArray<Real> da_K_values_;
+    mophi::DualArray<Real> da_u_, da_f_, da_r_, da_p_, da_Kp_;
+
+    /* Stiffness K in CSR format (n_dof × n_dof) — raw device pointers bound to DualArrays */
     int* d_K_offsets_ = nullptr;
     int* d_K_columns_ = nullptr;
     Real* d_K_values_ = nullptr;
     int K_nnz_ = 0;
     bool pattern_built_ = false;
 
-    /* CG workspace (length n_dof each) */
+    /* CG workspace (length n_dof each) — raw device pointers bound to DualArrays */
     Real* d_u_ = nullptr;   // displacement solution
     Real* d_f_ = nullptr;   // RHS (copy of f_ext, modified in-place for BCs)
     Real* d_r_ = nullptr;   // residual

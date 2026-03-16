@@ -224,30 +224,29 @@ LinearStaticSolver::LinearStaticSolver(GPU_FEAT10_Data* data, Real tol, int max_
     CHECK_CUSPARSE(cusparseCreate(&cusparse_));
     CHECK_CUBLAS(cublasCreate(&cublas_));
 
-    MOPHI_GPU_CALL(cudaMalloc(&d_u_, static_cast<size_t>(n_dof_) * sizeof(Real)));
-    MOPHI_GPU_CALL(cudaMalloc(&d_f_, static_cast<size_t>(n_dof_) * sizeof(Real)));
-    MOPHI_GPU_CALL(cudaMalloc(&d_r_, static_cast<size_t>(n_dof_) * sizeof(Real)));
-    MOPHI_GPU_CALL(cudaMalloc(&d_p_, static_cast<size_t>(n_dof_) * sizeof(Real)));
-    MOPHI_GPU_CALL(cudaMalloc(&d_Kp_, static_cast<size_t>(n_dof_) * sizeof(Real)));
+    // Long arrays: use DualArray (manages both pinned host and device memory).
+    da_u_.resize(static_cast<size_t>(n_dof_));
+    da_u_.BindDevicePointer(&d_u_);
+    da_f_.resize(static_cast<size_t>(n_dof_));
+    da_f_.BindDevicePointer(&d_f_);
+    da_r_.resize(static_cast<size_t>(n_dof_));
+    da_r_.BindDevicePointer(&d_r_);
+    da_p_.resize(static_cast<size_t>(n_dof_));
+    da_p_.BindDevicePointer(&d_p_);
+    da_Kp_.resize(static_cast<size_t>(n_dof_));
+    da_Kp_.BindDevicePointer(&d_Kp_);
 }
 
 LinearStaticSolver::~LinearStaticSolver() {
-    if (d_K_offsets_)
-        cudaFree(d_K_offsets_);
-    if (d_K_columns_)
-        cudaFree(d_K_columns_);
-    if (d_K_values_)
-        cudaFree(d_K_values_);
-    if (d_u_)
-        cudaFree(d_u_);
-    if (d_f_)
-        cudaFree(d_f_);
-    if (d_r_)
-        cudaFree(d_r_);
-    if (d_p_)
-        cudaFree(d_p_);
-    if (d_Kp_)
-        cudaFree(d_Kp_);
+    // Long arrays managed by DualArrays
+    da_K_offsets_.free();
+    da_K_columns_.free();
+    da_K_values_.free();
+    da_u_.free();
+    da_f_.free();
+    da_r_.free();
+    da_p_.free();
+    da_Kp_.free();
     if (cusparse_)
         cusparseDestroy(cusparse_);
     if (cublas_)
@@ -281,10 +280,13 @@ void LinearStaticSolver::BuildStiffnessCSRPattern() {
     auto keys_unique_end = thrust::unique(thrust::device, keys_begin, keys_end);
     K_nnz_ = static_cast<int>(keys_unique_end - keys_begin);
 
-    // Allocate CSR arrays.
-    MOPHI_GPU_CALL(cudaMalloc(&d_K_offsets_, static_cast<size_t>(n_dof_ + 1) * sizeof(int)));
-    MOPHI_GPU_CALL(cudaMalloc(&d_K_columns_, static_cast<size_t>(K_nnz_) * sizeof(int)));
-    MOPHI_GPU_CALL(cudaMalloc(&d_K_values_, static_cast<size_t>(K_nnz_) * sizeof(Real)));
+    // Allocate CSR arrays via DualArray.
+    da_K_offsets_.resize(static_cast<size_t>(n_dof_ + 1));
+    da_K_offsets_.BindDevicePointer(&d_K_offsets_);
+    da_K_columns_.resize(static_cast<size_t>(K_nnz_));
+    da_K_columns_.BindDevicePointer(&d_K_columns_);
+    da_K_values_.resize(static_cast<size_t>(K_nnz_));
+    da_K_values_.BindDevicePointer(&d_K_values_);
 
     // Decode unique keys into columns + row counts.
     int* d_row_counts = nullptr;
@@ -316,7 +318,7 @@ void LinearStaticSolver::BuildStiffnessCSRPattern() {
 // ---------------------------------------------------------------------------
 void LinearStaticSolver::AssembleLinearStiffness() {
     // Zero K values before accumulation.
-    MOPHI_GPU_CALL(cudaMemset(d_K_values_, 0, static_cast<size_t>(K_nnz_) * sizeof(Real)));
+    da_K_values_.SetVal(Real(0)); da_K_values_.MakeReadyDevice();
 
     const int total_qp = data_->get_n_elem() * Quadrature::N_QP_T10_5;
     constexpr int threads = 128;
@@ -371,7 +373,7 @@ void LinearStaticSolver::SolveLinearSystemCG() {
     const int n = n_dof_;
 
     // u = 0, r = f, p = r.
-    MOPHI_GPU_CALL(cudaMemset(d_u_, 0, static_cast<size_t>(n) * sizeof(Real)));
+    da_u_.SetVal(Real(0)); da_u_.MakeReadyDevice();
     MOPHI_GPU_CALL(cudaMemcpy(d_r_, d_f_, static_cast<size_t>(n) * sizeof(Real), cudaMemcpyDeviceToDevice));
     MOPHI_GPU_CALL(cudaMemcpy(d_p_, d_f_, static_cast<size_t>(n) * sizeof(Real), cudaMemcpyDeviceToDevice));
 
