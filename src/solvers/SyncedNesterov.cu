@@ -21,6 +21,8 @@
 #include "../elements/ANCF3443DataFunc.cuh"
 #include "../elements/FEAT10Data.cuh"
 #include "../elements/FEAT10DataFunc.cuh"
+#include "../elements/FEAT4Data.cuh"
+#include "../elements/FEAT4DataFunc.cuh"
 #include "SyncedNesterov.cuh"
 
 namespace cg = cooperative_groups;
@@ -361,6 +363,7 @@ __global__ void one_step_nesterov_kernel(ElementType* data, SyncedNesterovSolver
 template __global__ void one_step_nesterov_kernel<GPU_ANCF3243_Data>(GPU_ANCF3243_Data*, SyncedNesterovSolver*);
 template __global__ void one_step_nesterov_kernel<GPU_ANCF3443_Data>(GPU_ANCF3443_Data*, SyncedNesterovSolver*);
 template __global__ void one_step_nesterov_kernel<GPU_FEAT10_Data>(GPU_FEAT10_Data*, SyncedNesterovSolver*);
+template __global__ void one_step_nesterov_kernel<GPU_FEAT4_Data>(GPU_FEAT4_Data*, SyncedNesterovSolver*);
 
 void SyncedNesterovSolver::OneStepNesterov() {
     cudaEvent_t start, stop;
@@ -382,6 +385,8 @@ void SyncedNesterovSolver::OneStepNesterov() {
         kernelPtr = (void*)one_step_nesterov_kernel<GPU_ANCF3443_Data>;
     } else if (type_ == TYPE_T10) {
         kernelPtr = (void*)one_step_nesterov_kernel<GPU_FEAT10_Data>;
+    } else if (type_ == TYPE_T4) {
+        kernelPtr = (void*)one_step_nesterov_kernel<GPU_FEAT4_Data>;
     }
 
     MOPHI_GPU_CALL(cudaOccupancyMaxActiveBlocksPerMultiprocessor(&maxBlocksPerSm, kernelPtr, threads, 0));

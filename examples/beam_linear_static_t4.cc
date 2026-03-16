@@ -1,20 +1,20 @@
 /**
- * beam_linear_static.cc
+ * beam_linear_static_t4.cc
  *
- * Steady-state (linear) FEA analysis of a TET10 cantilever beam.
+ * Steady-state (linear) FEA analysis of a TET4 cantilever beam.
  *
  * Physics
  * -------
- * Same setup as the dynamic beam_simulation demo:
- *   • Beam mesh loaded from data/meshes/T10/beam.vtu
+ * Same setup as the TET10 linear static demo (beam_linear_static.cc):
+ *   • Beam mesh loaded from data/meshes/T4/beam.vtu
  *   • Fixed end: all nodes with x ≈ x_min (one end clamped)
  *   • Free end:  concentrated downward load P = 1000 N distributed uniformly
  *                among nodes with x ≈ x_max
  *   • Material:  Aluminium — E = 70 GPa, ν = 0.33
  *
- * The LinearStaticSolver assembles the tangent stiffness matrix K at the
- * reference configuration and solves K·u = f once on the GPU via conjugate
- * gradient, giving the small-displacement solution directly.
+ * The LinearStaticSolver<GPU_FEAT4_Data> assembles the tangent stiffness
+ * matrix K at the reference configuration and solves K·u = f once on the GPU
+ * via conjugate gradient, giving the small-displacement solution directly.
  *
  * Validation
  * ----------
@@ -30,7 +30,7 @@
 #include <iomanip>
 #include <iostream>
 
-#include "elements/FEAT10Data.cuh"
+#include "elements/FEAT4Data.cuh"
 #include "solvers/LinearStaticSolver.cuh"
 #include "types.h"
 #include "utils/cpu_utils.h"
@@ -56,13 +56,13 @@ static constexpr Real BOUNDARY_TOLERANCE_FRACTION = 0.0005;
 
 int main() {
     std::cout << "=======================================================\n"
-              << "  Linear Static FEA – TET10 Cantilever Beam\n"
+              << "  Linear Static FEA – TET4 Cantilever Beam\n"
               << "=======================================================\n";
 
     // -----------------------------------------------------------------------
     // Load mesh from VTU file
     // -----------------------------------------------------------------------
-    const std::string vtu_path = "data/meshes/T10/beam_highres.vtu";
+    const std::string vtu_path = "data/meshes/T4/beam_highres.vtu";
     std::cout << "Loading mesh: " << vtu_path << "\n";
 
     mophi::Mesh mesh;
@@ -73,14 +73,14 @@ int main() {
         return 1;
     }
 
-    if (mesh.NumOwnedTet10s() == 0) {
-        std::cerr << "No TET10 elements found in " << vtu_path << "\n";
+    if (mesh.NumOwnedTets() == 0) {
+        std::cerr << "No TET4 elements found in " << vtu_path << "\n";
         return 1;
     }
 
     const int n_nodes = mesh.NumLocalNodes();
-    const int n_elems = mesh.NumOwnedTet10s();
-    std::cout << "  Nodes: " << n_nodes << "   TET10 elements: " << n_elems << "\n";
+    const int n_elems = static_cast<int>(mesh.NumOwnedTets());
+    std::cout << "  Nodes: " << n_nodes << "   TET4 elements: " << n_elems << "\n";
 
     // -----------------------------------------------------------------------
     // Convert mesh to Eigen format
@@ -92,10 +92,10 @@ int main() {
         nodes(i, 2) = mesh.geom.nodes[i].z();
     }
 
-    MatrixXi elements(n_elems, 10);
+    MatrixXi elements(n_elems, 4);
     for (int i = 0; i < n_elems; ++i)
-        for (int j = 0; j < 10; ++j)
-            elements(i, j) = mesh.topo.tet10s[i][j];
+        for (int j = 0; j < 4; ++j)
+            elements(i, j) = mesh.topo.tets[i][j];
 
     VectorXR h_x(n_nodes), h_y(n_nodes), h_z(n_nodes);
     for (int i = 0; i < n_nodes; ++i) {
@@ -120,13 +120,13 @@ int main() {
     // -----------------------------------------------------------------------
     // Initialise GPU data structure
     // -----------------------------------------------------------------------
-    GPU_FEAT10_Data gpu_data(n_elems, n_nodes);
+    GPU_FEAT4_Data gpu_data(n_elems, n_nodes);
     gpu_data.Initialize();
 
-    const auto& qx = Quadrature::tet5pt_x;
-    const auto& qy = Quadrature::tet5pt_y;
-    const auto& qz = Quadrature::tet5pt_z;
-    const auto& qw = Quadrature::tet5pt_weights;
+    const auto& qx = Quadrature::tet1pt_x;
+    const auto& qy = Quadrature::tet1pt_y;
+    const auto& qz = Quadrature::tet1pt_z;
+    const auto& qw = Quadrature::tet1pt_weights;
 
     gpu_data.Setup(qx, qy, qz, qw, h_x, h_y, h_z, elements);
     gpu_data.SetDensity(rho0);
@@ -153,6 +153,7 @@ int main() {
 
     gpu_data.SetNodalFixed(h_fixed);
     std::cout << "  Fixed " << fixed_idx.size() << " nodes at x ≈ " << x_min << "\n";
+
     VectorXR h_f_ext(n_nodes * 3);
     h_f_ext.setZero();
 
@@ -175,7 +176,7 @@ int main() {
     // -----------------------------------------------------------------------
     std::cout << "\nRunning linear static solver (GPU conjugate gradient)...\n";
 
-    LinearStaticSolver<GPU_FEAT10_Data> solver(&gpu_data, /*tol=*/1e-10, /*max_iter=*/50000);
+    LinearStaticSolver<GPU_FEAT4_Data> solver(&gpu_data, /*tol=*/1e-10, /*max_iter=*/100000);
     solver.Solve();
 
     std::cout << "  CG converged in " << solver.GetLastIterCount() << " iterations"
@@ -208,7 +209,6 @@ int main() {
     // -----------------------------------------------------------------------
     // Analytical comparison (Euler-Bernoulli cantilever beam)
     // -----------------------------------------------------------------------
-    // Bending about the y-axis, load applied at the free end in −z.
     const Real I_y = b * h * h * h / 12.0;
     const Real delta_ana = std::abs(TOTAL_LOAD) * L * L * L / (3.0 * E_mod * I_y);
 
@@ -228,8 +228,8 @@ int main() {
     // -----------------------------------------------------------------------
     // Write output VTK
     // -----------------------------------------------------------------------
-    ANCFCPUUtils::WriteFEAT10ToVTK("output_beam_linear_static.vtk", nodes, elements, x12, y12, z12);
-    std::cout << "\n  Deformed mesh written to: output_beam_linear_static.vtk\n";
+    ANCFCPUUtils::WriteFEAT4ToVTK("output_beam_linear_static_t4.vtk", nodes, elements, x12, y12, z12);
+    std::cout << "\n  Deformed mesh written to: output_beam_linear_static_t4.vtk\n";
 
     // -----------------------------------------------------------------------
     // Cleanup
@@ -237,7 +237,7 @@ int main() {
     gpu_data.Destroy();
 
     std::cout << "=======================================================\n"
-              << "  Linear Static Analysis Complete\n"
+              << "  Linear Static Analysis (TET4) Complete\n"
               << "=======================================================\n";
     return 0;
 }

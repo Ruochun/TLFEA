@@ -85,3 +85,26 @@ target_include_directories(beam_linear_static PRIVATE
 set_target_properties(beam_linear_static PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
+
+# Add the TET4 linear static beam example
+add_executable(beam_linear_static_t4
+    beam_linear_static_t4.cc
+)
+
+target_link_libraries(beam_linear_static_t4
+    tlfea_lib
+    Eigen3::Eigen
+    CUDA::cudart
+    CUDA::cusparse
+    CUDA::cublas
+    mophi_essentials
+)
+
+target_include_directories(beam_linear_static_t4 PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/external/MoPhiEssentials/src
+)
+
+set_target_properties(beam_linear_static_t4 PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+)

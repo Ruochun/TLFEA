@@ -125,6 +125,10 @@ const VectorXR weight_zeta_3 =
 constexpr int N_QP_T10_5 = 5;      // 5-point quadrature
 constexpr int N_NODE_T10_10 = 10;  // 10-node tetrahedral element
 
+// 1-point centroid quadrature for TET4 (linear tetrahedral) elements
+constexpr int N_QP_T4_1 = 1;    // 1-point quadrature (centroid)
+constexpr int N_NODE_T4_4 = 4;  // 4-node tetrahedral element
+
 // Barycentric coordinates for 5-point Keast quadrature (each row: [L1, L2, L3,
 // L4])
 const Matrix<Real, N_QP_T10_5, 4> tet5pt_bary = (Matrix<Real, N_QP_T10_5, 4>() << 0.25,
@@ -166,6 +170,13 @@ struct Tet5ptQuadrature {
     static const Matrix<Real, N_QP_T10_5, 3>& xyz() { return tet5pt_xyz; }
     static const VectorXR& weights() { return tet5pt_weights; }
 };
+
+// 1-point centroid quadrature for TET4 (centroid of unit tet at L1=L2=L3=L4=1/4)
+// Weight = 1/6 (volume of unit tetrahedron)
+const VectorXR tet1pt_x = (VectorXR(N_QP_T4_1) << 0.25).finished();
+const VectorXR tet1pt_y = (VectorXR(N_QP_T4_1) << 0.25).finished();
+const VectorXR tet1pt_z = (VectorXR(N_QP_T4_1) << 0.25).finished();
+const VectorXR tet1pt_weights = (VectorXR(N_QP_T4_1) << 1.0 / 6.0).finished();
 }  // namespace Quadrature
 
 }  // namespace tlfea

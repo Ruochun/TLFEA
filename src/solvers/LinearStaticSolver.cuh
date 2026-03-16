@@ -3,18 +3,27 @@
  *==============================================================
  * Project: TLFEA
  * File:    LinearStaticSolver.cuh
- * Brief:   Declares the LinearStaticSolver class, which performs a single-step
- *          steady-state (linear) FEA solve for FEAT10 TET10 elements entirely
- *          on the GPU.
+ * Brief:   Declares the LinearStaticSolver class template, which performs a
+ *          single-step steady-state (linear) FEA solve for tetrahedral
+ *          elements entirely on the GPU.
+ *
+ *          The TData template parameter can be GPU_FEAT10_Data (TET10) or
+ *          GPU_FEAT4_Data (TET4). Both element types must provide:
+ *            - get_n_elem(), get_n_coef(), get_n_constraint()
+ *            - static constexpr N_NODES_PER_ELEM, N_QP_PER_ELEM
+ *            - d_data  (GPU copy of the struct)
+ *            - GetX12DevicePtr(), GetY12DevicePtr(), GetZ12DevicePtr()
+ *            - GetExternalForceDevicePtr()
+ *            - SetNodalFixed()
  *
  *          The solver:
  *            1. Builds the linearised (small-strain) tangent stiffness matrix K
- *               in 3N×3N CSR format using the existing SVK tangent block
+ *               in 3N x 3N CSR format using the existing SVK tangent block
  *               evaluated at the reference configuration (F = I).
  *            2. Applies Dirichlet boundary conditions by row/column elimination.
- *            3. Solves K·u = f_ext via a conjugate-gradient loop implemented
+ *            3. Solves K*u = f_ext via a conjugate-gradient loop implemented
  *               with cuBLAS (dot, axpy, scal) and cuSPARSE (SpMV).
- *            4. Updates the nodal positions stored in GPU_FEAT10_Data.
+ *            4. Updates the nodal positions stored in TData.
  *==============================================================
  *==============================================================*/
 
@@ -25,29 +34,31 @@
 #include <MoPhiEssentials.h>
 
 #include "../elements/FEAT10Data.cuh"
+#include "../elements/FEAT4Data.cuh"
 #include "../types.h"
 #include "SolverBase.h"
 
 namespace tlfea {
 
+template <typename TData>
 class LinearStaticSolver : public SolverBase {
   public:
     /**
      * Constructor.
      *
-     * @param data      Fully initialised GPU_FEAT10_Data.  The caller must have
-     *                  already invoked Setup(), SetSVK(), CalcDnDuPre(), and
-     *                  (optionally) SetNodalFixed() / SetExternalForce() before
-     *                  calling Solve().
+     * @param data      Fully initialised TData (GPU_FEAT10_Data or GPU_FEAT4_Data).
+     *                  The caller must have already invoked Setup(), SetSVK(),
+     *                  CalcDnDuPre(), and (optionally) SetNodalFixed() /
+     *                  SetExternalForce() before calling Solve().
      * @param tol       CG relative-residual convergence tolerance.
      * @param max_iter  Maximum number of CG iterations.
      */
-    LinearStaticSolver(GPU_FEAT10_Data* data, Real tol = 1e-10, int max_iter = 10000);
+    LinearStaticSolver(TData* data, Real tol = 1e-10, int max_iter = 10000);
     ~LinearStaticSolver();
 
     /**
-     * Assemble K, apply BCs, solve K·u = f_ext on GPU, then write the
-     * computed displacement back into the GPU_FEAT10_Data nodal positions.
+     * Assemble K, apply BCs, solve K*u = f_ext on GPU, then write the
+     * computed displacement back into the TData nodal positions.
      */
     void Solve() override;
 
@@ -69,7 +80,7 @@ class LinearStaticSolver : public SolverBase {
     void UpdatePositions();
 
     /* ---- data ---- */
-    GPU_FEAT10_Data* data_;
+    TData* data_;
     int n_dof_;  // 3 * n_nodes
 
     /* DualArrays for long arrays (manage both pinned host and device memory). */
@@ -77,14 +88,14 @@ class LinearStaticSolver : public SolverBase {
     mophi::DualArray<Real> da_K_values_;
     mophi::DualArray<Real> da_u_, da_f_, da_r_, da_p_, da_Kp_;
 
-    /* Stiffness K in CSR format (n_dof × n_dof) — raw device pointers bound to DualArrays */
+    /* Stiffness K in CSR format (n_dof x n_dof) -- raw device pointers bound to DualArrays */
     int* d_K_offsets_ = nullptr;
     int* d_K_columns_ = nullptr;
     Real* d_K_values_ = nullptr;
     int K_nnz_ = 0;
     bool pattern_built_ = false;
 
-    /* CG workspace (length n_dof each) — raw device pointers bound to DualArrays */
+    /* CG workspace (length n_dof each) -- raw device pointers bound to DualArrays */
     Real* d_u_ = nullptr;   // displacement solution
     Real* d_f_ = nullptr;   // RHS (copy of f_ext, modified in-place for BCs)
     Real* d_r_ = nullptr;   // residual
@@ -103,5 +114,9 @@ class LinearStaticSolver : public SolverBase {
     int last_iter_count_ = 0;
     Real last_residual_ = 0.0;
 };
+
+// Convenience type aliases for common element types
+using LinearStaticSolverT10 = LinearStaticSolver<GPU_FEAT10_Data>;
+using LinearStaticSolverT4 = LinearStaticSolver<GPU_FEAT4_Data>;
 
 }  // namespace tlfea

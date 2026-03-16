@@ -3,27 +3,29 @@
  * Project: TLFEA
  * File:    LinearStaticSolver.cu
  * Brief:   Implements the GPU-side steady-state (linear) FEA solver for
- *          FEAT10 TET10 elements.
+ *          tetrahedral elements (TET10 via GPU_FEAT10_Data, TET4 via
+ *          GPU_FEAT4_Data). The TData template parameter selects the element
+ *          type; explicit instantiations for both types are provided at the
+ *          bottom of this file.
  *
  *          Key stages performed inside Solve():
- *            1.  BuildStiffnessCSRPattern  – constructs the 3N×3N sparsity
+ *            1.  BuildStiffnessCSRPattern  - constructs the 3N x 3N sparsity
  *                pattern once using thrust sort + unique on (row,col) keys
  *                generated from element connectivity.
- *            2.  AssembleLinearStiffness   – fills K values via the existing
+ *            2.  AssembleLinearStiffness   - fills K values via the existing
  *                compute_hessian_assemble_csr device function (SVK tangent at
  *                the reference configuration where F = I gives the classical
  *                linear-elastic stiffness).
- *            3.  ApplyDirichletBCs         – enforces fixed DOFs by row/column
+ *            3.  ApplyDirichletBCs         - enforces fixed DOFs by row/column
  *                elimination (identity rows, zeroed symmetric columns, zero
  *                RHS entries).
- *            4.  SolveLinearSystemCG       – CG loop using cuSPARSE SpMV and
+ *            4.  SolveLinearSystemCG       - CG loop using cuSPARSE SpMV and
  *                cuBLAS dot / axpy / scal.
- *            5.  UpdatePositions           – writes u back into the
- *                GPU_FEAT10_Data node-position arrays.
+ *            5.  UpdatePositions           - writes u back into the TData
+ *                node-position arrays.
  *==============================================================
  *==============================================================*/
 
-#include <cooperative_groups.h>
 #include <thrust/device_ptr.h>
 #include <thrust/execution_policy.h>
 #include <thrust/scan.h>
@@ -34,10 +36,12 @@
 
 #include "../elements/FEAT10Data.cuh"
 #include "../elements/FEAT10DataFunc.cuh"
+#include "../elements/FEAT4Data.cuh"
+#include "../elements/FEAT4DataFunc.cuh"
 #include "../utils/cuda_utils.h"
 #include "LinearStaticSolver.cuh"
 
-// cuBLAS error checking (analogous to CHECK_CUSPARSE in cuda_utils.h)
+// cuBLAS error checking
 #ifndef CHECK_CUBLAS
     #define CHECK_CUBLAS(func)                                                                            \
         {                                                                                                 \
@@ -51,8 +55,7 @@
 namespace tlfea {
 
 // ---------------------------------------------------------------------------
-// Helper: set the last entry of an offset array (same helper used in
-// FEAT10Data.cu).
+// Helper: set the last entry of an offset array.
 // ---------------------------------------------------------------------------
 namespace {
 __global__ void ls_set_last_offset_kernel(int* d_offsets, int n_rows, int nnz) {
@@ -62,19 +65,17 @@ __global__ void ls_set_last_offset_kernel(int* d_offsets, int n_rows, int nnz) {
 }
 }  // namespace
 
-// Number of (node-pair × dof-pair) contributions per TET10 element:
-//   10 nodes × 10 nodes × 3 DOFs/node × 3 DOFs/node
-static constexpr int STIFFNESS_KEYS_PER_ELEM = 10 * 10 * 3 * 3;
-
 // ---------------------------------------------------------------------------
-// Pattern building – step 1: generate raw (row<<32|col) keys.
+// Pattern building step 1: generate raw (row<<32|col) keys.
 //
-// For each element e, each pair of local nodes (i, j) and each pair of
-// DOF indices (d, e_dof) contributes one entry:
-//   global_row = 3*global_node_i + d
-//   global_col = 3*global_node_j + e_dof
+// TData::N_NODES_PER_ELEM is a static constexpr that gives the number of
+// nodes per element (10 for TET10, 4 for TET4).
 // ---------------------------------------------------------------------------
-__global__ void build_stiffness_keys_kernel(GPU_FEAT10_Data* d_data, unsigned long long* d_keys) {
+template <typename TData>
+__global__ void build_stiffness_keys_kernel(TData* d_data, unsigned long long* d_keys) {
+    constexpr int N_NODES = TData::N_NODES_PER_ELEM;
+    constexpr int STIFFNESS_KEYS_PER_ELEM = N_NODES * N_NODES * 9;
+
     const int total = d_data->gpu_n_elem() * STIFFNESS_KEYS_PER_ELEM;
 
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
@@ -83,13 +84,13 @@ __global__ void build_stiffness_keys_kernel(GPU_FEAT10_Data* d_data, unsigned lo
 
     const int elem = tid / STIFFNESS_KEYS_PER_ELEM;
     const int rem = tid % STIFFNESS_KEYS_PER_ELEM;
-    const int node_pair = rem / 9;  // 0..99 (10 × 10 node combinations)
-    const int dof_pair = rem % 9;   // 0..8  (3 × 3 DOF combinations)
+    const int node_pair = rem / 9;
+    const int dof_pair = rem % 9;
 
-    const int i_local = node_pair / 10;  // 0..9
-    const int j_local = node_pair % 10;  // 0..9
-    const int dof_d = dof_pair / 3;      // 0..2
-    const int dof_e = dof_pair % 3;      // 0..2
+    const int i_local = node_pair / N_NODES;
+    const int j_local = node_pair % N_NODES;
+    const int dof_d = dof_pair / 3;
+    const int dof_e = dof_pair % 3;
 
     const int global_i = d_data->element_connectivity()(elem, i_local);
     const int global_j = d_data->element_connectivity()(elem, j_local);
@@ -102,7 +103,7 @@ __global__ void build_stiffness_keys_kernel(GPU_FEAT10_Data* d_data, unsigned lo
 }
 
 // ---------------------------------------------------------------------------
-// Pattern building – step 2: decode unique keys into CSR columns + row counts.
+// Pattern building step 2: decode unique keys into CSR columns + row counts.
 // ---------------------------------------------------------------------------
 __global__ void decode_stiffness_keys_kernel(const unsigned long long* d_keys,
                                              int nnz,
@@ -121,38 +122,29 @@ __global__ void decode_stiffness_keys_kernel(const unsigned long long* d_keys,
 }
 
 // ---------------------------------------------------------------------------
-// Stiffness assembly – one thread per (element, quadrature-point) pair.
-//
-// compute_hessian_assemble_csr<GPU_FEAT10_Data> is a __device__ __forceinline__
-// function from FEAT10DataFunc.cuh. It uses the SVK tangent and, when called
-// at the reference configuration (current positions == reference positions,
-// F = I), produces the classical linear-elastic element stiffness matrix.
-//
-// The SyncedNewtonSolver* parameter is forward-declared but never dereferenced
-// inside the FEAT10 specialisation – passing nullptr is safe.
+// Stiffness assembly: one thread per (element, quadrature-point) pair.
 // ---------------------------------------------------------------------------
-__global__ void assemble_stiffness_kernel(GPU_FEAT10_Data* d_data,
-                                          int* d_K_offsets,
-                                          int* d_K_columns,
-                                          Real* d_K_values) {
+template <typename TData>
+__global__ void assemble_stiffness_kernel(TData* d_data, int* d_K_offsets, int* d_K_columns, Real* d_K_values) {
+    constexpr int N_QP = TData::N_QP_PER_ELEM;
+
     const int tid = blockIdx.x * blockDim.x + threadIdx.x;
-    const int elem = tid / Quadrature::N_QP_T10_5;
-    const int qp = tid % Quadrature::N_QP_T10_5;
+    const int elem = tid / N_QP;
+    const int qp = tid % N_QP;
 
     if (elem >= d_data->gpu_n_elem())
         return;
 
     // h = 1.0: no time-step scaling for static assembly.
-    compute_hessian_assemble_csr<GPU_FEAT10_Data>(d_data, static_cast<SyncedNewtonSolver*>(nullptr), elem, qp,
-                                                  d_K_offsets, d_K_columns, d_K_values, 1.0);
+    compute_hessian_assemble_csr<TData>(d_data, static_cast<SyncedNewtonSolver*>(nullptr), elem, qp, d_K_offsets,
+                                        d_K_columns, d_K_values, 1.0);
 }
 
 // ---------------------------------------------------------------------------
-// Boundary condition application.
-//
-// Phase 1: mark which global DOFs are constrained.
+// Boundary condition application - phase 1: mark which DOFs are constrained.
 // ---------------------------------------------------------------------------
-__global__ void mark_fixed_dofs_kernel(GPU_FEAT10_Data* d_data, int* d_is_fixed) {
+template <typename TData>
+__global__ void mark_fixed_dofs_kernel(TData* d_data, int* d_is_fixed) {
     const int tid = blockIdx.x * blockDim.x + threadIdx.x;
     const int n_fixed = d_data->gpu_n_constraint() / 3;
     if (tid >= n_fixed)
@@ -165,15 +157,7 @@ __global__ void mark_fixed_dofs_kernel(GPU_FEAT10_Data* d_data, int* d_is_fixed)
 }
 
 // ---------------------------------------------------------------------------
-// BC application – phase 2.
-//
-// For each row:
-//   • If the row belongs to a fixed DOF → replace with identity row, set f=0.
-//   • Otherwise                         → zero out any column entry whose
-//                                         column index belongs to a fixed DOF
-//                                         (keeps the system symmetric; the RHS
-//                                         adjustment is trivially zero because
-//                                         prescribed displacements are zero).
+// BC application - phase 2: zero/identity rows and columns for fixed DOFs.
 // ---------------------------------------------------------------------------
 __global__ void apply_bcs_kernel(const int* d_is_fixed,
                                  const int* K_offsets,
@@ -189,17 +173,13 @@ __global__ void apply_bcs_kernel(const int* d_is_fixed,
     const int row_end = K_offsets[row + 1];
 
     if (d_is_fixed[row]) {
-        // Identity row for Dirichlet DOF.
         for (int k = row_start; k < row_end; ++k)
             K_values[k] = (K_columns[k] == row) ? static_cast<Real>(1) : static_cast<Real>(0);
         f[row] = static_cast<Real>(0);
     } else {
-        // Free row: zero out columns that correspond to fixed DOFs.
         for (int k = row_start; k < row_end; ++k)
             if (d_is_fixed[K_columns[k]])
                 K_values[k] = static_cast<Real>(0);
-        // f[row] is already the correct external force – no adjustment needed
-        // when all prescribed displacements are zero.
     }
 }
 
@@ -216,15 +196,15 @@ __global__ void update_positions_kernel(Real* d_x12, Real* d_y12, Real* d_z12, c
 }
 
 // ===========================================================================
-// LinearStaticSolver – host-side methods
+// LinearStaticSolver<TData> -- host-side methods
 // ===========================================================================
 
-LinearStaticSolver::LinearStaticSolver(GPU_FEAT10_Data* data, Real tol, int max_iter)
+template <typename TData>
+LinearStaticSolver<TData>::LinearStaticSolver(TData* data, Real tol, int max_iter)
     : data_(data), n_dof_(3 * data->get_n_coef()), cg_tol_(tol), cg_max_iter_(max_iter) {
     CHECK_CUSPARSE(cusparseCreate(&cusparse_));
     CHECK_CUBLAS(cublasCreate(&cublas_));
 
-    // Long arrays: use DualArray (manages both pinned host and device memory).
     da_u_.resize(static_cast<size_t>(n_dof_));
     da_u_.BindDevicePointer(&d_u_);
     da_f_.resize(static_cast<size_t>(n_dof_));
@@ -237,8 +217,8 @@ LinearStaticSolver::LinearStaticSolver(GPU_FEAT10_Data* data, Real tol, int max_
     da_Kp_.BindDevicePointer(&d_Kp_);
 }
 
-LinearStaticSolver::~LinearStaticSolver() {
-    // Long arrays managed by DualArrays
+template <typename TData>
+LinearStaticSolver<TData>::~LinearStaticSolver() {
     da_K_offsets_.free();
     da_K_columns_.free();
     da_K_values_.free();
@@ -256,9 +236,13 @@ LinearStaticSolver::~LinearStaticSolver() {
 // ---------------------------------------------------------------------------
 // BuildStiffnessCSRPattern
 // ---------------------------------------------------------------------------
-void LinearStaticSolver::BuildStiffnessCSRPattern() {
+template <typename TData>
+void LinearStaticSolver<TData>::BuildStiffnessCSRPattern() {
     if (pattern_built_)
         return;
+
+    constexpr int N_NODES = TData::N_NODES_PER_ELEM;
+    constexpr int STIFFNESS_KEYS_PER_ELEM = N_NODES * N_NODES * 9;
 
     const int n_elem = data_->get_n_elem();
     const int total_raw = n_elem * STIFFNESS_KEYS_PER_ELEM;
@@ -269,18 +253,16 @@ void LinearStaticSolver::BuildStiffnessCSRPattern() {
     {
         constexpr int threads = 256;
         const int blocks = (total_raw + threads - 1) / threads;
-        build_stiffness_keys_kernel<<<blocks, threads>>>(data_->d_data, d_keys);
+        build_stiffness_keys_kernel<TData><<<blocks, threads>>>(data_->d_data, d_keys);
         MOPHI_GPU_CALL(cudaDeviceSynchronize());
     }
 
-    // Sort and deduplicate.
     thrust::device_ptr<unsigned long long> keys_begin(d_keys);
     thrust::device_ptr<unsigned long long> keys_end = keys_begin + total_raw;
     thrust::sort(thrust::device, keys_begin, keys_end);
     auto keys_unique_end = thrust::unique(thrust::device, keys_begin, keys_end);
     K_nnz_ = static_cast<int>(keys_unique_end - keys_begin);
 
-    // Allocate CSR arrays via DualArray.
     da_K_offsets_.resize(static_cast<size_t>(n_dof_ + 1));
     da_K_offsets_.BindDevicePointer(&d_K_offsets_);
     da_K_columns_.resize(static_cast<size_t>(K_nnz_));
@@ -288,7 +270,6 @@ void LinearStaticSolver::BuildStiffnessCSRPattern() {
     da_K_values_.resize(static_cast<size_t>(K_nnz_));
     da_K_values_.BindDevicePointer(&d_K_values_);
 
-    // Decode unique keys into columns + row counts.
     int* d_row_counts = nullptr;
     MOPHI_GPU_CALL(cudaMalloc(&d_row_counts, static_cast<size_t>(n_dof_) * sizeof(int)));
     MOPHI_GPU_CALL(cudaMemset(d_row_counts, 0, static_cast<size_t>(n_dof_) * sizeof(int)));
@@ -300,7 +281,6 @@ void LinearStaticSolver::BuildStiffnessCSRPattern() {
         MOPHI_GPU_CALL(cudaDeviceSynchronize());
     }
 
-    // Exclusive prefix sum → row offsets.
     thrust::device_ptr<int> row_counts_ptr(d_row_counts);
     thrust::device_ptr<int> offsets_ptr(d_K_offsets_);
     thrust::exclusive_scan(thrust::device, row_counts_ptr, row_counts_ptr + n_dof_, offsets_ptr);
@@ -316,43 +296,41 @@ void LinearStaticSolver::BuildStiffnessCSRPattern() {
 // ---------------------------------------------------------------------------
 // AssembleLinearStiffness
 // ---------------------------------------------------------------------------
-void LinearStaticSolver::AssembleLinearStiffness() {
-    // Zero K values before accumulation.
+template <typename TData>
+void LinearStaticSolver<TData>::AssembleLinearStiffness() {
     da_K_values_.SetVal(Real(0));
     da_K_values_.MakeReadyDevice();
 
-    const int total_qp = data_->get_n_elem() * Quadrature::N_QP_T10_5;
+    const int total_qp = data_->get_n_elem() * TData::N_QP_PER_ELEM;
     constexpr int threads = 128;
     const int blocks = (total_qp + threads - 1) / threads;
 
-    assemble_stiffness_kernel<<<blocks, threads>>>(data_->d_data, d_K_offsets_, d_K_columns_, d_K_values_);
+    assemble_stiffness_kernel<TData><<<blocks, threads>>>(data_->d_data, d_K_offsets_, d_K_columns_, d_K_values_);
     MOPHI_GPU_CALL(cudaDeviceSynchronize());
 }
 
 // ---------------------------------------------------------------------------
 // ApplyDirichletBCs
 // ---------------------------------------------------------------------------
-void LinearStaticSolver::ApplyDirichletBCs() {
+template <typename TData>
+void LinearStaticSolver<TData>::ApplyDirichletBCs() {
     const int n_constraint = data_->get_n_constraint();
     if (n_constraint == 0)
         return;
 
     const int n_fixed_nodes = n_constraint / 3;
 
-    // Allocate and zero the is_fixed flag array.
     int* d_is_fixed = nullptr;
     MOPHI_GPU_CALL(cudaMalloc(&d_is_fixed, static_cast<size_t>(n_dof_) * sizeof(int)));
     MOPHI_GPU_CALL(cudaMemset(d_is_fixed, 0, static_cast<size_t>(n_dof_) * sizeof(int)));
 
-    // Mark fixed DOFs.
     {
         constexpr int threads = 256;
         const int blocks = (n_fixed_nodes + threads - 1) / threads;
-        mark_fixed_dofs_kernel<<<blocks, threads>>>(data_->d_data, d_is_fixed);
+        mark_fixed_dofs_kernel<TData><<<blocks, threads>>>(data_->d_data, d_is_fixed);
         MOPHI_GPU_CALL(cudaDeviceSynchronize());
     }
 
-    // Apply BC row/column modifications to K and the RHS f.
     {
         constexpr int threads = 256;
         const int blocks = (n_dof_ + threads - 1) / threads;
@@ -364,22 +342,17 @@ void LinearStaticSolver::ApplyDirichletBCs() {
 }
 
 // ---------------------------------------------------------------------------
-// SolveLinearSystemCG – conjugate gradient on GPU.
-//
-// Uses:
-//   cuSPARSE generic SpMV for y = K * x
-//   cuBLAS Ddot / Daxpy / Dscal for vector operations (double precision).
+// SolveLinearSystemCG
 // ---------------------------------------------------------------------------
-void LinearStaticSolver::SolveLinearSystemCG() {
+template <typename TData>
+void LinearStaticSolver<TData>::SolveLinearSystemCG() {
     const int n = n_dof_;
 
-    // u = 0, r = f, p = r.
     da_u_.SetVal(Real(0));
     da_u_.MakeReadyDevice();
     MOPHI_GPU_CALL(cudaMemcpy(d_r_, d_f_, static_cast<size_t>(n) * sizeof(Real), cudaMemcpyDeviceToDevice));
     MOPHI_GPU_CALL(cudaMemcpy(d_p_, d_f_, static_cast<size_t>(n) * sizeof(Real), cudaMemcpyDeviceToDevice));
 
-    // Build cuSPARSE descriptors.
     cusparseSpMatDescr_t K_descr = nullptr;
     cusparseDnVecDescr_t p_descr = nullptr;
     cusparseDnVecDescr_t Kp_descr = nullptr;
@@ -402,11 +375,9 @@ void LinearStaticSolver::SolveLinearSystemCG() {
         MOPHI_GPU_CALL(cudaMalloc(&spMV_buf, spMV_bufsize));
     }
 
-    // Initial residual norm squared.
     Real rr0 = 0.0;
     CHECK_CUBLAS(cublasDdot(cublas_, n, d_r_, 1, d_r_, 1, &rr0));
 
-    // Early exit: zero RHS means solution is u=0.
     if (rr0 == 0.0) {
         last_iter_count_ = 0;
         last_residual_ = 0.0;
@@ -424,33 +395,26 @@ void LinearStaticSolver::SolveLinearSystemCG() {
     last_residual_ = 1.0;
 
     for (int iter = 0; iter < cg_max_iter_; ++iter) {
-        // Kp = K * p.
         CHECK_CUSPARSE(cusparseSpMV(cusparse_, CUSPARSE_OPERATION_NON_TRANSPOSE, &one, K_descr, p_descr, &zero,
                                     Kp_descr, CUDA_R_64F, CUSPARSE_SPMV_ALG_DEFAULT, spMV_buf));
 
-        // alpha = rr / (p · Kp).
         Real pKp = 0.0;
         CHECK_CUBLAS(cublasDdot(cublas_, n, d_p_, 1, d_Kp_, 1, &pKp));
 
         if (pKp <= 0.0) {
-            // Should not happen for a SPD system after proper BC application.
-            MOPHI_ERROR("LinearStaticSolver CG: non-positive p·Kp detected; aborting.");
+            MOPHI_ERROR("LinearStaticSolver CG: non-positive p*Kp detected; aborting.");
             break;
         }
         Real alpha = rr / pKp;
 
-        // u += alpha * p.
         CHECK_CUBLAS(cublasDaxpy(cublas_, n, &alpha, d_p_, 1, d_u_, 1));
 
-        // r -= alpha * Kp.
         const Real neg_alpha = -alpha;
         CHECK_CUBLAS(cublasDaxpy(cublas_, n, &neg_alpha, d_Kp_, 1, d_r_, 1));
 
-        // rr_new = r · r.
         Real rr_new = 0.0;
         CHECK_CUBLAS(cublasDdot(cublas_, n, d_r_, 1, d_r_, 1, &rr_new));
 
-        // Check convergence.
         const Real rel_res = (rr0 > 0.0) ? std::sqrt(rr_new / rr0) : std::sqrt(rr_new);
         if (rel_res < cg_tol_) {
             last_iter_count_ = iter + 1;
@@ -458,10 +422,8 @@ void LinearStaticSolver::SolveLinearSystemCG() {
             break;
         }
 
-        // beta = rr_new / rr.
         const Real beta = rr_new / rr;
 
-        // p = r + beta * p  (cuBLAS: first scale p, then add r).
         CHECK_CUBLAS(cublasDscal(cublas_, n, &beta, d_p_, 1));
         CHECK_CUBLAS(cublasDaxpy(cublas_, n, &one, d_r_, 1, d_p_, 1));
 
@@ -473,7 +435,6 @@ void LinearStaticSolver::SolveLinearSystemCG() {
         }
     }
 
-    // Clean up descriptors and temporary buffer.
     CHECK_CUSPARSE(cusparseDestroySpMat(K_descr));
     CHECK_CUSPARSE(cusparseDestroyDnVec(p_descr));
     CHECK_CUSPARSE(cusparseDestroyDnVec(Kp_descr));
@@ -482,14 +443,14 @@ void LinearStaticSolver::SolveLinearSystemCG() {
 }
 
 // ---------------------------------------------------------------------------
-// UpdatePositions – add displacement u to GPU_FEAT10_Data positions.
+// UpdatePositions -- add displacement u to TData positions.
 // ---------------------------------------------------------------------------
-void LinearStaticSolver::UpdatePositions() {
+template <typename TData>
+void LinearStaticSolver<TData>::UpdatePositions() {
     const int n_nodes = data_->get_n_coef();
     constexpr int threads = 256;
     const int blocks = (n_nodes + threads - 1) / threads;
 
-    // Access the raw device pointers through the public getter methods.
     Real* d_x = const_cast<Real*>(data_->GetX12DevicePtr());
     Real* d_y = const_cast<Real*>(data_->GetY12DevicePtr());
     Real* d_z = const_cast<Real*>(data_->GetZ12DevicePtr());
@@ -498,33 +459,39 @@ void LinearStaticSolver::UpdatePositions() {
     MOPHI_GPU_CALL(cudaDeviceSynchronize());
 
     // Sync the host-visible struct copy on GPU.
-    MOPHI_GPU_CALL(cudaMemcpy(data_->d_data, data_, sizeof(GPU_FEAT10_Data), cudaMemcpyHostToDevice));
+    MOPHI_GPU_CALL(cudaMemcpy(data_->d_data, data_, sizeof(TData), cudaMemcpyHostToDevice));
 }
 
 // ---------------------------------------------------------------------------
-// Solve – top-level entry point.
+// Solve -- top-level entry point.
 // ---------------------------------------------------------------------------
-void LinearStaticSolver::Solve() {
-    // Build sparsity pattern once.
+template <typename TData>
+void LinearStaticSolver<TData>::Solve() {
     BuildStiffnessCSRPattern();
-
-    // Assemble K at current (reference) positions.
     AssembleLinearStiffness();
 
-    // Copy external force vector into the working RHS buffer.
     {
         const Real* d_f_ext = data_->GetExternalForceDevicePtr();
         MOPHI_GPU_CALL(cudaMemcpy(d_f_, d_f_ext, static_cast<size_t>(n_dof_) * sizeof(Real), cudaMemcpyDeviceToDevice));
     }
 
-    // Apply Dirichlet boundary conditions.
     ApplyDirichletBCs();
-
-    // Solve K * u = f.
     SolveLinearSystemCG();
-
-    // Write displacement back into GPU_FEAT10_Data.
     UpdatePositions();
 }
+
+// ---------------------------------------------------------------------------
+// Explicit template instantiations for supported element types
+// ---------------------------------------------------------------------------
+template class LinearStaticSolver<GPU_FEAT10_Data>;
+template class LinearStaticSolver<GPU_FEAT4_Data>;
+
+// Explicit instantiations of device kernels (required for the template kernels)
+template __global__ void build_stiffness_keys_kernel<GPU_FEAT10_Data>(GPU_FEAT10_Data*, unsigned long long*);
+template __global__ void build_stiffness_keys_kernel<GPU_FEAT4_Data>(GPU_FEAT4_Data*, unsigned long long*);
+template __global__ void assemble_stiffness_kernel<GPU_FEAT10_Data>(GPU_FEAT10_Data*, int*, int*, Real*);
+template __global__ void assemble_stiffness_kernel<GPU_FEAT4_Data>(GPU_FEAT4_Data*, int*, int*, Real*);
+template __global__ void mark_fixed_dofs_kernel<GPU_FEAT10_Data>(GPU_FEAT10_Data*, int*);
+template __global__ void mark_fixed_dofs_kernel<GPU_FEAT4_Data>(GPU_FEAT4_Data*, int*);
 
 }  // namespace tlfea

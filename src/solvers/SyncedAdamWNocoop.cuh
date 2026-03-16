@@ -49,6 +49,13 @@ class SyncedAdamWNocoopSolver : public SolverBase {
             d_constraint_ptr_ = typed_data->Get_Is_Constraint_Setup() ? typed_data->Get_Constraint_Ptr() : nullptr;
             n_total_qp_ = Quadrature::N_QP_T10_5;
             n_shape_ = Quadrature::N_NODE_T10_10;
+        } else if (data->type == TYPE_T4) {
+            type_ = TYPE_T4;
+            auto* typed_data = static_cast<GPU_FEAT4_Data*>(data);
+            d_data_ = typed_data->d_data;
+            d_constraint_ptr_ = typed_data->Get_Is_Constraint_Setup() ? typed_data->Get_Constraint_Ptr() : nullptr;
+            n_total_qp_ = Quadrature::N_QP_T4_1;
+            n_shape_ = Quadrature::N_NODE_T4_4;
         } else {
             d_data_ = nullptr;
             d_constraint_ptr_ = nullptr;
@@ -328,11 +335,18 @@ class SyncedAdamWNocoopSolver : public SolverBase {
     Real compute_l2_norm_cublas(Real* d_vec, int n_dofs);
 
     ElementType type_;
+    // Device pointer to the element data struct (GPU_ANCF3243_Data, GPU_ANCF3443_Data,
+    // GPU_FEAT10_Data, or GPU_FEAT4_Data). Owned by the ElementBase object; not freed here.
     ElementBase* d_data_;
+    // Device-side mirror of this solver struct, copied via cudaMemcpy in Setup().
+    // Passed directly to GPU kernels so they can access all device pointers and
+    // scalar fields without re-deriving the host address.
     SyncedAdamWNocoopSolver* d_adamw_solver_;
     int n_total_qp_, n_shape_;
     int n_coef_, n_beam_, n_constraints_;
 
+    // Device pointer to the pre-computed constraint Jacobian/data block.
+    // Null if no constraints were set up on the element (Get_Is_Constraint_Setup() == false).
     Real* d_constraint_ptr_;
 
     // DualArrays for long arrays (manage both pinned host and device memory).
@@ -342,24 +356,63 @@ class SyncedAdamWNocoopSolver : public SolverBase {
     mophi::DualArray<Real> da_m_, da_v_adam_;
 
     // Raw device pointers for GPU kernel access (bound to DualArrays above).
+    // Nodal x/y/z positions from the previous half-step (used in the momentum update).
     Real *d_x12_prev, *d_y12_prev, *d_z12_prev;
-
+    // Generalized coordinate (velocity/position DOF) vectors at successive AdamW stages:
+    //   d_v_guess_  – initial guess for the current outer iteration
+    //   d_v_prev_   – accepted solution from the previous outer iteration
+    //   d_v_k_      – iterate at the start of the current inner (gradient) step
+    //   d_v_next_   – candidate solution after applying the AdamW update
+    // Each array has length 3*n_coef_ (x, y, z DOFs concatenated).
     Real *d_v_guess_, *d_v_prev_, *d_v_k_, *d_v_next_;
-    Real *d_lambda_guess_, *d_g_;
+    // Lagrange multipliers for holonomic constraints (length n_constraints_).
+    Real *d_lambda_guess_;
+    // Gradient of the total potential energy w.r.t. the DOFs (length 3*n_coef_).
+    Real *d_g_;
+    // L2 norms stored on device so convergence comparisons stay GPU-resident:
+    //   d_norm_g_ – norm of the gradient d_g_ (residual force)
+    //   d_norm_v_ – norm of the velocity/displacement update d_v_next_ - d_v_k_
     Real *d_norm_g_, *d_norm_v_;
+    // Convergence flags written by GPU kernels; 0 = converged, 1 = not yet converged.
+    //   d_inner_flag_ – checked after each inner (gradient) step
+    //   d_outer_flag_ – checked after each outer (time) step
     int *d_inner_flag_, *d_outer_flag_;
 
+    // AdamW optimizer hyperparameters stored on the device so kernels can read
+    // them without host-device synchronization:
+    //   d_lr_           – base learning rate (step size)
+    //   d_beta1_        – exponential decay rate for the first moment (momentum) estimate
+    //   d_beta2_        – exponential decay rate for the second moment (RMS) estimate
+    //   d_eps_          – small constant added to the denominator for numerical stability
+    //   d_weight_decay_ – L2 regularisation coefficient applied to the DOF update
+    //   d_lr_decay_     – multiplicative decay applied to d_lr_ each outer step
     Real *d_lr_, *d_beta1_, *d_beta2_, *d_eps_, *d_weight_decay_, *d_lr_decay_;
 
+    // Convergence / time-integration scalar parameters stored on the device:
+    //   d_alpha_        – gradient step size override (used when lr schedule is bypassed)
+    //   d_inner_tol_    – absolute convergence tolerance for the inner loop
+    //   d_inner_rtol_   – relative convergence tolerance for the inner loop
+    //   d_outer_tol_    – absolute convergence tolerance for the outer loop
+    //   d_time_step_    – physical simulation time step
+    //   d_solver_rho_   – penalty parameter ρ used in the augmented Lagrangian
     Real *d_alpha_, *d_inner_tol_, *d_inner_rtol_, *d_outer_tol_, *d_time_step_, *d_solver_rho_;
 
+    // How many inner iterations to perform between successive convergence checks
+    // (reduces synchronization overhead when n_coef_ is large).
     int* d_convergence_check_interval_;
 
+    // Maximum iteration counts for the inner (gradient) and outer (time) loops.
     int *d_max_inner_, *d_max_outer_;
 
+    // AdamW biased first and second moment estimate vectors (length 3*n_coef_ each):
+    //   d_m_ – first moment (exponentially weighted moving average of the gradient)
+    //   d_v_adam_ – second moment (exponentially weighted moving average of gradient^2)
+    // Both are bias-corrected inside the update kernel before computing the step.
     Real *d_m_, *d_v_adam_;
 
     cublasHandle_t cublas_handle_;
+    // Temporary single-element device buffer written by cuBLAS cublasNrm2 so that
+    // the norm result stays on the device and avoids a device-to-host round-trip.
     Real* d_norm_temp_cublas_;
 };
 
