@@ -20,6 +20,8 @@
 #include "../elements/ANCF3443DataFunc.cuh"
 #include "../elements/FEAT10Data.cuh"
 #include "../elements/FEAT10DataFunc.cuh"
+#include "../elements/FEAT4Data.cuh"
+#include "../elements/FEAT4DataFunc.cuh"
 #include "SyncedAdamW.cuh"
 #include <MoPhiEssentials.h>
 
@@ -345,6 +347,7 @@ __global__ void one_step_adamw_kernel_impl(ElementType* d_data, SyncedAdamWSolve
 template __global__ void one_step_adamw_kernel_impl<GPU_ANCF3243_Data>(GPU_ANCF3243_Data*, SyncedAdamWSolver*);
 template __global__ void one_step_adamw_kernel_impl<GPU_ANCF3443_Data>(GPU_ANCF3443_Data*, SyncedAdamWSolver*);
 template __global__ void one_step_adamw_kernel_impl<GPU_FEAT10_Data>(GPU_FEAT10_Data*, SyncedAdamWSolver*);
+template __global__ void one_step_adamw_kernel_impl<GPU_FEAT4_Data>(GPU_FEAT4_Data*, SyncedAdamWSolver*);
 
 void SyncedAdamWSolver::OneStepAdamW() {
     cudaEvent_t start, stop;
@@ -372,6 +375,9 @@ void SyncedAdamWSolver::OneStepAdamW() {
     } else if (type_ == TYPE_T10) {
         MOPHI_GPU_CALL(cudaOccupancyMaxActiveBlocksPerMultiprocessor(
             &maxBlocksPerSm, one_step_adamw_kernel_impl<GPU_FEAT10_Data>, threads, 0));
+    } else if (type_ == TYPE_T4) {
+        MOPHI_GPU_CALL(cudaOccupancyMaxActiveBlocksPerMultiprocessor(
+            &maxBlocksPerSm, one_step_adamw_kernel_impl<GPU_FEAT4_Data>, threads, 0));
     }
 
     int maxCoopBlocks = maxBlocksPerSm * props.multiProcessorCount;
@@ -400,6 +406,10 @@ void SyncedAdamWSolver::OneStepAdamW() {
         void* args[] = {&d_data_, &d_adamw_solver_};
         MOPHI_GPU_CALL(
             cudaLaunchCooperativeKernel((void*)one_step_adamw_kernel_impl<GPU_FEAT10_Data>, blocks, threads, args));
+    } else if (type_ == TYPE_T4) {
+        void* args[] = {&d_data_, &d_adamw_solver_};
+        MOPHI_GPU_CALL(
+            cudaLaunchCooperativeKernel((void*)one_step_adamw_kernel_impl<GPU_FEAT4_Data>, blocks, threads, args));
     }
 
     MOPHI_GPU_CALL(cudaEventRecord(stop));

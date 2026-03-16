@@ -12,66 +12,52 @@
 #include "types.h"
 #include <MoPhiEssentials.h>
 
-// Definition of GPU_ANCF3443 and data access device functions
+// GPU data structure for 4-node linear tetrahedral (TET4) elements.
 #pragma once
 
 namespace tlfea {
 
-//
-// define a SAP data strucutre
-struct GPU_FEAT10_Data : public ElementBase {
+struct GPU_FEAT4_Data : public ElementBase {
     // Static compile-time constants for template dispatch
-    static constexpr int N_NODES_PER_ELEM = Quadrature::N_NODE_T10_10;
-    static constexpr int N_QP_PER_ELEM = Quadrature::N_QP_T10_5;
+    static constexpr int N_NODES_PER_ELEM = Quadrature::N_NODE_T4_4;
+    static constexpr int N_QP_PER_ELEM = Quadrature::N_QP_T4_1;
 
 #if defined(__CUDACC__)
 
-    // Helper: gather 16 DOFs for an element using connectivity
-    __device__ void gather_element_dofs(const Real* global, Map<MatrixXi> connectivity, int elem, Real* local) const {
-        // Each element has 4 nodes, each node has 4 DOFs
-        for (int n = 0; n < 4; ++n) {
-            int node = connectivity(elem, n);
-    #pragma unroll
-            for (int d = 0; d < 4; ++d) {
-                local[n * 4 + d] = global[node * 4 + d];
-            }
-        }
-    }
-
     __device__ Map<MatrixXi> element_connectivity() const {
-        return Map<MatrixXi>(d_element_connectivity, n_elem, Quadrature::N_NODE_T10_10);
+        return Map<MatrixXi>(d_element_connectivity, n_elem, Quadrature::N_NODE_T4_4);
     }
 
     __device__ Map<MatrixXR> grad_N_ref(int elem_idx, int qp_idx) {
-        return Map<MatrixXR>(d_grad_N_ref + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 10 * 3, 10, 3);
+        return Map<MatrixXR>(d_grad_N_ref + (elem_idx * Quadrature::N_QP_T4_1 + qp_idx) * 4 * 3, 4, 3);
     }
 
     __device__ const Map<MatrixXR> grad_N_ref(int elem_idx, int qp_idx) const {
-        return Map<MatrixXR>(d_grad_N_ref + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 10 * 3, 10, 3);
+        return Map<MatrixXR>(d_grad_N_ref + (elem_idx * Quadrature::N_QP_T4_1 + qp_idx) * 4 * 3, 4, 3);
     }
 
     __device__ Real& detJ_ref(int elem_idx, int qp_idx) {
-        return d_detJ_ref[elem_idx * Quadrature::N_QP_T10_5 + qp_idx];
+        return d_detJ_ref[elem_idx * Quadrature::N_QP_T4_1 + qp_idx];
     }
 
     __device__ Real detJ_ref(int elem_idx, int qp_idx) const {
-        return d_detJ_ref[elem_idx * Quadrature::N_QP_T10_5 + qp_idx];
+        return d_detJ_ref[elem_idx * Quadrature::N_QP_T4_1 + qp_idx];
     }
 
-    __device__ Real tet5pt_x(int qp_idx) {
-        return d_tet5pt_x[qp_idx];
+    __device__ Real tet1pt_x(int qp_idx) {
+        return d_tet1pt_x[qp_idx];
     }
 
-    __device__ Real tet5pt_y(int qp_idx) {
-        return d_tet5pt_y[qp_idx];
+    __device__ Real tet1pt_y(int qp_idx) {
+        return d_tet1pt_y[qp_idx];
     }
 
-    __device__ Real tet5pt_z(int qp_idx) {
-        return d_tet5pt_z[qp_idx];
+    __device__ Real tet1pt_z(int qp_idx) {
+        return d_tet1pt_z[qp_idx];
     }
 
-    __device__ Real tet5pt_weights(int qp_idx) {
-        return d_tet5pt_weights[qp_idx];
+    __device__ Real tet1pt_weights(int qp_idx) {
+        return d_tet1pt_weights[qp_idx];
     }
 
     __device__ Map<VectorXR> x12() {
@@ -111,37 +97,35 @@ struct GPU_FEAT10_Data : public ElementBase {
     }
 
     __device__ Map<MatrixXR> F(int elem_idx, int qp_idx) {
-        return Map<MatrixXR>(d_F + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+        return Map<MatrixXR>(d_F + (elem_idx * Quadrature::N_QP_T4_1 + qp_idx) * 9, 3, 3);
     }
 
     __device__ const Map<MatrixXR> F(int elem_idx, int qp_idx) const {
-        return Map<MatrixXR>(d_F + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+        return Map<MatrixXR>(d_F + (elem_idx * Quadrature::N_QP_T4_1 + qp_idx) * 9, 3, 3);
     }
 
     __device__ Map<MatrixXR> P(int elem_idx, int qp_idx) {
-        return Map<MatrixXR>(d_P + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+        return Map<MatrixXR>(d_P + (elem_idx * Quadrature::N_QP_T4_1 + qp_idx) * 9, 3, 3);
     }
 
     __device__ const Map<MatrixXR> P(int elem_idx, int qp_idx) const {
-        return Map<MatrixXR>(d_P + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+        return Map<MatrixXR>(d_P + (elem_idx * Quadrature::N_QP_T4_1 + qp_idx) * 9, 3, 3);
     }
 
-    // Time-derivative of deformation gradient (viscous computation)
     __device__ Map<MatrixXR> Fdot(int elem_idx, int qp_idx) {
-        return Map<MatrixXR>(d_Fdot + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+        return Map<MatrixXR>(d_Fdot + (elem_idx * Quadrature::N_QP_T4_1 + qp_idx) * 9, 3, 3);
     }
 
     __device__ const Map<MatrixXR> Fdot(int elem_idx, int qp_idx) const {
-        return Map<MatrixXR>(d_Fdot + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+        return Map<MatrixXR>(d_Fdot + (elem_idx * Quadrature::N_QP_T4_1 + qp_idx) * 9, 3, 3);
     }
 
-    // Viscous Piola stress storage
     __device__ Map<MatrixXR> P_vis(int elem_idx, int qp_idx) {
-        return Map<MatrixXR>(d_P_vis + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+        return Map<MatrixXR>(d_P_vis + (elem_idx * Quadrature::N_QP_T4_1 + qp_idx) * 9, 3, 3);
     }
 
     __device__ const Map<MatrixXR> P_vis(int elem_idx, int qp_idx) const {
-        return Map<MatrixXR>(d_P_vis + (elem_idx * Quadrature::N_QP_T10_5 + qp_idx) * 9, 3, 3);
+        return Map<MatrixXR>(d_P_vis + (elem_idx * Quadrature::N_QP_T4_1 + qp_idx) * 9, 3, 3);
     }
 
     __device__ Map<VectorXR> f_int(int global_node_idx) {
@@ -348,16 +332,12 @@ struct GPU_FEAT10_Data : public ElementBase {
 
     void RetrieveConnectivityToCPU(MatrixXi& connectivity);
 
-    void WriteOutputVTK(const std::string& filename);
-
     // Constructor
-    GPU_FEAT10_Data(int num_elements, int num_nodes) : n_elem(num_elements), n_coef(num_nodes) {
-        type = TYPE_T10;
+    GPU_FEAT4_Data(int num_elements, int num_nodes) : n_elem(num_elements), n_coef(num_nodes), n_constraint(0) {
+        type = TYPE_T4;
     }
 
     void Initialize() {
-        // Long arrays: use DualArray (manages both pinned host and device memory).
-        // BindDevicePointer keeps the raw device pointer in sync for GPU kernels.
         da_h_x12.resize(n_coef);
         da_h_x12.BindDevicePointer(&d_h_x12);
         da_h_y12.resize(n_coef);
@@ -370,34 +350,33 @@ struct GPU_FEAT10_Data : public ElementBase {
         da_h_y12_jac.BindDevicePointer(&d_h_y12_jac);
         da_h_z12_jac.resize(n_coef);
         da_h_z12_jac.BindDevicePointer(&d_h_z12_jac);
-        da_element_connectivity.resize(n_elem * Quadrature::N_NODE_T10_10);
+        da_element_connectivity.resize(n_elem * Quadrature::N_NODE_T4_4);
         da_element_connectivity.BindDevicePointer(&d_element_connectivity);
-        da_tet5pt_x.resize(Quadrature::N_QP_T10_5);
-        da_tet5pt_x.BindDevicePointer(&d_tet5pt_x);
-        da_tet5pt_y.resize(Quadrature::N_QP_T10_5);
-        da_tet5pt_y.BindDevicePointer(&d_tet5pt_y);
-        da_tet5pt_z.resize(Quadrature::N_QP_T10_5);
-        da_tet5pt_z.BindDevicePointer(&d_tet5pt_z);
-        da_tet5pt_weights.resize(Quadrature::N_QP_T10_5);
-        da_tet5pt_weights.BindDevicePointer(&d_tet5pt_weights);
-        da_grad_N_ref.resize(n_elem * Quadrature::N_QP_T10_5 * 10 * 3);
+        da_tet1pt_x.resize(Quadrature::N_QP_T4_1);
+        da_tet1pt_x.BindDevicePointer(&d_tet1pt_x);
+        da_tet1pt_y.resize(Quadrature::N_QP_T4_1);
+        da_tet1pt_y.BindDevicePointer(&d_tet1pt_y);
+        da_tet1pt_z.resize(Quadrature::N_QP_T4_1);
+        da_tet1pt_z.BindDevicePointer(&d_tet1pt_z);
+        da_tet1pt_weights.resize(Quadrature::N_QP_T4_1);
+        da_tet1pt_weights.BindDevicePointer(&d_tet1pt_weights);
+        da_grad_N_ref.resize(n_elem * Quadrature::N_QP_T4_1 * 4 * 3);
         da_grad_N_ref.BindDevicePointer(&d_grad_N_ref);
-        da_detJ_ref.resize(n_elem * Quadrature::N_QP_T10_5);
+        da_detJ_ref.resize(n_elem * Quadrature::N_QP_T4_1);
         da_detJ_ref.BindDevicePointer(&d_detJ_ref);
-        da_F.resize(n_elem * Quadrature::N_QP_T10_5 * 3 * 3);
+        da_F.resize(n_elem * Quadrature::N_QP_T4_1 * 3 * 3);
         da_F.BindDevicePointer(&d_F);
-        da_P.resize(n_elem * Quadrature::N_QP_T10_5 * 3 * 3);
+        da_P.resize(n_elem * Quadrature::N_QP_T4_1 * 3 * 3);
         da_P.BindDevicePointer(&d_P);
-        da_Fdot.resize(n_elem * Quadrature::N_QP_T10_5 * 3 * 3);
+        da_Fdot.resize(n_elem * Quadrature::N_QP_T4_1 * 3 * 3);
         da_Fdot.BindDevicePointer(&d_Fdot);
-        da_P_vis.resize(n_elem * Quadrature::N_QP_T10_5 * 3 * 3);
+        da_P_vis.resize(n_elem * Quadrature::N_QP_T4_1 * 3 * 3);
         da_P_vis.BindDevicePointer(&d_P_vis);
         da_f_int.resize(n_coef * 3);
         da_f_int.BindDevicePointer(&d_f_int);
         da_f_ext.resize(n_coef * 3);
         da_f_ext.BindDevicePointer(&d_f_ext);
 
-        // Scalar material/damping parameters: single values on device only.
         MOPHI_GPU_CALL(cudaMalloc(&d_rho0, sizeof(Real)));
         MOPHI_GPU_CALL(cudaMalloc(&d_nu, sizeof(Real)));
         MOPHI_GPU_CALL(cudaMalloc(&d_E, sizeof(Real)));
@@ -407,24 +386,22 @@ struct GPU_FEAT10_Data : public ElementBase {
         MOPHI_GPU_CALL(cudaMalloc(&d_mu10, sizeof(Real)));
         MOPHI_GPU_CALL(cudaMalloc(&d_mu01, sizeof(Real)));
         MOPHI_GPU_CALL(cudaMalloc(&d_kappa, sizeof(Real)));
-        // damping parameters
         MOPHI_GPU_CALL(cudaMalloc(&d_eta_damp, sizeof(Real)));
         MOPHI_GPU_CALL(cudaMalloc(&d_lambda_damp, sizeof(Real)));
 
-        // copy struct to device
-        MOPHI_GPU_CALL(cudaMalloc(&d_data, sizeof(GPU_FEAT10_Data)));
+        MOPHI_GPU_CALL(cudaMalloc(&d_data, sizeof(GPU_FEAT4_Data)));
     }
 
-    void Setup(const VectorXR& tet5pt_x_host,
-               const VectorXR& tet5pt_y_host,
-               const VectorXR& tet5pt_z_host,
-               const VectorXR& tet5pt_weights_host,
+    void Setup(const VectorXR& tet1pt_x_host,
+               const VectorXR& tet1pt_y_host,
+               const VectorXR& tet1pt_z_host,
+               const VectorXR& tet1pt_weights_host,
                const VectorXR& h_x12,
                const VectorXR& h_y12,
                const VectorXR& h_z12,
                const MatrixXi& element_connectivity) {
         if (is_setup) {
-            MOPHI_ERROR(std::string("GPU_FEAT10_Data is already set up."));
+            MOPHI_ERROR(std::string("GPU_FEAT4_Data is already set up."));
             return;
         }
 
@@ -441,19 +418,19 @@ struct GPU_FEAT10_Data : public ElementBase {
         std::copy(h_z12.data(), h_z12.data() + n_coef, da_h_z12_jac.host());
         da_h_z12_jac.ToDevice();
 
-        std::copy(element_connectivity.data(), element_connectivity.data() + n_elem * Quadrature::N_NODE_T10_10,
+        std::copy(element_connectivity.data(), element_connectivity.data() + n_elem * Quadrature::N_NODE_T4_4,
                   da_element_connectivity.host());
         da_element_connectivity.ToDevice();
 
-        std::copy(tet5pt_x_host.data(), tet5pt_x_host.data() + Quadrature::N_QP_T10_5, da_tet5pt_x.host());
-        da_tet5pt_x.ToDevice();
-        std::copy(tet5pt_y_host.data(), tet5pt_y_host.data() + Quadrature::N_QP_T10_5, da_tet5pt_y.host());
-        da_tet5pt_y.ToDevice();
-        std::copy(tet5pt_z_host.data(), tet5pt_z_host.data() + Quadrature::N_QP_T10_5, da_tet5pt_z.host());
-        da_tet5pt_z.ToDevice();
-        std::copy(tet5pt_weights_host.data(), tet5pt_weights_host.data() + Quadrature::N_QP_T10_5,
-                  da_tet5pt_weights.host());
-        da_tet5pt_weights.ToDevice();
+        std::copy(tet1pt_x_host.data(), tet1pt_x_host.data() + Quadrature::N_QP_T4_1, da_tet1pt_x.host());
+        da_tet1pt_x.ToDevice();
+        std::copy(tet1pt_y_host.data(), tet1pt_y_host.data() + Quadrature::N_QP_T4_1, da_tet1pt_y.host());
+        da_tet1pt_y.ToDevice();
+        std::copy(tet1pt_z_host.data(), tet1pt_z_host.data() + Quadrature::N_QP_T4_1, da_tet1pt_z.host());
+        da_tet1pt_z.ToDevice();
+        std::copy(tet1pt_weights_host.data(), tet1pt_weights_host.data() + Quadrature::N_QP_T4_1,
+                  da_tet1pt_weights.host());
+        da_tet1pt_weights.ToDevice();
         da_grad_N_ref.SetVal(Real(0));
         da_grad_N_ref.MakeReadyDevice();
         da_detJ_ref.SetVal(Real(0));
@@ -474,9 +451,8 @@ struct GPU_FEAT10_Data : public ElementBase {
         Real rho0 = 0.0;
         Real nu = 0.0;
         Real E = 0.0;
-        // Compute material constants
-        Real mu = E / (2 * (1 + nu));                        // Shear modulus μ
-        Real lambda = (E * nu) / ((1 + nu) * (1 - 2 * nu));  // Lamé's first parameter λ
+        Real mu = E / (2 * (1 + nu));
+        Real lambda = (E * nu) / ((1 + nu) * (1 - 2 * nu));
         Real eta_damp = 0.0;
         Real lambda_damp = 0.0;
         int material_model = MATERIAL_MODEL_SVK;
@@ -489,7 +465,6 @@ struct GPU_FEAT10_Data : public ElementBase {
         MOPHI_GPU_CALL(cudaMemcpy(d_E, &E, sizeof(Real), cudaMemcpyHostToDevice));
         MOPHI_GPU_CALL(cudaMemcpy(d_mu, &mu, sizeof(Real), cudaMemcpyHostToDevice));
         MOPHI_GPU_CALL(cudaMemcpy(d_lambda, &lambda, sizeof(Real), cudaMemcpyHostToDevice));
-        // copy damping parameters
         MOPHI_GPU_CALL(cudaMemcpy(d_eta_damp, &eta_damp, sizeof(Real), cudaMemcpyHostToDevice));
         MOPHI_GPU_CALL(cudaMemcpy(d_lambda_damp, &lambda_damp, sizeof(Real), cudaMemcpyHostToDevice));
         MOPHI_GPU_CALL(cudaMemcpy(d_material_model, &material_model, sizeof(int), cudaMemcpyHostToDevice));
@@ -497,42 +472,31 @@ struct GPU_FEAT10_Data : public ElementBase {
         MOPHI_GPU_CALL(cudaMemcpy(d_mu01, &mu01, sizeof(Real), cudaMemcpyHostToDevice));
         MOPHI_GPU_CALL(cudaMemcpy(d_kappa, &kappa, sizeof(Real), cudaMemcpyHostToDevice));
 
-        MOPHI_GPU_CALL(cudaMemcpy(d_data, this, sizeof(GPU_FEAT10_Data), cudaMemcpyHostToDevice));
+        MOPHI_GPU_CALL(cudaMemcpy(d_data, this, sizeof(GPU_FEAT4_Data), cudaMemcpyHostToDevice));
 
         is_setup = true;
     }
 
-    /**
-     * Set reference density (used for mass/inertial terms).
-     */
     void SetDensity(Real rho0) {
         if (!is_setup) {
-            MOPHI_ERROR("GPU_FEAT10_Data must be set up before setting density.");
+            MOPHI_ERROR("GPU_FEAT4_Data must be set up before setting density.");
             return;
         }
         MOPHI_GPU_CALL(cudaMemcpy(d_rho0, &rho0, sizeof(Real), cudaMemcpyHostToDevice));
     }
 
-    /**
-     * Set Kelvin-Voigt damping parameters.
-     * eta_damp: shear-like damping coefficient
-     * lambda_damp: volumetric-like damping coefficient
-     */
     void SetDamping(Real eta_damp, Real lambda_damp) {
         if (!is_setup) {
-            MOPHI_ERROR("GPU_FEAT10_Data must be set up before setting damping.");
+            MOPHI_ERROR("GPU_FEAT4_Data must be set up before setting damping.");
             return;
         }
         MOPHI_GPU_CALL(cudaMemcpy(d_eta_damp, &eta_damp, sizeof(Real), cudaMemcpyHostToDevice));
         MOPHI_GPU_CALL(cudaMemcpy(d_lambda_damp, &lambda_damp, sizeof(Real), cudaMemcpyHostToDevice));
     }
 
-    /**
-     * Select Saint Venant-Kirchhoff (SVK) material model using current E/nu.
-     */
     void SetSVK() {
         if (!is_setup) {
-            MOPHI_ERROR("GPU_FEAT10_Data must be set up before setting material.");
+            MOPHI_ERROR("GPU_FEAT4_Data must be set up before setting material.");
             return;
         }
 
@@ -546,14 +510,9 @@ struct GPU_FEAT10_Data : public ElementBase {
         MOPHI_GPU_CALL(cudaMemcpy(d_kappa, &kappa, sizeof(Real), cudaMemcpyHostToDevice));
     }
 
-    /**
-     * Set Saint Venant-Kirchhoff (SVK) parameters.
-     * E: Young's modulus
-     * nu: Poisson's ratio
-     */
     void SetSVK(Real E, Real nu) {
         if (!is_setup) {
-            MOPHI_ERROR("GPU_FEAT10_Data must be set up before setting material.");
+            MOPHI_ERROR("GPU_FEAT4_Data must be set up before setting material.");
             return;
         }
 
@@ -568,14 +527,9 @@ struct GPU_FEAT10_Data : public ElementBase {
         SetSVK();
     }
 
-    /**
-     * Set compressible Mooney-Rivlin parameters.
-     * mu10, mu01: isochoric Mooney-Rivlin coefficients
-     * kappa: volumetric penalty (bulk-modulus-like) coefficient
-     */
     void SetMooneyRivlin(Real mu10, Real mu01, Real kappa) {
         if (!is_setup) {
-            MOPHI_ERROR("GPU_FEAT10_Data must be set up before setting material.");
+            MOPHI_ERROR("GPU_FEAT4_Data must be set up before setting material.");
             return;
         }
 
@@ -616,9 +570,6 @@ struct GPU_FEAT10_Data : public ElementBase {
         return d_f_ext;
     }
 
-    /**
-     * Update node positions on GPU (for prescribed motion of fixed nodes).
-     */
     void UpdatePositions(const VectorXR& h_x12, const VectorXR& h_y12, const VectorXR& h_z12) {
         if (h_x12.size() != n_coef || h_y12.size() != n_coef || h_z12.size() != n_coef) {
             MOPHI_ERROR("Position vector size mismatch.");
@@ -647,17 +598,9 @@ struct GPU_FEAT10_Data : public ElementBase {
 
     void SetNodalFixed(const VectorXi& fixed_nodes);
 
-    /**
-     * Update fixed nodes for dynamic constraint changes (e.g., moving grippers).
-     * This reuses existing constraint buffers if the number of fixed nodes
-     * matches, otherwise reallocates. After calling this, you must call
-     * CalcConstraintData() and rebuild constraint Jacobians (CSR) if needed.
-     */
     void UpdateNodalFixed(const VectorXi& fixed_nodes);
 
-    // Free memory
     void Destroy() {
-        // Long arrays managed by DualArrays (frees both host and device memory)
         da_h_x12.free();
         da_h_y12.free();
         da_h_z12.free();
@@ -687,10 +630,10 @@ struct GPU_FEAT10_Data : public ElementBase {
             MOPHI_GPU_CALL(cudaFree(d_j_nnz));
         }
 
-        da_tet5pt_x.free();
-        da_tet5pt_y.free();
-        da_tet5pt_z.free();
-        da_tet5pt_weights.free();
+        da_tet1pt_x.free();
+        da_tet1pt_y.free();
+        da_tet1pt_z.free();
+        da_tet1pt_weights.free();
 
         da_grad_N_ref.free();
         da_detJ_ref.free();
@@ -730,20 +673,17 @@ struct GPU_FEAT10_Data : public ElementBase {
         return is_constraints_setup;
     }
 
-    GPU_FEAT10_Data* d_data;  // Storing GPU copy of SAPGPUData
+    GPU_FEAT4_Data* d_data;  // GPU copy of this struct
 
     int n_elem;
     int n_coef;
     int n_constraint;
 
   private:
-    // DualArrays for long arrays (manage both host and device memory).
-    // The raw device pointers below are bound to these DualArrays via
-    // BindDevicePointer so that GPU kernels can access data through them.
     mophi::DualArray<Real> da_h_x12, da_h_y12, da_h_z12;
     mophi::DualArray<Real> da_h_x12_jac, da_h_y12_jac, da_h_z12_jac;
     mophi::DualArray<int> da_element_connectivity;
-    mophi::DualArray<Real> da_tet5pt_x, da_tet5pt_y, da_tet5pt_z, da_tet5pt_weights;
+    mophi::DualArray<Real> da_tet1pt_x, da_tet1pt_y, da_tet1pt_z, da_tet1pt_weights;
     mophi::DualArray<Real> da_grad_N_ref;
     mophi::DualArray<Real> da_detJ_ref;
     mophi::DualArray<Real> da_F, da_P, da_Fdot, da_P_vis;
@@ -751,56 +691,43 @@ struct GPU_FEAT10_Data : public ElementBase {
     mophi::DualArray<Real> da_constraint;
     mophi::DualArray<int> da_fixed_nodes;
 
-    // Raw device pointers for GPU kernel access (managed by DualArrays above
-    // via BindDevicePointer; also retained by scalars and CSR arrays below).
-    Real *d_h_x12, *d_h_y12, *d_h_z12;  // (n_coef, 1)
+    Real *d_h_x12, *d_h_y12, *d_h_z12;
     Real *d_h_x12_jac, *d_h_y12_jac, *d_h_z12_jac;
 
-    // Element connectivity
-    int* d_element_connectivity;  // (n_elem, 10)
+    int* d_element_connectivity;  // (n_elem, 4)
 
-    // Mass Matrix in CSR format (dynamically sized, not managed by DualArray)
+    // Mass Matrix in CSR format
     int *d_csr_offsets, *d_csr_columns;
     Real* d_csr_values;
     int* d_nnz;
 
-    // Quadrature points and weights
-    Real *d_tet5pt_x, *d_tet5pt_y, *d_tet5pt_z;
-    Real* d_tet5pt_weights;  // (5,)
+    Real *d_tet1pt_x, *d_tet1pt_y, *d_tet1pt_z;
+    Real* d_tet1pt_weights;
 
-    // Precomputed reference gradients
-    Real* d_grad_N_ref;  // (n_elem, 5, 10, 3)
-    Real* d_detJ_ref;    // (n_elem, 5)
+    Real* d_grad_N_ref;  // (n_elem, 1, 4, 3)
+    Real* d_detJ_ref;    // (n_elem, 1)
 
-    // Deformation gradient and Piola stress
-    Real* d_F;  // (n_elem, n_qp, 3, 3)
-    Real* d_P;  // (n_elem, n_qp, 3, 3)
-    // Time-derivative of deformation gradient and viscous Piola
+    Real* d_F;      // (n_elem, n_qp, 3, 3)
+    Real* d_P;      // (n_elem, n_qp, 3, 3)
     Real* d_Fdot;   // (n_elem, n_qp, 3, 3)
     Real* d_P_vis;  // (n_elem, n_qp, 3, 3)
 
-    // Material properties (scalar device values, not managed by DualArray)
     Real *d_E, *d_nu, *d_rho0, *d_lambda, *d_mu;
     int* d_material_model;
     Real *d_mu10, *d_mu01, *d_kappa;
-    // Damping parameters
     Real *d_eta_damp, *d_lambda_damp;
 
-    // Constraint data
     Real* d_constraint;
     int* d_fixed_nodes;
-    // Constraint Jacobian J^T in CSR format (dynamically sized)
     int *d_cj_csr_offsets, *d_cj_csr_columns;
     Real* d_cj_csr_values;
     int* d_cj_nnz;
 
-    // Constraint Jacobian J in CSR format (dynamically sized)
     int *d_j_csr_offsets, *d_j_csr_columns;
     Real* d_j_csr_values;
     int* d_j_nnz;
 
-    // Force vectors
-    Real *d_f_int, *d_f_ext;  // (n_nodes*3)
+    Real *d_f_int, *d_f_ext;
 
     bool is_setup = false;
     bool is_constraints_setup = false;

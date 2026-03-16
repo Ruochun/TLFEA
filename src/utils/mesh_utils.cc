@@ -1018,6 +1018,64 @@ bool WriteFEAT10ToVTK(const std::string& filename,
     return true;
 }
 
+bool WriteFEAT4ToVTK(const std::string& filename,
+                     const MatrixXR& nodes,
+                     const MatrixXi& elements,
+                     const VectorXR& x,
+                     const VectorXR& y,
+                     const VectorXR& z) {
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Error: Failed to open file for writing: " << filename << std::endl;
+        return false;
+    }
+
+    int n_nodes = static_cast<int>(nodes.rows());
+    int n_elements = static_cast<int>(elements.rows());
+
+    // Write VTK header
+    file << "# vtk DataFile Version 3.0\n";
+    file << "FEAT4 Tetrahedral Mesh\n";
+    file << "ASCII\n";
+    file << "DATASET UNSTRUCTURED_GRID\n";
+
+    // Write deformed node positions
+    file << "POINTS " << n_nodes << " double\n";
+    for (int i = 0; i < n_nodes; i++) {
+        file << x(i) << " " << y(i) << " " << z(i) << "\n";
+    }
+
+    // Write elements (FEAT4 has 4 nodes per element)
+    // VTK cell type 10 is VTK_TETRA (4-node linear tetrahedral)
+    file << "\nCELLS " << n_elements << " " << (n_elements * 5) << "\n";
+    for (int i = 0; i < n_elements; i++) {
+        file << "4";  // 4 nodes per FEAT4 element
+        for (int j = 0; j < 4; j++) {
+            file << " " << (elements(i, j));
+        }
+        file << "\n";
+    }
+
+    // Write cell types (10 = VTK_TETRA)
+    file << "\nCELL_TYPES " << n_elements << "\n";
+    for (int i = 0; i < n_elements; i++) {
+        file << "10\n";
+    }
+
+    // Write displacement as point data
+    file << "\nPOINT_DATA " << n_nodes << "\n";
+    file << "VECTORS displacement double\n";
+    for (int i = 0; i < n_nodes; i++) {
+        Real dx = x(i) - nodes(i, 0);
+        Real dy = y(i) - nodes(i, 1);
+        Real dz = z(i) - nodes(i, 2);
+        file << dx << " " << dy << " " << dz << "\n";
+    }
+
+    file.close();
+    return true;
+}
+
 }  // namespace ANCFCPUUtils
 
 }  // namespace tlfea

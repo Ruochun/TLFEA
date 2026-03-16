@@ -246,6 +246,23 @@ bool WriteFEAT10ToVTK(const std::string& filename,
                       const VectorXR& y,
                       const VectorXR& z);
 
+/**
+ * Write FEAT4 tetrahedral mesh to VTK format for visualization
+ * @param filename Output VTK file path
+ * @param nodes Node coordinates (n_nodes × 3)
+ * @param elements Element connectivity (n_elements × 4)
+ * @param x Deformed x coordinates (size n_nodes)
+ * @param y Deformed y coordinates (size n_nodes)
+ * @param z Deformed z coordinates (size n_nodes)
+ * @return true if write successful, false otherwise
+ */
+bool WriteFEAT4ToVTK(const std::string& filename,
+                     const MatrixXR& nodes,
+                     const MatrixXi& elements,
+                     const VectorXR& x,
+                     const VectorXR& y,
+                     const VectorXR& z);
+
 }  // namespace ANCFCPUUtils
 
 }  // namespace tlfea

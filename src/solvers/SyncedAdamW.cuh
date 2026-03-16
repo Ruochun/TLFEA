@@ -19,6 +19,7 @@
 #include "../elements/ANCF3443Data.cuh"
 #include "../elements/ElementBase.h"
 #include "../elements/FEAT10Data.cuh"
+#include "../elements/FEAT4Data.cuh"
 #include "SolverBase.h"
 #include <MoPhiEssentials.h>
 #include "../types.h"
@@ -62,6 +63,12 @@ class SyncedAdamWSolver : public SolverBase {
             d_data_ = typed_data->d_data;  // This accesses the derived class's d_data
             n_total_qp_ = Quadrature::N_QP_T10_5;
             n_shape_ = Quadrature::N_NODE_T10_10;
+        } else if (data->type == TYPE_T4) {
+            type_ = TYPE_T4;
+            auto* typed_data = static_cast<GPU_FEAT4_Data*>(data);
+            d_data_ = typed_data->d_data;
+            n_total_qp_ = Quadrature::N_QP_T4_1;
+            n_shape_ = Quadrature::N_NODE_T4_4;
         } else {
             d_data_ = nullptr;
             MOPHI_ERROR("Unknown element type!");
