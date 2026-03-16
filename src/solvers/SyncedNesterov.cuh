@@ -269,7 +269,12 @@ class SyncedNesterovSolver : public SolverBase {
 
   private:
     ElementType type_;
+    // Device pointer to the element data struct (GPU_ANCF3243_Data, GPU_ANCF3443_Data,
+    // GPU_FEAT10_Data, or GPU_FEAT4_Data). Owned by the ElementBase object; not freed here.
     ElementBase* d_data_;
+    // Device-side mirror of this solver struct, copied via cudaMemcpy in Setup().
+    // Passed directly to GPU kernels so they can access all device pointers and
+    // scalar fields without re-deriving the host address.
     SyncedNesterovSolver* d_nesterov_solver_;
     int n_total_qp_, n_shape_;
     int n_coef_, n_beam_, n_constraints_;
@@ -280,13 +285,37 @@ class SyncedNesterovSolver : public SolverBase {
     mophi::DualArray<Real> da_x12_prev_, da_y12_prev_, da_z12_prev_;
 
     // Raw device pointers for GPU kernel access (bound to DualArrays above).
+    // Nodal x/y/z positions from the previous half-step (used in the Nesterov momentum update).
     Real *d_x12_prev, *d_y12_prev, *d_z12_prev;
 
+    // Generalized coordinate (velocity/position DOF) vectors at successive Nesterov stages:
+    //   d_v_guess_  – initial guess for the current outer iteration
+    //   d_v_prev_   – accepted solution from the previous outer iteration
+    //   d_v_k_      – iterate at the start of the current inner (gradient) step
+    //   d_v_next_   – candidate solution after applying the Nesterov update
+    // Each array has length 3*n_coef_ (x, y, z DOFs concatenated).
     Real *d_v_guess_, *d_v_prev_, *d_v_k_, *d_v_next_;
-    Real *d_lambda_guess_, *d_g_;
+    // Lagrange multipliers for holonomic constraints (length n_constraints_).
+    Real *d_lambda_guess_;
+    // Gradient of the total potential energy w.r.t. the DOFs (length 3*n_coef_).
+    // Computed each inner iteration and used to drive the Nesterov descent.
+    Real *d_g_;
+    // L2 norm of d_g_ at the previous and current inner iterations; used to
+    // detect convergence and to drive the adaptive step-size schedule.
     Real *d_prev_norm_g_, *d_norm_g_;
+    // Convergence flags written by GPU kernels; 0 = converged, 1 = not yet converged.
+    //   d_inner_flag_ – checked after each inner (gradient) step
+    //   d_outer_flag_ – checked after each outer (time) step
     int *d_inner_flag_, *d_outer_flag_;
+    // Nesterov / ADMM scalar parameters stored on the device so kernels can
+    // read them without host-device synchronization:
+    //   d_alpha_        – gradient step size (learning rate)
+    //   d_inner_tol_    – absolute convergence tolerance for the inner loop
+    //   d_outer_tol_    – absolute convergence tolerance for the outer loop
+    //   d_time_step_    – physical simulation time step
+    //   d_solver_rho_   – penalty parameter ρ used in the augmented Lagrangian
     Real *d_alpha_, *d_inner_tol_, *d_outer_tol_, *d_time_step_, *d_solver_rho_;
+    // Maximum iteration counts for the inner (gradient) and outer (time) loops.
     int *d_max_inner_, *d_max_outer_;
 };
 
