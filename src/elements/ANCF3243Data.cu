@@ -577,8 +577,8 @@ void GPU_ANCF3243_Data::RetrieveConnectivityToCPU(MatrixXi& connectivity) {
     // Use DualArray ToHost + Map into a row-major staging matrix, then assign.
     da_element_connectivity.ToHost();
     // Map is a no-copy host view; the assignment to MatrixXi deep-copies the data.
-    Map<Matrix<int, DynamicMatrix, 2, RowMajorMatrix>> connectivity_row_major(
-        da_element_connectivity.host(), n_beam, 2);
+    Map<Matrix<int, DynamicMatrix, 2, RowMajorMatrix>> connectivity_row_major(da_element_connectivity.host(), n_beam,
+                                                                              2);
     connectivity = connectivity_row_major.eval();
 }
 

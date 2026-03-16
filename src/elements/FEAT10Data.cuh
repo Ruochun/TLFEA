@@ -354,28 +354,44 @@ struct GPU_FEAT10_Data : public ElementBase {
     void Initialize() {
         // Long arrays: use DualArray (manages both pinned host and device memory).
         // BindDevicePointer keeps the raw device pointer in sync for GPU kernels.
-        da_h_x12.resize(n_coef); da_h_x12.BindDevicePointer(&d_h_x12);
-        da_h_y12.resize(n_coef); da_h_y12.BindDevicePointer(&d_h_y12);
-        da_h_z12.resize(n_coef); da_h_z12.BindDevicePointer(&d_h_z12);
-        da_h_x12_jac.resize(n_coef); da_h_x12_jac.BindDevicePointer(&d_h_x12_jac);
-        da_h_y12_jac.resize(n_coef); da_h_y12_jac.BindDevicePointer(&d_h_y12_jac);
-        da_h_z12_jac.resize(n_coef); da_h_z12_jac.BindDevicePointer(&d_h_z12_jac);
+        da_h_x12.resize(n_coef);
+        da_h_x12.BindDevicePointer(&d_h_x12);
+        da_h_y12.resize(n_coef);
+        da_h_y12.BindDevicePointer(&d_h_y12);
+        da_h_z12.resize(n_coef);
+        da_h_z12.BindDevicePointer(&d_h_z12);
+        da_h_x12_jac.resize(n_coef);
+        da_h_x12_jac.BindDevicePointer(&d_h_x12_jac);
+        da_h_y12_jac.resize(n_coef);
+        da_h_y12_jac.BindDevicePointer(&d_h_y12_jac);
+        da_h_z12_jac.resize(n_coef);
+        da_h_z12_jac.BindDevicePointer(&d_h_z12_jac);
         da_element_connectivity.resize(n_elem * Quadrature::N_NODE_T10_10);
         da_element_connectivity.BindDevicePointer(&d_element_connectivity);
-        da_tet5pt_x.resize(Quadrature::N_QP_T10_5); da_tet5pt_x.BindDevicePointer(&d_tet5pt_x);
-        da_tet5pt_y.resize(Quadrature::N_QP_T10_5); da_tet5pt_y.BindDevicePointer(&d_tet5pt_y);
-        da_tet5pt_z.resize(Quadrature::N_QP_T10_5); da_tet5pt_z.BindDevicePointer(&d_tet5pt_z);
-        da_tet5pt_weights.resize(Quadrature::N_QP_T10_5); da_tet5pt_weights.BindDevicePointer(&d_tet5pt_weights);
+        da_tet5pt_x.resize(Quadrature::N_QP_T10_5);
+        da_tet5pt_x.BindDevicePointer(&d_tet5pt_x);
+        da_tet5pt_y.resize(Quadrature::N_QP_T10_5);
+        da_tet5pt_y.BindDevicePointer(&d_tet5pt_y);
+        da_tet5pt_z.resize(Quadrature::N_QP_T10_5);
+        da_tet5pt_z.BindDevicePointer(&d_tet5pt_z);
+        da_tet5pt_weights.resize(Quadrature::N_QP_T10_5);
+        da_tet5pt_weights.BindDevicePointer(&d_tet5pt_weights);
         da_grad_N_ref.resize(n_elem * Quadrature::N_QP_T10_5 * 10 * 3);
         da_grad_N_ref.BindDevicePointer(&d_grad_N_ref);
         da_detJ_ref.resize(n_elem * Quadrature::N_QP_T10_5);
         da_detJ_ref.BindDevicePointer(&d_detJ_ref);
-        da_F.resize(n_elem * Quadrature::N_QP_T10_5 * 3 * 3); da_F.BindDevicePointer(&d_F);
-        da_P.resize(n_elem * Quadrature::N_QP_T10_5 * 3 * 3); da_P.BindDevicePointer(&d_P);
-        da_Fdot.resize(n_elem * Quadrature::N_QP_T10_5 * 3 * 3); da_Fdot.BindDevicePointer(&d_Fdot);
-        da_P_vis.resize(n_elem * Quadrature::N_QP_T10_5 * 3 * 3); da_P_vis.BindDevicePointer(&d_P_vis);
-        da_f_int.resize(n_coef * 3); da_f_int.BindDevicePointer(&d_f_int);
-        da_f_ext.resize(n_coef * 3); da_f_ext.BindDevicePointer(&d_f_ext);
+        da_F.resize(n_elem * Quadrature::N_QP_T10_5 * 3 * 3);
+        da_F.BindDevicePointer(&d_F);
+        da_P.resize(n_elem * Quadrature::N_QP_T10_5 * 3 * 3);
+        da_P.BindDevicePointer(&d_P);
+        da_Fdot.resize(n_elem * Quadrature::N_QP_T10_5 * 3 * 3);
+        da_Fdot.BindDevicePointer(&d_Fdot);
+        da_P_vis.resize(n_elem * Quadrature::N_QP_T10_5 * 3 * 3);
+        da_P_vis.BindDevicePointer(&d_P_vis);
+        da_f_int.resize(n_coef * 3);
+        da_f_int.BindDevicePointer(&d_f_int);
+        da_f_ext.resize(n_coef * 3);
+        da_f_ext.BindDevicePointer(&d_f_ext);
 
         // Scalar material/damping parameters: single values on device only.
         MOPHI_GPU_CALL(cudaMalloc(&d_rho0, sizeof(Real)));
@@ -421,8 +437,7 @@ struct GPU_FEAT10_Data : public ElementBase {
         std::copy(h_z12.data(), h_z12.data() + n_coef, da_h_z12_jac.host());
         da_h_z12_jac.ToDevice();
 
-        std::copy(element_connectivity.data(),
-                  element_connectivity.data() + n_elem * Quadrature::N_NODE_T10_10,
+        std::copy(element_connectivity.data(), element_connectivity.data() + n_elem * Quadrature::N_NODE_T10_10,
                   da_element_connectivity.host());
         da_element_connectivity.ToDevice();
 

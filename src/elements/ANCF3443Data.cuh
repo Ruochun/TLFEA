@@ -446,36 +446,60 @@ struct GPU_ANCF3443_Data : public ElementBase {
         da_detJ_ref.resize(n_beam * Quadrature::N_TOTAL_QP_4_4_3);
         da_detJ_ref.BindDevicePointer(&d_detJ_ref);
 
-        da_gauss_xi_m.resize(Quadrature::N_QP_7); da_gauss_xi_m.BindDevicePointer(&d_gauss_xi_m);
-        da_gauss_eta_m.resize(Quadrature::N_QP_7); da_gauss_eta_m.BindDevicePointer(&d_gauss_eta_m);
-        da_gauss_zeta_m.resize(Quadrature::N_QP_3); da_gauss_zeta_m.BindDevicePointer(&d_gauss_zeta_m);
-        da_gauss_xi.resize(Quadrature::N_QP_4); da_gauss_xi.BindDevicePointer(&d_gauss_xi);
-        da_gauss_eta.resize(Quadrature::N_QP_4); da_gauss_eta.BindDevicePointer(&d_gauss_eta);
-        da_gauss_zeta.resize(Quadrature::N_QP_3); da_gauss_zeta.BindDevicePointer(&d_gauss_zeta);
+        da_gauss_xi_m.resize(Quadrature::N_QP_7);
+        da_gauss_xi_m.BindDevicePointer(&d_gauss_xi_m);
+        da_gauss_eta_m.resize(Quadrature::N_QP_7);
+        da_gauss_eta_m.BindDevicePointer(&d_gauss_eta_m);
+        da_gauss_zeta_m.resize(Quadrature::N_QP_3);
+        da_gauss_zeta_m.BindDevicePointer(&d_gauss_zeta_m);
+        da_gauss_xi.resize(Quadrature::N_QP_4);
+        da_gauss_xi.BindDevicePointer(&d_gauss_xi);
+        da_gauss_eta.resize(Quadrature::N_QP_4);
+        da_gauss_eta.BindDevicePointer(&d_gauss_eta);
+        da_gauss_zeta.resize(Quadrature::N_QP_3);
+        da_gauss_zeta.BindDevicePointer(&d_gauss_zeta);
 
-        da_weight_xi_m.resize(Quadrature::N_QP_7); da_weight_xi_m.BindDevicePointer(&d_weight_xi_m);
-        da_weight_eta_m.resize(Quadrature::N_QP_7); da_weight_eta_m.BindDevicePointer(&d_weight_eta_m);
-        da_weight_zeta_m.resize(Quadrature::N_QP_3); da_weight_zeta_m.BindDevicePointer(&d_weight_zeta_m);
-        da_weight_xi.resize(Quadrature::N_QP_4); da_weight_xi.BindDevicePointer(&d_weight_xi);
-        da_weight_eta.resize(Quadrature::N_QP_4); da_weight_eta.BindDevicePointer(&d_weight_eta);
-        da_weight_zeta.resize(Quadrature::N_QP_3); da_weight_zeta.BindDevicePointer(&d_weight_zeta);
+        da_weight_xi_m.resize(Quadrature::N_QP_7);
+        da_weight_xi_m.BindDevicePointer(&d_weight_xi_m);
+        da_weight_eta_m.resize(Quadrature::N_QP_7);
+        da_weight_eta_m.BindDevicePointer(&d_weight_eta_m);
+        da_weight_zeta_m.resize(Quadrature::N_QP_3);
+        da_weight_zeta_m.BindDevicePointer(&d_weight_zeta_m);
+        da_weight_xi.resize(Quadrature::N_QP_4);
+        da_weight_xi.BindDevicePointer(&d_weight_xi);
+        da_weight_eta.resize(Quadrature::N_QP_4);
+        da_weight_eta.BindDevicePointer(&d_weight_eta);
+        da_weight_zeta.resize(Quadrature::N_QP_3);
+        da_weight_zeta.BindDevicePointer(&d_weight_zeta);
 
-        da_x12_jac.resize(n_coef); da_x12_jac.BindDevicePointer(&d_x12_jac);
-        da_y12_jac.resize(n_coef); da_y12_jac.BindDevicePointer(&d_y12_jac);
-        da_z12_jac.resize(n_coef); da_z12_jac.BindDevicePointer(&d_z12_jac);
-        da_x12.resize(n_coef); da_x12.BindDevicePointer(&d_x12);
-        da_y12.resize(n_coef); da_y12.BindDevicePointer(&d_y12);
-        da_z12.resize(n_coef); da_z12.BindDevicePointer(&d_z12);
+        da_x12_jac.resize(n_coef);
+        da_x12_jac.BindDevicePointer(&d_x12_jac);
+        da_y12_jac.resize(n_coef);
+        da_y12_jac.BindDevicePointer(&d_y12_jac);
+        da_z12_jac.resize(n_coef);
+        da_z12_jac.BindDevicePointer(&d_z12_jac);
+        da_x12.resize(n_coef);
+        da_x12.BindDevicePointer(&d_x12);
+        da_y12.resize(n_coef);
+        da_y12.BindDevicePointer(&d_y12);
+        da_z12.resize(n_coef);
+        da_z12.BindDevicePointer(&d_z12);
 
         da_element_connectivity.resize(n_beam * 4);
         da_element_connectivity.BindDevicePointer(&d_element_connectivity);
 
-        da_F.resize(n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3); da_F.BindDevicePointer(&d_F);
-        da_P.resize(n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3); da_P.BindDevicePointer(&d_P);
-        da_Fdot.resize(n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3); da_Fdot.BindDevicePointer(&d_Fdot);
-        da_P_vis.resize(n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3); da_P_vis.BindDevicePointer(&d_P_vis);
-        da_f_int.resize(n_coef * 3); da_f_int.BindDevicePointer(&d_f_int);
-        da_f_ext.resize(n_coef * 3); da_f_ext.BindDevicePointer(&d_f_ext);
+        da_F.resize(n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3);
+        da_F.BindDevicePointer(&d_F);
+        da_P.resize(n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3);
+        da_P.BindDevicePointer(&d_P);
+        da_Fdot.resize(n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3);
+        da_Fdot.BindDevicePointer(&d_Fdot);
+        da_P_vis.resize(n_beam * Quadrature::N_TOTAL_QP_4_4_3 * 3 * 3);
+        da_P_vis.BindDevicePointer(&d_P_vis);
+        da_f_int.resize(n_coef * 3);
+        da_f_int.BindDevicePointer(&d_f_int);
+        da_f_ext.resize(n_coef * 3);
+        da_f_ext.BindDevicePointer(&d_f_ext);
 
         // Scalar damping parameters: single values on device only.
         MOPHI_GPU_CALL(cudaMalloc(&d_eta_damp, sizeof(Real)));
@@ -485,9 +509,12 @@ struct GPU_ANCF3443_Data : public ElementBase {
         MOPHI_GPU_CALL(cudaMalloc(&d_data, sizeof(GPU_ANCF3443_Data)));
 
         // beam dimension data
-        da_H.resize(n_beam); da_H.BindDevicePointer(&d_H);
-        da_W.resize(n_beam); da_W.BindDevicePointer(&d_W);
-        da_L.resize(n_beam); da_L.BindDevicePointer(&d_L);
+        da_H.resize(n_beam);
+        da_H.BindDevicePointer(&d_H);
+        da_W.resize(n_beam);
+        da_W.BindDevicePointer(&d_W);
+        da_L.resize(n_beam);
+        da_L.BindDevicePointer(&d_L);
 
         // Scalar material parameters: single values on device only.
         MOPHI_GPU_CALL(cudaMalloc(&d_rho0, sizeof(Real)));
@@ -582,8 +609,7 @@ struct GPU_ANCF3443_Data : public ElementBase {
         std::copy(h_z12.data(), h_z12.data() + n_coef, da_z12.host());
         da_z12.ToDevice();
 
-        std::copy(element_connectivity.data(),
-                  element_connectivity.data() + n_beam * 4,
+        std::copy(element_connectivity.data(), element_connectivity.data() + n_beam * 4,
                   da_element_connectivity.host());
         da_element_connectivity.ToDevice();
 
