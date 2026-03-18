@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.18)
-project(TLFEA LANGUAGES CXX CUDA)
+project(TLFEA VERSION 0.1.0 LANGUAGES CXX CUDA)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -58,3 +58,53 @@ add_subdirectory(examples)
 
 # Copy data directory to build directory
 file(COPY ${CMAKE_SOURCE_DIR}/data DESTINATION ${CMAKE_BINARY_DIR})
+
+# ===========================================================================
+# Installation policy
+# ===========================================================================
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
+# Install the compiled library and export its targets
+install(TARGETS tlfea_lib
+    EXPORT TLFEATargets
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+# Install all public headers, preserving the src/ subdirectory structure
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tlfea
+    FILES_MATCHING
+        PATTERN "*.h"
+        PATTERN "*.cuh"
+)
+
+# Export targets file (for use from an install tree)
+install(EXPORT TLFEATargets
+    FILE TLFEATargets.cmake
+    NAMESPACE TLFEA::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/TLFEA
+)
+
+# Generate a version file
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/TLFEAConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY AnyNewerVersion
+)
+
+# Generate the package config file from the template
+configure_package_config_file(
+    "${CMAKE_SOURCE_DIR}/cmake/TLFEAConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/TLFEAConfig.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/TLFEA
+)
+
+# Install the config and version files
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/TLFEAConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/TLFEAConfigVersion.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/TLFEA
+)
