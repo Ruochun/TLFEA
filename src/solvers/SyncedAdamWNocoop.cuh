@@ -366,9 +366,9 @@ class SyncedAdamWNocoopSolver : public SolverBase {
     // Each array has length 3*n_coef_ (x, y, z DOFs concatenated).
     Real *d_v_guess_, *d_v_prev_, *d_v_k_, *d_v_next_;
     // Lagrange multipliers for holonomic constraints (length n_constraints_).
-    Real *d_lambda_guess_;
+    Real* d_lambda_guess_;
     // Gradient of the total potential energy w.r.t. the DOFs (length 3*n_coef_).
-    Real *d_g_;
+    Real* d_g_;
     // L2 norms stored on device so convergence comparisons stay GPU-resident:
     //   d_norm_g_ – norm of the gradient d_g_ (residual force)
     //   d_norm_v_ – norm of the velocity/displacement update d_v_next_ - d_v_k_

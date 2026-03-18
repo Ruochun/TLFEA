@@ -346,10 +346,10 @@ class SyncedAdamWSolver : public SolverBase {
     // Each array has length 3*n_coef_ (x, y, z DOFs concatenated).
     Real *d_v_guess_, *d_v_prev_, *d_v_k_, *d_v_next_;
     // Lagrange multipliers for holonomic constraints (length n_constraints_).
-    Real *d_lambda_guess_;
+    Real* d_lambda_guess_;
     // Gradient of the total potential energy w.r.t. the DOFs (length 3*n_coef_).
     // Computed each inner iteration and used to drive the AdamW descent.
-    Real *d_g_;
+    Real* d_g_;
     // L2 norm of d_g_; used to detect convergence and to drive the step-size schedule.
     Real* d_norm_g_;
     // Convergence flags written by GPU kernels; 0 = converged, 1 = not yet converged.

@@ -296,10 +296,10 @@ class SyncedNesterovSolver : public SolverBase {
     // Each array has length 3*n_coef_ (x, y, z DOFs concatenated).
     Real *d_v_guess_, *d_v_prev_, *d_v_k_, *d_v_next_;
     // Lagrange multipliers for holonomic constraints (length n_constraints_).
-    Real *d_lambda_guess_;
+    Real* d_lambda_guess_;
     // Gradient of the total potential energy w.r.t. the DOFs (length 3*n_coef_).
     // Computed each inner iteration and used to drive the Nesterov descent.
-    Real *d_g_;
+    Real* d_g_;
     // L2 norm of d_g_ at the previous and current inner iterations; used to
     // detect convergence and to drive the adaptive step-size schedule.
     Real *d_prev_norm_g_, *d_norm_g_;

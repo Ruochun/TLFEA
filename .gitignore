@@ -6,7 +6,7 @@
 *.fatbin
 
 # Build artifacts
-build/
+build*
 bin/
 lib/
 *.o
