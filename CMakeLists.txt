@@ -41,16 +41,19 @@ add_library(tlfea_lib STATIC
 )
 
 target_link_libraries(tlfea_lib
-    Eigen3::Eigen
-    CUDA::cudart
-    CUDA::cusparse
-    CUDA::cublas
-    mophi_essentials
+    PUBLIC
+        Eigen3::Eigen
+        CUDA::cudart
+        CUDA::cusparse
+        CUDA::cublas
+    PRIVATE
+        mophi_essentials
 )
 
 target_include_directories(tlfea_lib PUBLIC
-    ${CMAKE_SOURCE_DIR}/src
-    ${CMAKE_SOURCE_DIR}/external/MoPhiEssentials/src
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/external/MoPhiEssentials/src>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/tlfea>
 )
 
 # Add examples subdirectory
@@ -79,6 +82,14 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/
     FILES_MATCHING
         PATTERN "*.h"
         PATTERN "*.cuh"
+)
+
+# Install bundled MoPhiEssentials headers alongside TLFEA headers so
+# downstream consumers that use the installed package still have them.
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/external/MoPhiEssentials/src/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tlfea
+    FILES_MATCHING
+        PATTERN "*.h"
 )
 
 # Export targets file (for use from an install tree)
