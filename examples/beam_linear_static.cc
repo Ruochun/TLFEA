@@ -191,8 +191,7 @@ int main() {
 
     auto* lss = static_cast<LinearStaticSolver<GPU_FEAT10_Data>*>(fea.GetSolver("linear_static"));
     std::cout << "  CG converged in " << lss->GetLastIterCount() << " iterations"
-              << "  (relative residual: " << std::scientific << std::setprecision(3) << lss->GetLastResidual()
-              << ")\n";
+              << "  (relative residual: " << std::scientific << std::setprecision(3) << lss->GetLastResidual() << ")\n";
 
     // -----------------------------------------------------------------------
     // Retrieve displaced positions and compute nodal displacements

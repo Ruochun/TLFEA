@@ -34,15 +34,15 @@ namespace tlfea {
  */
 class FEASolver {
   public:
-    FEASolver()  = default;
+    FEASolver() = default;
     ~FEASolver() = default;
 
     // Non-copyable, non-movable (the maps hold raw pointers, so copying
     // would create dangling aliased ownership).
-    FEASolver(const FEASolver&)            = delete;
+    FEASolver(const FEASolver&) = delete;
     FEASolver& operator=(const FEASolver&) = delete;
-    FEASolver(FEASolver&&)                 = delete;
-    FEASolver& operator=(FEASolver&&)      = delete;
+    FEASolver(FEASolver&&) = delete;
+    FEASolver& operator=(FEASolver&&) = delete;
 
     // -----------------------------------------------------------------------
     // Element management
@@ -134,7 +134,7 @@ class FEASolver {
 
   private:
     std::map<std::string, ElementBase*> elements_;
-    std::map<std::string, SolverBase*>  solvers_;
+    std::map<std::string, SolverBase*> solvers_;
 };
 
 }  // namespace tlfea
