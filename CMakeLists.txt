@@ -68,8 +68,12 @@ file(COPY ${CMAKE_SOURCE_DIR}/data DESTINATION ${CMAKE_BINARY_DIR})
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
-# Install the compiled library and export its targets
-install(TARGETS tlfea_lib
+# Install the compiled library and export its targets.
+# mophi_essentials is also listed here so that CMake's install-export
+# dependency checker (which flags even PRIVATE deps on older CMake) can
+# resolve the target; the generated TLFEATargets.cmake will carry it as
+# TLFEA::mophi_essentials.
+install(TARGETS tlfea_lib mophi_essentials
     EXPORT TLFEATargets
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
