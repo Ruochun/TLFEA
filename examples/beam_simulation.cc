@@ -21,6 +21,7 @@
 #include <iostream>
 #include <sstream>
 
+#include "FEASolver.h"
 #include "elements/FEAT10Data.cuh"
 #include "solvers/SyncedAdamW.cuh"
 #include "types.h"
@@ -111,7 +112,13 @@ int main() {
     // ==========================================================================
 
     GPU_FEAT10_Data gpu_t10_data(n_elems, n_nodes);
-    gpu_t10_data.Initialize();
+
+    // Register the element data with the FEASolver manager
+    FEASolver fea;
+    fea.AddElement("beam", &gpu_t10_data);
+    auto* beam = static_cast<GPU_FEAT10_Data*>(fea.GetElement("beam"));
+
+    beam->Initialize();
 
     // Extract coordinate vectors from nodes matrix
     VectorXR h_x12(n_nodes), h_y12(n_nodes), h_z12(n_nodes);
@@ -147,13 +154,13 @@ int main() {
     }
 
     std::cout << "Boundary conditions: Fixed " << fixed_node_indices.size() << " nodes at x ≈ " << x_min << std::endl;
-    gpu_t10_data.SetNodalFixed(h_fixed_nodes);
+    beam->SetNodalFixed(h_fixed_nodes);
 
     // ==========================================================================
     // Apply external forces
     // ==========================================================================
 
-    VectorXR h_f_ext(gpu_t10_data.get_n_coef() * 3);
+    VectorXR h_f_ext(beam->get_n_coef() * 3);
     h_f_ext.setZero();
 
     // Apply a concentrated load at x ≈ x_max (the right end of the beam)
@@ -175,7 +182,7 @@ int main() {
         h_f_ext(3 * i + 2) = load_per_node;  // Apply force in z-direction (index 2)
     }
 
-    gpu_t10_data.SetExternalForce(h_f_ext);
+    beam->SetExternalForce(h_f_ext);
     std::cout << "External forces: Applied " << total_load << " N load to " << loaded_node_indices.size()
               << " nodes at x ≈ " << x_max << std::endl;
 
@@ -190,11 +197,11 @@ int main() {
     const VectorXR& tet5pt_weights_host = Quadrature::tet5pt_weights;
 
     // Setup element data
-    gpu_t10_data.Setup(tet5pt_x_host, tet5pt_y_host, tet5pt_z_host, tet5pt_weights_host, h_x12, h_y12, h_z12, elements);
+    beam->Setup(tet5pt_x_host, tet5pt_y_host, tet5pt_z_host, tet5pt_weights_host, h_x12, h_y12, h_z12, elements);
 
-    gpu_t10_data.SetDensity(rho0);
-    gpu_t10_data.SetDamping(0.0, 0.1);  // Add some damping for stability
-    gpu_t10_data.SetSVK(E, nu);         // St. Venant-Kirchhoff material model
+    beam->SetDensity(rho0);
+    beam->SetDamping(0.0, 0.1);  // Add some damping for stability
+    beam->SetSVK(E, nu);         // St. Venant-Kirchhoff material model
 
     std::cout << "Material properties: E=" << (E / 1e9) << " GPa, nu=" << nu << ", rho=" << rho0 << " kg/m³"
               << std::endl;
@@ -203,10 +210,10 @@ int main() {
     // Compute reference configuration data
     // ==========================================================================
 
-    gpu_t10_data.CalcDnDuPre();
-    gpu_t10_data.CalcMassMatrix();
-    gpu_t10_data.CalcConstraintData();
-    gpu_t10_data.ConvertToCSR_ConstraintJacT();
+    beam->CalcDnDuPre();
+    beam->CalcMassMatrix();
+    beam->CalcConstraintData();
+    beam->ConvertToCSR_ConstraintJacT();
 
     std::cout << "Reference configuration computed" << std::endl;
 
@@ -218,9 +225,13 @@ int main() {
     // max_outer, max_inner, time_step, convergence_check_interval, inner_rtol
     SyncedAdamWParams params = {2e-4, 0.9, 0.999, 1e-8, 1e-4, 0.995, 1e-1, 1e-6, 1e14, 5, 300, STEP_SIZE, 10, 0.0};
 
-    SyncedAdamWSolver solver(&gpu_t10_data, gpu_t10_data.get_n_constraint());
-    solver.Setup();
-    solver.SetParameters(&params);
+    SyncedAdamWSolver solver(beam, beam->get_n_constraint());
+
+    // Register the solver with the FEASolver manager
+    fea.AddSolver("adamw", &solver);
+
+    static_cast<SyncedAdamWSolver*>(fea.GetSolver("adamw"))->Setup();
+    fea.GetSolver("adamw")->SetParameters(&params);
 
     std::cout << "Solver initialized: SyncedAdamW with h=" << std::scientific << params.time_step << std::defaultfloat
               << std::endl;
@@ -236,7 +247,7 @@ int main() {
     // Retrieve mass CSR once — it is constant throughout the simulation
     std::vector<int> moff, mcols;
     std::vector<Real> mvals;
-    gpu_t10_data.RetrieveMassCSRToCPU(moff, mcols, mvals);
+    beam->RetrieveMassCSRToCPU(moff, mcols, mvals);
 
     // Print energy table header
     std::cout << "\n"
@@ -248,7 +259,7 @@ int main() {
     // Output initial configuration
     {
         VectorXR x12, y12, z12;
-        gpu_t10_data.RetrievePositionToCPU(x12, y12, z12);
+        beam->RetrievePositionToCPU(x12, y12, z12);
         std::stringstream ss;
         ss << "output_beam_" << std::setfill('0') << std::setw(5) << 0 << ".vtk";
         ANCFCPUUtils::WriteFEAT10ToVTK(ss.str(), nodes, elements, x12, y12, z12);
@@ -266,10 +277,10 @@ int main() {
 
         // Save positions just before solving so we can estimate velocity at output frames
         if (output_this_step) {
-            gpu_t10_data.RetrievePositionToCPU(x_before, y_before, z_before);
+            beam->RetrievePositionToCPU(x_before, y_before, z_before);
         }
 
-        solver.Solve();
+        fea.GetSolver("adamw")->Solve();
 
         // Output at specified frequency
         if (output_this_step) {
@@ -277,7 +288,7 @@ int main() {
             Real t = step * STEP_SIZE;
 
             VectorXR x12, y12, z12;
-            gpu_t10_data.RetrievePositionToCPU(x12, y12, z12);
+            beam->RetrievePositionToCPU(x12, y12, z12);
 
             // Write VTK
             std::stringstream filename;
@@ -306,7 +317,7 @@ int main() {
 
             // SE = (1/2) f_int · (h·v) = (1/2) f_int · Δx  (linearized work estimate)
             VectorXR f_int_cpu;
-            gpu_t10_data.RetrieveInternalForceToCPU(f_int_cpu);
+            beam->RetrieveInternalForceToCPU(f_int_cpu);
             Real SE = 0.0;
             for (int i = 0; i < n_dof; ++i)
                 SE += 0.5 * f_int_cpu(i) * STEP_SIZE * v_cpu(i);
@@ -323,7 +334,7 @@ int main() {
     // Cleanup
     // ==========================================================================
 
-    gpu_t10_data.Destroy();
+    beam->Destroy();
 
     std::cout << "\n=======================================================\n"
               << "  Simulation Complete!\n"

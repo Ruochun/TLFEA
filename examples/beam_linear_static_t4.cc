@@ -30,6 +30,7 @@
 #include <iomanip>
 #include <iostream>
 
+#include "FEASolver.h"
 #include "elements/FEAT4Data.cuh"
 #include "solvers/LinearStaticSolver.cuh"
 #include "types.h"
@@ -121,22 +122,28 @@ int main() {
     // Initialise GPU data structure
     // -----------------------------------------------------------------------
     GPU_FEAT4_Data gpu_data(n_elems, n_nodes);
-    gpu_data.Initialize();
+
+    // Register the element data with the FEASolver manager
+    FEASolver fea;
+    fea.AddElement("beam", &gpu_data);
+    auto* beam = static_cast<GPU_FEAT4_Data*>(fea.GetElement("beam"));
+
+    beam->Initialize();
 
     const auto& qx = Quadrature::tet1pt_x;
     const auto& qy = Quadrature::tet1pt_y;
     const auto& qz = Quadrature::tet1pt_z;
     const auto& qw = Quadrature::tet1pt_weights;
 
-    gpu_data.Setup(qx, qy, qz, qw, h_x, h_y, h_z, elements);
-    gpu_data.SetDensity(rho0);
-    gpu_data.SetDamping(0.0, 0.0);  // no damping for static analysis
-    gpu_data.SetSVK(E_mod, nu_val);
+    beam->Setup(qx, qy, qz, qw, h_x, h_y, h_z, elements);
+    beam->SetDensity(rho0);
+    beam->SetDamping(0.0, 0.0);  // no damping for static analysis
+    beam->SetSVK(E_mod, nu_val);
 
     std::cout << "  Material: E = " << (E_mod / 1e9) << " GPa  ν = " << nu_val << "\n";
 
     // Pre-compute reference shape-function gradients.
-    gpu_data.CalcDnDuPre();
+    beam->CalcDnDuPre();
 
     // -----------------------------------------------------------------------
     // Boundary conditions – fix all nodes at x ≈ x_min
@@ -151,7 +158,7 @@ int main() {
     for (int i = 0; i < static_cast<int>(fixed_idx.size()); ++i)
         h_fixed(i) = fixed_idx[i];
 
-    gpu_data.SetNodalFixed(h_fixed);
+    beam->SetNodalFixed(h_fixed);
     std::cout << "  Fixed " << fixed_idx.size() << " nodes at x ≈ " << x_min << "\n";
 
     VectorXR h_f_ext(n_nodes * 3);
@@ -167,7 +174,7 @@ int main() {
     for (int i : load_idx)
         h_f_ext(3 * i + 2) = load_per_node;  // force in −z direction
 
-    gpu_data.SetExternalForce(h_f_ext);
+    beam->SetExternalForce(h_f_ext);
     std::cout << "  Load: " << TOTAL_LOAD << " N distributed over " << load_idx.size() << " nodes at x ≈ " << x_max
               << "\n";
 
@@ -176,18 +183,23 @@ int main() {
     // -----------------------------------------------------------------------
     std::cout << "\nRunning linear static solver (GPU conjugate gradient)...\n";
 
-    LinearStaticSolver<GPU_FEAT4_Data> solver(&gpu_data, /*tol=*/1e-10, /*max_iter=*/100000);
-    solver.Solve();
+    LinearStaticSolver<GPU_FEAT4_Data> solver(beam, /*tol=*/1e-10, /*max_iter=*/100000);
 
-    std::cout << "  CG converged in " << solver.GetLastIterCount() << " iterations"
-              << "  (relative residual: " << std::scientific << std::setprecision(3) << solver.GetLastResidual()
+    // Register the solver with the FEASolver manager
+    fea.AddSolver("linear_static", &solver);
+
+    fea.GetSolver("linear_static")->Solve();
+
+    auto* lss = static_cast<LinearStaticSolver<GPU_FEAT4_Data>*>(fea.GetSolver("linear_static"));
+    std::cout << "  CG converged in " << lss->GetLastIterCount() << " iterations"
+              << "  (relative residual: " << std::scientific << std::setprecision(3) << lss->GetLastResidual()
               << ")\n";
 
     // -----------------------------------------------------------------------
     // Retrieve displaced positions and compute nodal displacements
     // -----------------------------------------------------------------------
     VectorXR x12, y12, z12;
-    gpu_data.RetrievePositionToCPU(x12, y12, z12);
+    beam->RetrievePositionToCPU(x12, y12, z12);
 
     // Displacement = deformed − reference positions.
     VectorXR ux = x12 - h_x;
@@ -234,7 +246,7 @@ int main() {
     // -----------------------------------------------------------------------
     // Cleanup
     // -----------------------------------------------------------------------
-    gpu_data.Destroy();
+    beam->Destroy();
 
     std::cout << "=======================================================\n"
               << "  Linear Static Analysis (TET4) Complete\n"

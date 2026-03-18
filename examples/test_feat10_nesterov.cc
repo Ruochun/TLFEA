@@ -16,6 +16,7 @@
 #include <iostream>
 #include <MoPhiEssentials.h>
 
+#include "FEASolver.h"
 #include "elements/FEAT10Data.cuh"
 #include "solvers/SyncedNesterov.cuh"
 #include "types.h"
@@ -50,9 +51,14 @@ int main() {
 
     GPU_FEAT10_Data gpu_t10_data(n_elems, n_nodes);
 
+    // Register the element data with the FEASolver manager
+    FEASolver fea;
+    fea.AddElement("cube", &gpu_t10_data);
+    auto* cube = static_cast<GPU_FEAT10_Data*>(fea.GetElement("cube"));
+
     MOPHI_INFO("gpu_t10_data created");
 
-    gpu_t10_data.Initialize();
+    cube->Initialize();
 
     MOPHI_INFO("gpu_t10_data initialized");
 
@@ -88,14 +94,14 @@ int main() {
     std::cout << std::endl;
 
     // Set fixed nodes
-    gpu_t10_data.SetNodalFixed(h_fixed_nodes);
+    cube->SetNodalFixed(h_fixed_nodes);
 
     // set external force
-    VectorXR h_f_ext(gpu_t10_data.get_n_coef() * 3);
+    VectorXR h_f_ext(cube->get_n_coef() * 3);
     // set external force applied at the end of the beam to be 0,0,3100
     h_f_ext.setZero();
     h_f_ext(3 * 6 + 0) = 1000.0;
-    gpu_t10_data.SetExternalForce(h_f_ext);
+    cube->SetExternalForce(h_f_ext);
 
     // Get quadrature data from quadrature_utils.h
     const VectorXR& tet5pt_x_host = Quadrature::tet5pt_x;
@@ -104,22 +110,22 @@ int main() {
     const VectorXR& tet5pt_weights_host = Quadrature::tet5pt_weights;
 
     // Call Setup with all required parameters
-    gpu_t10_data.Setup(tet5pt_x_host, tet5pt_y_host, tet5pt_z_host, tet5pt_weights_host, h_x12, h_y12, h_z12, elements);
+    cube->Setup(tet5pt_x_host, tet5pt_y_host, tet5pt_z_host, tet5pt_weights_host, h_x12, h_y12, h_z12, elements);
 
-    gpu_t10_data.SetDensity(rho0);
-    gpu_t10_data.SetDamping(0.0, 0.0);
+    cube->SetDensity(rho0);
+    cube->SetDamping(0.0, 0.0);
 
-    gpu_t10_data.SetSVK(E, nu);
+    cube->SetSVK(E, nu);
 
     // =========================================================================
 
-    gpu_t10_data.CalcDnDuPre();
+    cube->CalcDnDuPre();
 
     MOPHI_INFO("gpu_t10_data dndu pre complete");
 
     // 2. Retrieve results
     std::vector<std::vector<MatrixXR>> ref_grads;
-    gpu_t10_data.RetrieveDnDuPreToCPU(ref_grads);
+    cube->RetrieveDnDuPreToCPU(ref_grads);
 
     std::cout << "ref_grads:" << std::endl;
     for (size_t i = 0; i < ref_grads.size(); i++) {
@@ -130,7 +136,7 @@ int main() {
     std::cout << "done retrieving ref_grads" << std::endl;
 
     std::vector<std::vector<Real>> detJ;
-    gpu_t10_data.RetrieveDetJToCPU(detJ);
+    cube->RetrieveDetJToCPU(detJ);
 
     std::cout << "detJ:" << std::endl;
     for (size_t i = 0; i < detJ.size(); i++) {
@@ -140,24 +146,24 @@ int main() {
     }
     MOPHI_INFO("done retrieving detJ");
 
-    gpu_t10_data.CalcMassMatrix();
+    cube->CalcMassMatrix();
 
-    gpu_t10_data.CalcConstraintData();
+    cube->CalcConstraintData();
 
     MOPHI_INFO("done CalcConstraintData");
 
-    gpu_t10_data.ConvertToCSR_ConstraintJacT();
+    cube->ConvertToCSR_ConstraintJacT();
 
     MOPHI_INFO("done ConvertToCSR_ConstraintJacT");
 
     // calculate p
-    gpu_t10_data.CalcP();
+    cube->CalcP();
 
     MOPHI_INFO("done CalcP");
 
     // retrieve p
     std::vector<std::vector<MatrixXR>> p_from_F;
-    gpu_t10_data.RetrievePFromFToCPU(p_from_F);
+    cube->RetrievePFromFToCPU(p_from_F);
 
     std::cout << "P matrices (First Piola-Kirchhoff stress):" << std::endl;
     for (size_t elem = 0; elem < p_from_F.size(); elem++) {
@@ -170,30 +176,33 @@ int main() {
     MOPHI_INFO("done retrieving P matrices");
 
     // calculate internal force
-    gpu_t10_data.CalcInternalForce();
+    cube->CalcInternalForce();
     MOPHI_INFO("done CalcInternalForce");
 
     // retrieve internal force
     VectorXR f_int;
-    gpu_t10_data.RetrieveInternalForceToCPU(f_int);
+    cube->RetrieveInternalForceToCPU(f_int);
     std::cout << "Internal force vector (size: " << f_int.size() << "):" << std::endl;
     std::cout << f_int.transpose() << std::endl;
     std::cout << "done retrieving internal force vector" << std::endl;
 
     SyncedNesterovParams params = {1.0e-8, 1e14, 1.0e-6, 1.0e-6, 5, 300, 1.0e-3};
-    SyncedNesterovSolver solver(&gpu_t10_data, gpu_t10_data.get_n_constraint());
+    SyncedNesterovSolver solver(cube, cube->get_n_constraint());
 
-    solver.Setup();
-    solver.SetParameters(&params);
+    // Register the solver with the FEASolver manager
+    fea.AddSolver("nesterov", &solver);
+
+    static_cast<SyncedNesterovSolver*>(fea.GetSolver("nesterov"))->Setup();
+    fea.GetSolver("nesterov")->SetParameters(&params);
     for (int i = 0; i < 50; i++) {
-        solver.Solve();
+        fea.GetSolver("nesterov")->Solve();
     }
 
     // // Set highest precision for cout
     std::cout << std::fixed << std::setprecision(17);
 
     VectorXR x12, y12, z12;
-    gpu_t10_data.RetrievePositionToCPU(x12, y12, z12);
+    cube->RetrievePositionToCPU(x12, y12, z12);
 
     std::cout << "x12:" << std::endl;
     for (int i = 0; i < x12.size(); i++) {
@@ -216,7 +225,7 @@ int main() {
 
     std::cout << std::endl;
 
-    gpu_t10_data.Destroy();
+    cube->Destroy();
 
     std::cout << "gpu_t10_data destroyed" << std::endl;
 
