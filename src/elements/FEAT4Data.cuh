@@ -9,7 +9,7 @@
 #include "../utils/quadrature_utils.h"
 #include "../materials/MaterialModel.cuh"
 #include "ElementBase.h"
-#include "types.h"
+#include "../types.h"
 #include <MoPhiEssentials.h>
 
 // GPU data structure for 4-node linear tetrahedral (TET4) elements.

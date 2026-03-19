@@ -24,7 +24,7 @@
 #include "../utils/quadrature_utils.h"
 #include "../materials/MaterialModel.cuh"
 #include "ElementBase.h"
-#include "types.h"
+#include "../types.h"
 
 // Definition of GPU_ANCF3243 and data access device functions
 #pragma once

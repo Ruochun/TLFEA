@@ -30,13 +30,13 @@
 #include <iomanip>
 #include <iostream>
 
-#include "FEASolver.h"
-#include "elements/FEAT4Data.cuh"
-#include "solvers/LinearStaticSolver.cuh"
-#include "types.h"
-#include "utils/cpu_utils.h"
-#include "utils/mesh_utils.h"
-#include "utils/quadrature_utils.h"
+#include "../src/FEASolver.h"
+#include "../src/elements/FEAT4Data.cuh"
+#include "../src/solvers/LinearStaticSolver.cuh"
+#include "../src/types.h"
+#include "../src/utils/cpu_utils.h"
+#include "../src/utils/mesh_utils.h"
+#include "../src/utils/quadrature_utils.h"
 
 using namespace tlfea;
 

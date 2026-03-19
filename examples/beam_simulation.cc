@@ -21,13 +21,13 @@
 #include <iostream>
 #include <sstream>
 
-#include "FEASolver.h"
-#include "elements/FEAT10Data.cuh"
-#include "solvers/SyncedAdamW.cuh"
-#include "types.h"
-#include "utils/cpu_utils.h"
-#include "utils/mesh_utils.h"
-#include "utils/quadrature_utils.h"
+#include "../src/FEASolver.h"
+#include "../src/elements/FEAT10Data.cuh"
+#include "../src/solvers/SyncedAdamW.cuh"
+#include "../src/types.h"
+#include "../src/utils/cpu_utils.h"
+#include "../src/utils/mesh_utils.h"
+#include "../src/utils/quadrature_utils.h"
 
 using namespace tlfea;
 

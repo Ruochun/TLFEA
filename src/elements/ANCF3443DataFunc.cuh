@@ -13,7 +13,7 @@
  *==============================================================*/
 
 #include <cmath>
-#include "types.h"
+#include "../types.h"
 
 #include "../materials/MooneyRivlin.cuh"
 #include "../materials/SVK.cuh"
