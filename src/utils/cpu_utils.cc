@@ -1,5 +1,5 @@
 #include "cpu_utils.h"
-#include "types.h"
+#include "../types.h"
 
 #include <algorithm>
 #include <climits>

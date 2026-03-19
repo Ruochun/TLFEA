@@ -3,7 +3,7 @@
 #include <set>
 #include <string>
 #include <vector>
-#include "types.h"
+#include "../types.h"
 
 namespace tlfea {
 

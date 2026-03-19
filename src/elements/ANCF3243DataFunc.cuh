@@ -17,7 +17,7 @@
 #include "../materials/MooneyRivlin.cuh"
 #include "../materials/SVK.cuh"
 #include "ANCF3243Data.cuh"
-#include "types.h"
+#include "../types.h"
 
 namespace tlfea {
 

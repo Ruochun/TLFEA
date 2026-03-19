@@ -5,7 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <MoPhiEssentials.h>
-#include "types.h"
+#include "../types.h"
 
 /*==============================================================
  *==============================================================
