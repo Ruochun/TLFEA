@@ -85,6 +85,7 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tlfea
     FILES_MATCHING
         PATTERN "*.h"
+        PATTERN "*.hpp"
         PATTERN "*.cuh"
 )
 
@@ -94,6 +95,8 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/external/MoPhiEssentials/src/
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tlfea
     FILES_MATCHING
         PATTERN "*.h"
+        PATTERN "*.hpp"
+        PATTERN "*.cuh"
 )
 
 # Export targets file (for use from an install tree)
