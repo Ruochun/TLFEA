@@ -108,3 +108,26 @@ target_include_directories(beam_linear_static_t4 PRIVATE
 set_target_properties(beam_linear_static_t4 PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
+
+# Add the flow-past-cylinder Navier-Stokes demo
+add_executable(flow_past_cylinder
+    flow_past_cylinder.cc
+)
+
+target_link_libraries(flow_past_cylinder
+    tlfea_lib
+    Eigen3::Eigen
+    CUDA::cudart
+    CUDA::cusparse
+    CUDA::cublas
+    mophi_essentials
+)
+
+target_include_directories(flow_past_cylinder PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/external/MoPhiEssentials/src
+)
+
+set_target_properties(flow_past_cylinder PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+)
